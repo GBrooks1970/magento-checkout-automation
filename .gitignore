@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Serenity/JS and Playwright output
+target/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Generated living documentation
+# (docs/reports is published to GitHub Pages from a CI artifact, not committed)
+docs/reports/*
+!docs/reports/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# Editor and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

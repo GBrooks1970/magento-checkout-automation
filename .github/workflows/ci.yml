@@ -1,0 +1,65 @@
+# CI for the Magento checkout automation suite.
+#
+# SKELETON. This workflow is a draft. It assumes the Dockerised-Magento route
+# (see docs/adr and the session notes). If the public-sandbox route is chosen
+# instead, the "Stand up Magento" and reindex/cache steps are dropped and a
+# BASE_URL secret points at the sandbox. That decision is still open and gates
+# this file.
+#
+# The green badge from this workflow on a checkout E2E repo is the headline
+# portfolio claim, so it must run the active suite to a reliable pass.
+
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checkout-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # --- Magento bring-up (Docker route) -------------------------------
+      # TODO: start the ephemeral Magento instance and wait for health.
+      - name: Stand up Magento
+        run: docker compose up -d --wait
+
+      # Catalog/price/search changes are not visible on the storefront until
+      # a reindex and cache flush. Without these, create-then-assert flakes.
+      - name: Reindex and flush cache
+        run: |
+          docker compose exec -T magento bin/magento indexer:reindex
+          docker compose exec -T magento bin/magento cache:flush
+      # -------------------------------------------------------------------
+
+      - name: Run the active suite
+        run: npm test -- --tags "not @deferred"
+
+      - name: Publish living documentation
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/reports
+
+      - name: Tear down Magento
+        if: always()
+        run: docker compose down -v

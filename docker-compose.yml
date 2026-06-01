@@ -1,0 +1,35 @@
+# SKELETON. Ephemeral Magento for local runs and CI.
+#
+# This is a placeholder pending the CI-target decision (Dockerised Magento vs
+# public sandbox). Standing up a reproducible Magento instance is genuinely
+# fiddly: it is heavy and slow, and it is a precondition for the deferred
+# payment feature. Budget real time here; this is the part that bites.
+#
+# The intent is a pre-built Magento image plus its dependencies (database,
+# search, cache), exposing the storefront and the REST API the test-data client
+# uses. Service names and image tags below are indicative and to be confirmed.
+
+services:
+  magento:
+    image: # TODO: pin a pre-built Magento (Adobe Commerce open source) image
+    depends_on:
+      - db
+      - elasticsearch
+    ports:
+      - "8080:80"
+    # healthcheck: TODO so `docker compose up --wait` blocks until ready
+    # environment: TODO base URL, admin credentials, test payment method config
+
+  db:
+    image: mariadb:10.6
+    environment:
+      MYSQL_DATABASE: magento
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+      MYSQL_ROOT_PASSWORD: magento
+    # volumes: intentionally omitted; the instance is ephemeral
+
+  elasticsearch:
+    image: # TODO: pin the Elasticsearch/OpenSearch version Magento expects
+    environment:
+      - discovery.type=single-node
