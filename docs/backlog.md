@@ -52,6 +52,24 @@ and TypeScript-clean but has never executed against a live Magento store.
 - [ ] CI run produces a green badge on the GitHub repo
 - [ ] `BASE_URL` documented in README run-instructions
 
+**Update (2026-06-02, Session v4 follow-up) — Docker route researched, scaffolding authored:**
+The "pin a known-good image and go" framing was **wrong**. There is no official pull-and-run Magento
+image with Luma sample data; a working store is *installed* at run time. Grounded in Mark Shust's
+docker-magento v53.0.0 (the maintained reference config):
+- `docker-compose.yml` rewritten from skeleton to a **pinned, healthchecked** infra stack — nginx
+  `markoshust/magento-nginx:1.28-0`, php `markoshust/magento-php:8.4-fpm-2`, `mariadb:11.4`,
+  `valkey/valkey:8.1-alpine`, `markoshust/magento-opensearch:3-0`, `markoshust/magento-rabbitmq:4.2-0`;
+  storefront on `:8080`. Dev-only services (Xdebug/Mailcatcher/Blackfire) and host SSH/Composer mounts dropped.
+- **`docs/docker-magento-setup.md`** authored — the full bring-up runbook (Composer auth → create-project
+  with samples → `setup:install` → `sampledata:deploy` → reindex → cache flush → `npm test`).
+- `.github/workflows/ci.yml` reconciled to the real service names (`phpfpm`, not `magento`) + auth-keys secrets.
+
+**Two facts that resize this item:** (1) it **requires Adobe Commerce Marketplace auth keys** (free account;
+real secret, local + CI) — a hard dependency the old notes missed; (2) a from-scratch install is **~30 min**
+and needs **≥6 GB RAM** on Docker. **NOT yet validated** — the Docker Desktop daemon was down this session and
+no auth keys are configured. First-bring-up risk: the upstream nginx may force HTTPS, conflicting with the
+plain-HTTP `:8080` BASE_URL (see runbook "Open decisions"). Revised effort: **6–10 hrs**, not 4–8.
+
 **Update (2026-06-02):** A read-only smoke test was run against the **Magebit** public demo
 (`https://magento2-demo.magebit.com`, Luma sample data) to de-risk ahead of Docker — see
 `docs/implementation-logs/2026-06-02_live-smoke-test.md`. The `mageplaza.com` demo returned HTTP 403

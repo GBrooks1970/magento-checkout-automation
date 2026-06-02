@@ -1,10 +1,12 @@
 # CI for the Magento checkout automation suite.
 #
-# SKELETON. This workflow is a draft. It assumes the Dockerised-Magento route
-# (see docs/adr and the session notes). If the public-sandbox route is chosen
-# instead, the "Stand up Magento" and reindex/cache steps are dropped and a
-# BASE_URL secret points at the sandbox. That decision is still open and gates
-# this file.
+# DRAFT — not yet validated against a live bring-up. The bring-up here mirrors
+# docs/docker-magento-setup.md (the authoritative runbook); reconcile the two
+# once a first install passes locally. Magento has no pull-and-run image, so the
+# store is *installed* at run time: this requires Adobe Marketplace auth keys
+# (repository secrets MAGENTO_PUBLIC_KEY / MAGENTO_PRIVATE_KEY) and a ~30-minute
+# install. Caching or a pre-baked installed image is likely needed before this
+# is run on every push — see the runbook's "CI runtime" note.
 #
 # The green badge from this workflow on a checkout E2E repo is the headline
 # portfolio claim, so it must run the active suite to a reliable pass.
@@ -39,19 +41,33 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # --- Magento bring-up (Docker route) -------------------------------
-      # TODO: start the ephemeral Magento instance and wait for health.
-      - name: Stand up Magento
+      # The PHP/store service is "phpfpm"; nginx is "app" (see docker-compose.yml).
+      - name: Stand up infrastructure
         run: docker compose up -d --wait
+
+      - name: Authenticate Composer for the Magento repo
+        run: |
+          docker compose exec -T phpfpm composer config --global \
+            http-basic.repo.magento.com \
+            "${{ secrets.MAGENTO_PUBLIC_KEY }}" "${{ secrets.MAGENTO_PRIVATE_KEY }}"
+
+      - name: Install Magento with Luma sample data
+        # Full sequence (create-project, setup:install, sampledata:deploy,
+        # setup:upgrade) is in docs/docker-magento-setup.md. ~30 min from scratch;
+        # cache or pre-bake before relying on this per push.
+        run: echo "TODO: run the install sequence from docs/docker-magento-setup.md"
 
       # Catalog/price/search changes are not visible on the storefront until
       # a reindex and cache flush. Without these, create-then-assert flakes.
       - name: Reindex and flush cache
         run: |
-          docker compose exec -T magento bin/magento indexer:reindex
-          docker compose exec -T magento bin/magento cache:flush
+          docker compose exec -T phpfpm bin/magento indexer:reindex
+          docker compose exec -T phpfpm bin/magento cache:flush
       # -------------------------------------------------------------------
 
       - name: Run the active suite
+        env:
+          BASE_URL: http://localhost:8080
         run: npm test -- --tags "not @deferred"
 
       - name: Publish living documentation

@@ -1,35 +1,123 @@
-# SKELETON. Ephemeral Magento for local runs and CI.
+# Ephemeral Magento target for local runs and CI.
 #
-# This is a placeholder pending the CI-target decision (Dockerised Magento vs
-# public sandbox). Standing up a reproducible Magento instance is genuinely
-# fiddly: it is heavy and slow, and it is a precondition for the deferred
-# payment feature. Budget real time here; this is the part that bites.
+# IMPORTANT — this file brings up the *infrastructure* only. It does NOT, on its
+# own, produce a browsable store. Magento has no official "pull-and-run" image
+# with Luma sample data: the source must be installed into the `appdata` volume
+# at run time (composer create-project + sampledata:deploy + setup:install),
+# which requires Adobe Commerce Marketplace auth keys and takes ~20–40 minutes
+# on first bring-up. See docs/docker-magento-setup.md for the full sequence.
 #
-# The intent is a pre-built Magento image plus its dependencies (database,
-# search, cache), exposing the storefront and the REST API the test-data client
-# uses. Service names and image tags below are indicative and to be confirmed.
+# Image tags below are pinned to Mark Shust's docker-magento v53.0.0
+# (https://github.com/markshust/docker-magento) — a known-good, actively
+# maintained set for Magento 2.4.x on PHP 8.4 / OpenSearch 3 / MariaDB 11.4.
+# This compose is a trimmed, self-contained derivative: the developer-only
+# services (Xdebug, Mailcatcher, Blackfire) and host SSH/Composer mounts are
+# dropped, since the goal is a disposable test target, not a dev workstation.
+#
+# STATUS: authored from the upstream config but NOT yet validated end-to-end on
+# this machine (the Docker daemon was not running, and Marketplace auth keys are
+# not yet configured). Treat the HTTP/port and install specifics as provisional
+# until a first green bring-up — see the validation checklist in the runbook.
 
 services:
-  magento:
-    image: # TODO: pin a pre-built Magento (Adobe Commerce open source) image
-    depends_on:
-      - db
-      - elasticsearch
+  # nginx — serves the storefront. Upstream listens on 8000 (http) / 8443
+  # (https); we publish http on 8080 to match BASE_URL=http://localhost:8080.
+  app:
+    image: markoshust/magento-nginx:1.28-0
     ports:
-      - "8080:80"
-    # healthcheck: TODO so `docker compose up --wait` blocks until ready
-    # environment: TODO base URL, admin credentials, test payment method config
+      - "8080:8000"
+    volumes:
+      - appdata:/var/www/html
+      - sockdata:/sock
+    healthcheck:
+      test: "curl --fail 127.0.0.1:8000 || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      phpfpm:
+        condition: service_started
+
+  phpfpm:
+    image: markoshust/magento-php:8.4-fpm-2
+    volumes:
+      - appdata:/var/www/html
+      - sockdata:/sock
+    environment:
+      COMPOSER_DISABLE_XDEBUG_WARN: "1"
+      PHP_CS_FIXER_IGNORE_ENV: "1"
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   db:
-    image: mariadb:10.6
+    image: mariadb:11.4
+    command: >
+      --max_allowed_packet=64M
+      --optimizer_use_condition_selectivity=1
+      --optimizer_switch=rowid_filter=off
+      --log_bin_trust_function_creators=1
     environment:
+      MYSQL_ROOT_PASSWORD: magento
       MYSQL_DATABASE: magento
       MYSQL_USER: magento
       MYSQL_PASSWORD: magento
-      MYSQL_ROOT_PASSWORD: magento
-    # volumes: intentionally omitted; the instance is ephemeral
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: "mariadb-admin ping -h localhost -u root -pmagento || mysqladmin ping -h localhost -u root -pmagento"
+      interval: 5s
+      timeout: 5s
+      retries: 6
 
-  elasticsearch:
-    image: # TODO: pin the Elasticsearch/OpenSearch version Magento expects
+  redis:
+    image: valkey/valkey:8.1-alpine
+    healthcheck:
+      test: "redis-cli ping || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  opensearch:
+    image: markoshust/magento-opensearch:3-0
     environment:
       - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      # Stop OpenSearch flipping the index read-only on a small CI disk.
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - index.blocks.read_only_allow_delete
+    healthcheck:
+      test: "curl --fail opensearch:9200/_cat/health >/dev/null || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  rabbitmq:
+    image: markoshust/magento-rabbitmq:4.2-0
+    environment:
+      RABBITMQ_DEFAULT_USER: magento
+      RABBITMQ_DEFAULT_PASS: magento
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: "rabbitmq-diagnostics -q ping"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+volumes:
+  appdata:
+  dbdata:
+  rabbitmqdata:
+  sockdata:

@@ -24,8 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `@placesOrder` tag to the two order-placing scenarios in `features/guest-checkout.feature`
 - Added a `smoke` profile to `cucumber.js` (`tags: 'not @deferred and not @placesOrder'`) for safe read-only runs against shared stores
 - Added a `test:smoke` npm script (`cucumber-js --profile smoke`) (backlog Item #7)
+- Added `docs/docker-magento-setup.md` — the Dockerised Magento bring-up runbook (Composer auth, create-project with Luma sample data, `setup:install`, `sampledata:deploy`, reindex, cache flush, run), documenting the Adobe Marketplace auth-keys requirement, the ~30-minute/≥6 GB cost, and first-bring-up validation risks (backlog Item #1)
 
 ### Changed
+
+- Changed `docker-compose.yml` — replaced the unpinned skeleton with a pinned, healthchecked infrastructure stack derived from Mark Shust's docker-magento v53.0.0 (nginx 1.28, PHP 8.4-FPM, MariaDB 11.4, Valkey 8.1, OpenSearch 3, RabbitMQ 4.2), storefront on `:8080`, developer-only services and host mounts dropped. Brings up infrastructure only; Magento is installed into the volume at run time per the runbook (backlog Item #1). Not yet validated on a live daemon
+- Changed `.github/workflows/ci.yml` — reconciled with the real compose service names (`phpfpm`/`app`, not `magento`), added Composer-auth and install steps referencing the runbook and `MAGENTO_PUBLIC_KEY`/`MAGENTO_PRIVATE_KEY` secrets, and set `BASE_URL=http://localhost:8080` for the run (backlog Item #1)
 
 - Changed `README.md` — replaced the "Running the suite" placeholder with documented run paths: the live read-only smoke (`BASE_URL=https://magento2-demo.magebit.com npm run test:smoke`, including the tag-scoping safety note and a Windows PowerShell variant) and the Docker full-suite path; added the `npx playwright install chromium` step, a "Continuous integration" section, and an updated "Status" reflecting the validated live methodology (backlog Item #7)
 
