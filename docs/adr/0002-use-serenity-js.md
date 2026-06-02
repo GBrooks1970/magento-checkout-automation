@@ -53,14 +53,24 @@ configure({
 ```
 
 ```typescript
-// src/hooks/browser.hooks.ts — actor equipped per scenario
+// src/hooks/browser.hooks.ts — browser launched once, actor equipped per scenario
+import { BeforeAll, Before, AfterAll } from '@cucumber/cucumber';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 
-Before(async () => {
+let browser: Browser;
+
+BeforeAll(async () => {                       // launch once for the whole run
     browser = await chromium.launch({ headless: true });
+});
+
+Before(() => {                                // engage a fresh cast per scenario
     engage(Cast.where(actor =>
         actor.whoCan(BrowseTheWebWithPlaywright.using(browser))
     ));
+});
+
+AfterAll(async () => {                        // close once at the end
+    if (browser) { await browser.close(); }
 });
 ```
 
@@ -68,7 +78,15 @@ Before(async () => {
 to `docs/reports/` into an HTML narrative report. Once published via GitHub Pages, this URL is the
 primary deliverable a portfolio reviewer clicks through.
 
-**Note on a discovered API constraint:** `Cast.where` in Serenity/JS v3 accepts a synchronous
-function only. Because `chromium.launch()` is async, the browser launch lives in a Cucumber
-`Before` hook, not in `configure()`. This pattern is documented in the official Serenity/JS
-handbook and is consistent with how all supported test runners manage browser lifecycle.
+**Note on two discovered constraints, and a corrected pattern:**
+
+1. `Cast.where` in Serenity/JS v3 accepts a *synchronous* function only. Because `chromium.launch()`
+   is async, the launch cannot live inside `configure()` or inside `Cast.where`. Engagement
+   (`engage(...)`) is therefore done in a Cucumber hook, not in `configure()`.
+2. The launch must happen **once** (`BeforeAll`), not per scenario. An earlier version launched and
+   closed the browser in `Before`/`After`; this left every scenario after the first bound to a
+   browser that the previous `After` had already closed, so only the first scenario in a run passed.
+   The corrected pattern above launches once in `BeforeAll`, engages a fresh cast per `Before`
+   (Serenity/JS gives each scenario its own browser context), and closes in `AfterAll`. The defect
+   and its diagnosis are recorded in `docs/implementation-logs/2026-06-02_live-smoke-test.md` (§3.2)
+   and backlog Item #8.

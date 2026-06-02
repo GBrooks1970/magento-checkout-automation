@@ -246,9 +246,9 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 #### Item #5: Complete ADR concrete examples — Score: 12
 
 **Priority Score:** Breakage Probability (2) + Portfolio Impact (6) + Maintenance Burden (4) = **12 points**
-**Impact:** All four ADRs have "skeleton — expand with concrete example" markers. A reviewer reading them sees the reasoning but not the proof. Concrete before/after code examples make the decisions tangible.
+**Impact:** ADRs need concrete before/after code examples so a reviewer sees the proof, not just the reasoning.
 **Effort:** 2–3 hours
-**Status:** READY TO START (implementation exists; examples can be written now)
+**Status:** ✅ DONE (2026-06-02)
 **Area:** Documentation
 
 **Resolution Strategy:**
@@ -258,8 +258,14 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 4. **ADR-0004** — Note the Playwright version (1.60.0); add a code snippet showing `Wait.until(element, isVisible())` vs a hypothetical Cypress `cy.wait(2000)` anti-pattern
 
 **Success Criteria:**
-- [ ] All four ADRs have at least one concrete code example
-- [ ] No "Skeleton" markers remaining in any ADR
+- [x] All four ADRs have at least one concrete code example
+- [x] No "Skeleton" markers remaining in any ADR
+
+**Outcome (2026-06-02):** Verified all four ADRs already carry concrete examples (0001 Page-Object-vs-Screenplay,
+0002 crew/hook wiring + version pin, 0003 REST V1 endpoints + indexer/cache, 0004 KO.js wait vs `cy.wait` anti-pattern)
+with no skeleton markers. The one genuine fix: **ADR-0002's hook example and note were corrected** — they showed the
+per-`Before` browser launch that backlog #8 proved defective, and asserted it was canonical. Now they show the
+launch-once `BeforeAll`/`Before`/`AfterAll` pattern and reference the defect record.
 
 ---
 
@@ -312,13 +318,14 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 
 ## Summary
 
-| Priority | Count | Total Effort | Status |
-|---|---|---|---|
-| HIGH (20–30) | 2 | 6–12 hrs | Item #1 ready to start; Item #2 blocked on #1 |
-| MEDIUM (10–19) | 3 | 6–10 hrs | Items #3 and #4 blocked on #1; Item #5 ready |
-| LOW (0–9) | 2 | 1.5–2 hrs | Items #6 ready; #7 blocked on #1 |
-| **Total Outstanding** | **7** | **13.5–24 hrs** | |
-| Resolved | 1 | ~20 hrs completed | |
+| Priority | Count | Status |
+|---|---|---|
+| HIGH (20–30) | 4 | #1 ready to start; #2 blocked on #1; #8 ✅ done; #9 ✅ done |
+| MEDIUM (10–19) | 4 | #3, #4 blocked on #1; #5 ✅ done; #10 code done & validated, full validation Docker-gated |
+| LOW (0–9) | 2 | #6 ✅ done; #7 blocked on #1 |
+| **Outstanding (not fully done)** | **#1, #2, #3, #4, #7, #10** | Most gated on the Docker target (#1) |
+| Done this work | #5, #6, #8, #9 (+#10 code) | 2026-06-02 |
+| Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
 
@@ -327,7 +334,7 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 | Item | Status | Backlog ref |
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
-| ADRs complete with concrete examples | ⏸ In progress | Item #5 |
+| ADRs complete with concrete examples | ✅ Done | Item #5 |
 | Green CI badge, demonstrably non-flaky | ❌ Blocked | Item #1 |
 | Living documentation published (GitHub Pages) | ❌ Blocked | Items #1, #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |

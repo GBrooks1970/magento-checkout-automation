@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `src/interactions/CheckoutPage.ts` — `placeOrderButton` scoped to `.payment-method-content` to remove the same latent selector ambiguity (backlog Item #10)
 - Changed `src/hooks/browser.hooks.ts` — added `setDefaultTimeout(30 s)` so live Magento steps (network + Knockout.js re-renders) no longer hit Cucumber's 5 s default (backlog Item #10)
 - Changed `src/tasks/ProceedToCheckout.ts` — checkout email-field wait raised to `Wait.upTo(20 s)` for the heavy Knockout.js checkout render (backlog Item #10)
+- Changed `docs/adr/0002-use-serenity-js.md` — corrected the browser-hook example and accompanying note, which previously showed the per-`Before` launch/close pattern (proven defective by Item #8) and asserted it was canonical; now shows the launch-once `BeforeAll`/`Before`/`AfterAll` pattern (backlog Item #5)
 
 - Changed `docs/gherkin-style-guide.md` — replaced the before/after worked-example placeholder with a real refactor: a bloated imperative scenario rewritten into the actual `Complete a guest order with valid details` scenario, with commentary mapping each change to a documented principle (backlog Item #6)
 
