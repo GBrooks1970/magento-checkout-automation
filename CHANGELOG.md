@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CHANGELOG.md`
 - Added `docs/implementation-logs/2026-06-02_phases-1-3.md` recording the Phase 1–3 session
 
+### Changed
+
+- Changed `docs/gherkin-style-guide.md` — replaced the before/after worked-example placeholder with a real refactor: a bloated imperative scenario rewritten into the actual `Complete a guest order with valid details` scenario, with commentary mapping each change to a documented principle (backlog Item #6)
+
 ---
 
 ## [0.3.0] — 2026-06-02

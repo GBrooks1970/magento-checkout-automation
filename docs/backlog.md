@@ -159,7 +159,7 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 **Priority Score:** Breakage Probability (1) + Portfolio Impact (5) + Maintenance Burden (2) = **8 points**
 **Impact:** `docs/gherkin-style-guide.md` has a placeholder for the before/after refactor example. The principles are documented; the illustrative example is not.
 **Effort:** 1 hour
-**Status:** READY TO START
+**Status:** ✅ DONE (2026-06-02)
 **Area:** Documentation
 
 **Resolution Strategy:**
@@ -168,8 +168,10 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 3. Add inline commentary on each change and why it matters
 
 **Success Criteria:**
-- [ ] No placeholder comments remaining in `docs/gherkin-style-guide.md`
-- [ ] Before/after example uses real step text from the suite
+- [x] No placeholder comments remaining in `docs/gherkin-style-guide.md`
+- [x] Before/after example uses real step text from the suite
+
+**Outcome:** Placeholder replaced with a bloated `before` (URL navigation, hard waits, over-specified selectors, currency symbols, grand-total assertion) refactored into the real `Complete a guest order with valid details` scenario, with seven commentary sections each mapping a change to a documented principle.
 
 ---
 
@@ -217,7 +219,7 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 | ADRs complete with concrete examples | ⏸ In progress | Item #5 |
 | Green CI badge, demonstrably non-flaky | ❌ Blocked | Item #1 |
 | Living documentation published (GitHub Pages) | ❌ Blocked | Items #1, #4 |
-| Gherkin style guide with refactor example | ⏸ Placeholder | Item #6 |
+| Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Scaffolded | Item #2 to activate |
 
 ---
