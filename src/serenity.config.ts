@@ -1,19 +1,13 @@
-import { configure, Cast } from '@serenity-js/core';
-import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
-import { SerenityBDDReporter } from '@serenity-js/serenity-bdd';
+import { ArtifactArchiver, configure } from '@serenity-js/core';
+import createSerenityBDDReporter from '@serenity-js/serenity-bdd';
 import { ConsoleReporter } from '@serenity-js/console-reporter';
-import { chromium } from 'playwright';
+
+export const BASE_URL = process.env.BASE_URL ?? 'https://magento.softwaretestingboard.com';
 
 configure({
     crew: [
-        new ConsoleReporter(),
-        SerenityBDDReporter.fromJSON({ outputDirectory: 'docs/reports' }),
+        ArtifactArchiver.storingArtifactsAt('./docs/reports'),
+        createSerenityBDDReporter(),
+        ConsoleReporter.withDefaultColourSupport(),
     ],
-    actors: Cast.where(actor =>
-        actor.whoCan(
-            BrowseTheWebWithPlaywright.using(chromium, {
-                headless: true,
-            })
-        )
-    ),
 });

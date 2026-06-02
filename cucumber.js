@@ -1,5 +1,7 @@
 const common = {
   require: [
+    'src/serenity.config.ts',
+    'src/hooks/**/*.ts',
     'src/step-definitions/**/*.ts'
   ],
   requireModule: [
@@ -9,9 +11,6 @@ const common = {
     '@serenity-js/cucumber',
     'progress-bar'
   ],
-  formatOptions: {
-    serenityConfig: './src/serenity.config.ts'
-  },
   tags: 'not @deferred',
   strict: true
 };
