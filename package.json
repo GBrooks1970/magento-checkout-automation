@@ -1,0 +1,27 @@
+{
+  "name": "magento-checkout-automation",
+  "version": "1.0.0",
+  "description": "Serenity/JS + Playwright + Cucumber BDD checkout automation — Screenplay pattern, SDD, living documentation",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "cucumber-js --profile default",
+    "test:report": "serenity-bdd run --features ./features"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@serenity-js/core": "^3.0.0",
+    "@serenity-js/cucumber": "^3.0.0",
+    "@serenity-js/playwright": "^3.0.0",
+    "@serenity-js/rest": "^3.0.0",
+    "@serenity-js/assertions": "^3.0.0",
+    "@serenity-js/web": "^3.0.0",
+    "@serenity-js/serenity-bdd": "^3.0.0",
+    "@serenity-js/console-reporter": "^3.0.0",
+    "@playwright/test": "^1.40.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
