@@ -72,16 +72,48 @@ The reasoning behind each choice is recorded in `docs/adr/`.
 
 ## Running the suite
 
-> Placeholder. To be completed once the Serenity/JS project is initialised and
-> the CI target (Dockerised Magento vs public sandbox) is decided.
-
 ```bash
-# install
+# install dependencies
 npm install
 
-# run the active suite (the deferred payment feature is excluded)
-npm test -- --tags "not @deferred"
+# install the Playwright browser (once per machine)
+npx playwright install chromium
 ```
+
+There are two ways to run, depending on the target store.
+
+**Live read-only smoke (no setup required).** A public Magento Luma demo serves as
+a read-only target. Only the read-only subset is run — scenarios that place an
+order are excluded — so it is safe against a shared, non-resettable store:
+
+```bash
+BASE_URL=https://magento2-demo.magebit.com npm run test:smoke
+```
+
+The `smoke` profile filters by tag (`not @deferred and not @placesOrder`). Scope
+the run through this profile, **not** through CLI path or `feature:line`
+arguments — the default profile's path glob wins over those, and an unscoped run
+would place real orders on the shared demo. On Windows PowerShell set the
+variable first: `$env:BASE_URL = 'https://magento2-demo.magebit.com'`.
+
+**Full suite (order placement and checkout).** The order-placing and `@deferred`
+scenarios need a clean, resettable store — a shared demo's cart is
+nondeterministic and cannot be asserted on. This runs against the ephemeral
+Dockerised Magento target:
+
+```bash
+docker compose up -d --wait
+BASE_URL=http://localhost:8080 npm test          # active suite, excludes @deferred
+```
+
+The Dockerised target is still being stood up; see `docker-compose.yml` and the
+session notes. Until it lands, use the smoke command above.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` (the `e2e` workflow) runs the active suite on every push to `main`, stands
+up the Dockerised Magento target, reindexes and flushes cache, runs the suite, and
+publishes the Serenity living documentation. It is gated on the same Docker target.
 
 ## Design decisions
 
@@ -94,5 +126,8 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-Specification phase complete. The feature files are in place. Implementation of
-the Screenplay layer, the API client, and CI is in progress.
+The Screenplay layer is implemented and the methodology is validated against a
+live Magento Luma store: the read-only smoke subset passes end-to-end. Remaining
+work — the multi-step checkout assertions, the API-driven test-data client, the
+deferred payment feature, and the CI badge — is gated on the ephemeral Dockerised
+Magento target, which is being stood up next.

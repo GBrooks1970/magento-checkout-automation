@@ -296,14 +296,21 @@ launch-once `BeforeAll`/`Before`/`AfterAll` pattern and reference the defect rec
 
 **Priority Score:** Breakage Probability (1) + Portfolio Impact (4) + Maintenance Burden (2) = **7 points**
 **Impact:** The README has a "Placeholder. To be completed..." note in the Running the suite section.
-**Effort:** 30 minutes (once Item #1 is resolved)
-**Status:** BLOCKED on Item #1
+**Effort:** 30 minutes
+**Status:** ✅ DONE (2026-06-02) — unblocked early; the smoke command needs no live target
 **Area:** Documentation
 
 **Resolution Strategy:**
 1. Replace the placeholder with the confirmed `BASE_URL`, install steps, and run commands
 2. Add `HEADLESS`, `MAGENTO_ADMIN_TOKEN` env var documentation
 3. Add link to the published Serenity BDD report (once Item #4 is done)
+
+**Outcome (2026-06-02):** README "Running the suite" placeholder replaced with two documented paths —
+the live read-only smoke (`BASE_URL=https://magento2-demo.magebit.com npm run test:smoke`, with the
+tag-scoping safety warning and a Windows PowerShell note) and the Docker full-suite path. Added
+`npx playwright install chromium` step and a "Continuous integration" section. Added a `test:smoke`
+npm script. "Status" section updated to reflect the validated live methodology. Forward-referenced
+items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (with #4).
 
 ---
 
@@ -322,9 +329,9 @@ launch-once `BeforeAll`/`Before`/`AfterAll` pattern and reference the defect rec
 |---|---|---|
 | HIGH (20–30) | 4 | #1 ready to start; #2 blocked on #1; #8 ✅ done; #9 ✅ done |
 | MEDIUM (10–19) | 4 | #3, #4 blocked on #1; #5 ✅ done; #10 code done & validated, full validation Docker-gated |
-| LOW (0–9) | 2 | #6 ✅ done; #7 blocked on #1 |
-| **Outstanding (not fully done)** | **#1, #2, #3, #4, #7, #10** | Most gated on the Docker target (#1) |
-| Done this work | #5, #6, #8, #9 (+#10 code) | 2026-06-02 |
+| LOW (0–9) | 2 | #6 ✅ done; #7 ✅ done |
+| **Outstanding (not fully done)** | **#1, #2, #3, #4, #10** | Most gated on the Docker target (#1) |
+| Done this work | #5, #6, #7, #8, #9 (+#10 code) | 2026-06-02 |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

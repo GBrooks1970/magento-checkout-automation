@@ -23,8 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added backlog Items #8 (browser-lifecycle defect — fixed), #9 (order-scenario tagging + smoke profile — done), and #10 (live-run selector/timeout drift), discovered by the live smoke test
 - Added `@placesOrder` tag to the two order-placing scenarios in `features/guest-checkout.feature`
 - Added a `smoke` profile to `cucumber.js` (`tags: 'not @deferred and not @placesOrder'`) for safe read-only runs against shared stores
+- Added a `test:smoke` npm script (`cucumber-js --profile smoke`) (backlog Item #7)
 
 ### Changed
+
+- Changed `README.md` — replaced the "Running the suite" placeholder with documented run paths: the live read-only smoke (`BASE_URL=https://magento2-demo.magebit.com npm run test:smoke`, including the tag-scoping safety note and a Windows PowerShell variant) and the Docker full-suite path; added the `npx playwright install chromium` step, a "Continuous integration" section, and an updated "Status" reflecting the validated live methodology (backlog Item #7)
 
 - Changed `src/hooks/browser.hooks.ts` — launch the browser once in `BeforeAll` and close it in `AfterAll`, keeping `engage(Cast.where(...))` per-scenario in `Before`. Fixes a lifecycle defect where only the first scenario per run passed and all others failed at first navigation with "Target page, context or browser has been closed" (backlog Item #8)
 - Changed `src/interactions/CartPage.ts` — `proceedToCheckoutButton` now uses `button[data-role="proceed-to-checkout"]` instead of the ambiguous `button.action.primary.checkout`, which also matched the header mini-cart button and caused a Playwright strict-mode violation on live Luma (backlog Item #10)
