@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Changed `src/hooks/browser.hooks.ts` — launch the browser once in `BeforeAll` and close it in `AfterAll`, keeping `engage(Cast.where(...))` per-scenario in `Before`. Fixes a lifecycle defect where only the first scenario per run passed and all others failed at first navigation with "Target page, context or browser has been closed" (backlog Item #8)
+- Changed `src/interactions/CartPage.ts` — `proceedToCheckoutButton` now uses `button[data-role="proceed-to-checkout"]` instead of the ambiguous `button.action.primary.checkout`, which also matched the header mini-cart button and caused a Playwright strict-mode violation on live Luma (backlog Item #10)
+- Changed `src/interactions/CheckoutPage.ts` — `placeOrderButton` scoped to `.payment-method-content` to remove the same latent selector ambiguity (backlog Item #10)
+- Changed `src/hooks/browser.hooks.ts` — added `setDefaultTimeout(30 s)` so live Magento steps (network + Knockout.js re-renders) no longer hit Cucumber's 5 s default (backlog Item #10)
+- Changed `src/tasks/ProceedToCheckout.ts` — checkout email-field wait raised to `Wait.upTo(20 s)` for the heavy Knockout.js checkout render (backlog Item #10)
 
 - Changed `docs/gherkin-style-guide.md` — replaced the before/after worked-example placeholder with a real refactor: a bloated imperative scenario rewritten into the actual `Complete a guest order with valid details` scenario, with commentary mapping each change to a documented principle (backlog Item #6)
 

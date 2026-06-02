@@ -10,7 +10,10 @@ export const CartPage = {
     itemCounter: PageElement.located(By.css('span.counter-number'))
         .describedAs('cart item counter'),
 
-    proceedToCheckoutButton: PageElement.located(By.css('button.action.primary.checkout'))
+    // Use the cart-page button specifically. The bare `button.action.primary.checkout`
+    // selector also matches the header mini-cart button (#top-cart-btn-checkout), which
+    // causes a Playwright strict-mode violation on live Luma. See backlog #10.
+    proceedToCheckoutButton: PageElement.located(By.css('button[data-role="proceed-to-checkout"]'))
         .describedAs('Proceed to Checkout button'),
 
     emptyCartMessage: PageElement.located(By.css('div.cart-empty'))

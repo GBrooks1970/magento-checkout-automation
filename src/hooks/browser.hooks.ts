@@ -1,8 +1,14 @@
-import { BeforeAll, Before, AfterAll } from '@cucumber/cucumber';
+import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { Cast, engage } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
+
+// Cucumber's default per-step timeout is 5 s. A real Magento checkout step combines
+// network latency with several Knockout.js re-renders, which can legitimately exceed
+// that against a live store, producing spurious "function timed out" failures. Raise
+// it to a realistic ceiling for live/CI runs. See backlog #10.
+setDefaultTimeout(30 * 1000);
 
 // The browser is launched once for the whole run and kept open. Serenity/JS
 // gives each scenario its own isolated browser context and discards it when the

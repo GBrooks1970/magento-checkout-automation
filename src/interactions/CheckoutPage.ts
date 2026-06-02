@@ -35,7 +35,12 @@ export const CheckoutPage = {
     // Payment step
     checkMoneyOrderOption: PageElement.located(By.css('input[value="checkmo"]'))
         .describedAs('Check / Money Order payment option'),
-    placeOrderButton: PageElement.located(By.css('button.action.primary.checkout'))
+    // Scope to the active payment method content. The bare `button.action.primary.checkout`
+    // selector also matches the header mini-cart button, causing a strict-mode violation
+    // (same root cause as the cart-page button). See backlog #10. NOTE: validated by
+    // reasoning against the Luma DOM, not by a live run — this is on the @placesOrder path,
+    // which is not exercised against the shared demo; confirm on the Docker instance.
+    placeOrderButton: PageElement.located(By.css('.payment-method-content button.action.primary.checkout'))
         .describedAs('Place Order button'),
 
     // Order confirmation

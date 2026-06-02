@@ -128,7 +128,7 @@ profile (`tags: 'not @deferred and not @placesOrder'`) added to `cucumber.js`. V
 against live Luma. These must be resolved for a reliable pass; best finished against the clean Docker instance.
 Discovered by the 2026-06-02 live smoke test re-run (§7).
 **Effort:** 1–2 hours (some items only confirmable on a clean store)
-**Status:** PARTIALLY READY (selector + timeout fixes can start now; clean assertions need Item #1's Docker store)
+**Status:** 🟡 CODE FIXES DONE & validated 2026-06-02; remaining validation confirmed Docker-gated (Item #1)
 **Area:** Implementation
 
 **Problem / findings:**
@@ -146,9 +146,22 @@ Discovered by the 2026-06-02 live smoke test re-run (§7).
 3. Re-validate count/subtotal assertions on the Docker instance (Item #1), not the shared demo
 
 **Success Criteria:**
-- [ ] `ProceedToCheckout` resolves to exactly one element on Luma
-- [ ] No spurious 5 s step timeouts on a normal live run
-- [ ] Cart-count and subtotal scenarios pass on the clean Docker store
+- [x] `ProceedToCheckout` resolves to exactly one element on Luma — strict-mode violation gone, click executes
+- [x] No spurious 5 s step timeouts — Cucumber step ceiling raised to 30 s; KO.js checkout-render wait raised to 20 s
+- [ ] Cart-count and subtotal scenarios pass on the clean Docker store — still pending Item #1
+
+**Outcome (2026-06-02):** Code fixes applied and validated against the Magebit demo as far as the shared
+store allows:
+- `CartPage.proceedToCheckoutButton` → `button[data-role="proceed-to-checkout"]` (was the ambiguous
+  `button.action.primary.checkout`). Confirmed: the strict-mode violation is gone and the proceed click executes.
+- `CheckoutPage.placeOrderButton` → scoped to `.payment-method-content` (same latent ambiguity). Validated by
+  reasoning only — it is on the `@placesOrder` path, not run against the shared demo; confirm on Docker.
+- `setDefaultTimeout(30 s)` in `browser.hooks.ts`; `ProceedToCheckout` email-field wait raised to `Wait.upTo(20 s)`.
+
+Remaining failures on Magebit are **environmental, not code**: the shared cart is nondeterministic (item count
+returned 3/7/8 across runs) so the Background cannot build a controlled cart, and the checkout email field
+therefore never renders for the validation scenarios. This confirms checkout-flow and count/subtotal assertions
+require the clean, resettable Docker store (Item #1). The shared demo remains useful only for cart/selector smoke.
 
 ---
 
