@@ -7,6 +7,7 @@ Feature: Guest checkout
     Given a product "Push It Messenger Bag" priced at "45.00" is available
     And I am browsing the storefront as a guest
 
+  @placesOrder
   Scenario: Complete a guest order with valid details
     When I add "Push It Messenger Bag" to my cart
     And I proceed to checkout
@@ -22,6 +23,7 @@ Feature: Guest checkout
     Then my cart should contain 1 item
     And the cart subtotal should be "45.00"
 
+  @placesOrder
   Scenario Outline: Order multiple quantities of a single product
     When I add "Push It Messenger Bag" to my cart with quantity <quantity>
     And I complete checkout with valid details

@@ -52,6 +52,104 @@ and TypeScript-clean but has never executed against a live Magento store.
 - [ ] CI run produces a green badge on the GitHub repo
 - [ ] `BASE_URL` documented in README run-instructions
 
+**Update (2026-06-02):** A read-only smoke test was run against the **Magebit** public demo
+(`https://magento2-demo.magebit.com`, Luma sample data) to de-risk ahead of Docker — see
+`docs/implementation-logs/2026-06-02_live-smoke-test.md`. The `mageplaza.com` demo returned HTTP 403
+and was discarded. The smoke test validated the live target and the core methodology (one scenario
+passed end-to-end) but surfaced two new blockers, Items #8 and #9 below, which gate any green run
+regardless of target. Docker remains the route for checkout/API/payment work.
+
+---
+
+#### Item #8: Fix browser-lifecycle defect in Cucumber hooks — Score: 26
+
+**Priority Score:** Breakage Probability (10) + Portfolio Impact (10) + Maintenance Burden (6) = **26 points**
+**Impact:** Blocks every multi-scenario run, and therefore any green CI badge — on Docker or anywhere.
+Discovered by the 2026-06-02 live smoke test.
+**Effort:** 30 minutes
+**Status:** ✅ DONE (2026-06-02)
+**Area:** Implementation / Infrastructure
+
+**Problem:**
+`src/hooks/browser.hooks.ts` launched a fresh browser in `Before` and closed it in `After`. Only the
+first scenario per process passed; every subsequent scenario failed at its first navigation with
+`browserContext.newPage: Target page, context or browser has been closed`. The reused actor stayed bound
+to the closed browser. This was a lifecycle bug, not a selector/assertion failure (see smoke-test log §3.2).
+
+**Resolution Strategy:**
+1. Move the browser launch to `BeforeAll`, keep `engage(Cast.where(...))` in `Before`, close in `AfterAll`
+2. Rely on Serenity/JS to manage a fresh browser context per scenario
+3. Re-run the read-only subset against Magebit; confirm the lifecycle error is gone
+
+**Success Criteria:**
+- [x] Multi-scenario runs no longer fail with "browser has been closed" — every scenario reaches the storefront
+- [x] `npx tsc --noEmit` stays clean
+
+**Outcome:** Fixed in `src/hooks/browser.hooks.ts` (launch once in `BeforeAll`, `engage` per `Before`,
+close in `AfterAll`), with a comment warning against reverting. Confirmed by re-run: all 7 read-only
+scenarios now navigate successfully; remaining failures are genuine selector/timeout drift (Item #10).
+
+---
+
+#### Item #9: Tag order-placing scenarios and add a smoke profile — Score: 20
+
+**Priority Score:** Breakage Probability (6) + Portfolio Impact (7) + Maintenance Burden (7) = **20 points**
+**Impact:** CLI path/line filters do not reliably scope this project (the auto-loaded `default` profile's
+`paths` glob always wins), so there is currently no safe way to exclude order-placing scenarios when
+running against a shared/non-resettable store. Discovered by the 2026-06-02 live smoke test (§3.3).
+**Effort:** 30–45 minutes
+**Status:** ✅ DONE (2026-06-02)
+**Area:** Test infrastructure / CI
+
+**Problem:**
+Against `magento2-demo.magebit.com`, neither positional paths nor `feature:line` arguments restricted the
+run — the full suite executed. Once Item #8 was fixed, an unscoped run would place real orders on a shared
+demo via the `guest-checkout` happy path and quantity outline.
+
+**Resolution Strategy:**
+1. Tag order-placing scenarios in `guest-checkout.feature` (e.g. `@placesOrder`)
+2. Filter via tags, which combine reliably with the profile: `--tags "not @deferred and not @placesOrder"`
+3. Add a dedicated `smoke` profile in `cucumber.js` for the read-only subset
+
+**Success Criteria:**
+- [x] A profile runs only the read-only subset, verified to exclude all order-placing scenarios
+- [x] `cucumber.js` carries a `smoke` profile
+
+**Outcome:** `@placesOrder` added to the two order-placing scenarios in `guest-checkout.feature`; a `smoke`
+profile (`tags: 'not @deferred and not @placesOrder'`) added to `cucumber.js`. Verified: `npx cucumber-js
+--profile smoke` runs exactly 7 read-only scenarios and no order-placing ones. Safe to run against shared stores.
+
+---
+
+#### Item #10: Harden live-run selectors and step timeouts — Score: 18
+
+**Priority Score:** Breakage Probability (8) + Portfolio Impact (5) + Maintenance Burden (5) = **18 points**
+**Impact:** With the lifecycle bug fixed, the read-only smoke run surfaced genuine selector/behaviour drift
+against live Luma. These must be resolved for a reliable pass; best finished against the clean Docker instance.
+Discovered by the 2026-06-02 live smoke test re-run (§7).
+**Effort:** 1–2 hours (some items only confirmable on a clean store)
+**Status:** PARTIALLY READY (selector + timeout fixes can start now; clean assertions need Item #1's Docker store)
+**Area:** Implementation
+
+**Problem / findings:**
+1. `ProceedToCheckout` selector `button.action.primary.checkout` matches **two** elements on live Luma
+   (mini-cart `#top-cart-btn-checkout` and the cart-page `[data-role="proceed-to-checkout"]`) → Playwright
+   strict-mode violation. Needs a single unambiguous locator.
+2. Several steps hit Cucumber's default **5000 ms** timeout against live network + KO.js re-renders. Raise
+   via `setDefaultTimeout` (and/or scope Serenity interaction timeouts) for live/CI runs.
+3. Cart-count/subtotal assertions are unreliable on the shared Magebit demo (observed cart count "8" where
+   "1" expected — contaminated shared state). Confirms these assertions need the clean, resettable Docker store.
+
+**Resolution Strategy:**
+1. Tighten the `ProceedToCheckout` / `CartPage` checkout locator to a single element
+2. Add `setDefaultTimeout` (e.g. 15–30 s) and review per-interaction waits
+3. Re-validate count/subtotal assertions on the Docker instance (Item #1), not the shared demo
+
+**Success Criteria:**
+- [ ] `ProceedToCheckout` resolves to exactly one element on Luma
+- [ ] No spurious 5 s step timeouts on a normal live run
+- [ ] Cart-count and subtotal scenarios pass on the clean Docker store
+
 ---
 
 #### Item #2: Activate `payment-failure.feature` — Score: 21

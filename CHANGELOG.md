@@ -19,7 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CHANGELOG.md`
 - Added `docs/implementation-logs/2026-06-02_phases-1-3.md` recording the Phase 1–3 session
 
+- Added `docs/implementation-logs/2026-06-02_live-smoke-test.md` recording the first live run against a public Magento sandbox (Magebit), validating the methodology and identifying new blockers
+- Added backlog Items #8 (browser-lifecycle defect — fixed), #9 (order-scenario tagging + smoke profile — done), and #10 (live-run selector/timeout drift), discovered by the live smoke test
+- Added `@placesOrder` tag to the two order-placing scenarios in `features/guest-checkout.feature`
+- Added a `smoke` profile to `cucumber.js` (`tags: 'not @deferred and not @placesOrder'`) for safe read-only runs against shared stores
+
 ### Changed
+
+- Changed `src/hooks/browser.hooks.ts` — launch the browser once in `BeforeAll` and close it in `AfterAll`, keeping `engage(Cast.where(...))` per-scenario in `Before`. Fixes a lifecycle defect where only the first scenario per run passed and all others failed at first navigation with "Target page, context or browser has been closed" (backlog Item #8)
 
 - Changed `docs/gherkin-style-guide.md` — replaced the before/after worked-example placeholder with a real refactor: a bloated imperative scenario rewritten into the actual `Complete a guest order with valid details` scenario, with commentary mapping each change to a documented principle (backlog Item #6)
 
