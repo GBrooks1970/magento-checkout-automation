@@ -1,33 +1,83 @@
 # 0003. Set up test data through the API, assert through the UI
 
-Status: Accepted
+**Status:** Accepted
+**Date:** 2026-06-01
 
 ## Context
 
-Every checkout scenario needs a known starting state: a product that exists at a
-known price, sometimes a pre-seeded cart. Building that state through the UI is
-slow, fragile, and irrelevant to what the test is actually checking. Magento's
-EAV data model makes UI-based product setup especially painful.
+Every checkout scenario needs a known starting state: a product that exists at a known price,
+sometimes a pre-seeded cart. Building that state through the UI is slow, fragile, and irrelevant
+to what the test is actually checking. Magento's EAV data model makes UI-based product setup
+especially painful — creating a product through the admin UI involves dozens of fields and several
+page loads.
 
 ## Decision
 
-Set up and tear down test data through the Magento REST API, and reserve the UI
-for the behaviour under test. The API ability resolves the Background steps
-(product availability, guest context, pre-seeded cart); the UI ability drives the
-journey and makes the assertions.
+Set up and tear down test data through the Magento REST API, and reserve the UI for the behaviour
+under test. The API ability resolves the Background steps (product availability, guest context,
+pre-seeded cart); the UI ability drives the journey and makes the assertions.
 
 ## Consequences
 
-This is the highest-value pattern the portfolio demonstrates. Tests become faster
-and more stable because setup no longer depends on rendering and clicking through
-unrelated pages. The split also keeps each test focused: state via API, behaviour
-via UI.
+This is the highest-value pattern the portfolio demonstrates. Tests become faster and more stable
+because setup no longer depends on rendering and clicking through unrelated pages. The split also
+keeps each test focused: state via API, behaviour via UI.
 
-The trade-off is two integration surfaces to maintain, API and UI, and a
-dependency on the API staying in step with the storefront. Magento's caching and
-indexing mean data created via API is not visible to the storefront until a
-reindex and cache flush, which CI must handle. That trap is documented and is
-part of what the suite exists to show.
+The trade-off is two integration surfaces to maintain — API and UI — and a dependency on the API
+staying in step with the storefront. Magento's caching and indexing mean data created via API is
+not visible to the storefront until a reindex and cache flush, which CI must handle. That trap is
+documented and is part of what the suite exists to show.
 
-> Skeleton. Link to the REST client in `src/api/` and list the endpoints used
-> once implemented.
+## Concrete detail
+
+**API client location:** `src/api/MagentoApiClient.ts`
+
+**Magento REST V1 base URL:** `${BASE_URL}/rest/V1`
+
+**Authentication:** Bearer token via `MAGENTO_ADMIN_TOKEN` environment variable
+
+**Background step pattern:**
+
+```gherkin
+# features/guest-checkout.feature
+Background:
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+```
+
+```typescript
+// src/step-definitions/background.steps.ts
+Given('a product {string} priced at {string} is available',
+  async (productName: string, _price: string) => {
+    await actorCalled('User').attemptsTo(
+        // Current: UI fallback — navigates to product page to verify existence
+        // Target: MagentoApi.verifyProductIsAvailable(productName, price)
+        Navigate.to(StorefrontPage.urlFor(productName)),
+        Wait.until(StorefrontPage.addToCartButton, isVisible()),
+    );
+});
+```
+
+**Target REST endpoint (once fully wired):**
+
+```
+GET /rest/V1/products?searchCriteria[filter_groups][0][filters][0][field]=name
+                     &searchCriteria[filter_groups][0][filters][0][value]=Push+It+Messenger+Bag
+                     &searchCriteria[filter_groups][0][filters][0][condition_type]=eq
+Authorization: Bearer <MAGENTO_ADMIN_TOKEN>
+```
+
+**CI indexer/cache requirement:**
+
+```bash
+# Must run before any test execution in CI
+bin/magento indexer:reindex
+bin/magento cache:flush
+```
+
+Products created or modified via the REST API are not visible on the storefront until the
+catalogue and price indexers have run and the full-page cache has been flushed. Skipping this
+step is the single most common cause of "product not found" flakiness in Magento automation suites.
+
+**Note:** The API client is currently a stub. Background steps use UI verification as a fallback
+while the live test target decision is open. Full API wiring is tracked in `docs/backlog.md` Item #3.
