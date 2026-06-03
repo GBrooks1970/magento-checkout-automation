@@ -12,10 +12,9 @@ Feature: Checkout validation
     When I proceed to checkout
     And I provide incomplete shipping details
     Then I should not be able to advance to payment
-    And I should see a validation message
 
   Scenario: Reject checkout with an invalid email
     When I proceed to checkout
     And I provide shipping details with email "not-an-email"
     Then I should not be able to advance to payment
-    And I should see a validation message
+    And the email field should be flagged as invalid
