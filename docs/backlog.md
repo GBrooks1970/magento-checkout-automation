@@ -194,6 +194,32 @@ previously masked:
 Both must be fixed for a green run. This is the headline value of the Docker target: it exposed a real
 test-isolation defect the shared demo had hidden.
 
+**Update (2026-06-03, cont.) — isolation fixed; smoke at 42/44 steps (5/7 scenarios green).** After the
+isolation + add-to-cart-wait fix, the remaining failures were genuine Luma 2.4.8 selector/behaviour drift,
+now mostly resolved:
+- ✅ Cart subtotal selector `.cart-totals .subtotal .price` → `.totals.sub .price`; the subtotal step now
+  navigates to the cart page first (some scenarios asserted it without viewing the cart).
+- ✅ Cart-row selectors: scope by the product *photo* link `a[title="..."]` (the name link has no title);
+  the delete link lives in a sibling `tr.item-actions`, so scope to `tbody.cart.item:has(...)`.
+- ✅ Cart-quantity count: the header counter shows distinct-item count until `checkout/cart_link/use_qty=1`
+  (now set in the bring-up). Count assertions also poll (`Wait.until`) to ride out the async customer-data
+  refresh after a cart-update reload.
+- ✅ "Should not advance to payment": assert the payment section is not visible (robust) instead of the
+  email field staying visible (the post-submit loader transiently hides it).
+
+**Two scenarios still red — checkout validation messages (need a decision, not just a selector):**
+1. **Reject checkout with an invalid email** — Magento *does* validate (`#customer-email` gets
+   `aria-invalid="true"` + class `mage-error`, stable; a `div.mage-error` renders), but asserting the
+   transient `div.mage-error` is flaky under the KO.js re-render, and Serenity's `:visible` pseudo
+   misbehaves. A robust fix: assert `CheckoutPage.emailFieldInvalid` (`#customer-email.mage-error`) — the
+   stable signal — added but not yet wired into the shared step.
+2. **Reject checkout with missing shipping details** — clicking "Next" with only an email and an empty
+   address surfaces **no validation message at all** (no `div.mage-error`, no `aria-invalid`); Magento
+   simply declines to advance. The scenario's "I should see a validation message" expectation does not
+   match this Magento version. Options: change the scenario (assert non-advancement only, which already
+   passes), make `incomplete()` trigger real field validation (e.g. submit a touched-then-emptied field),
+   or drop the message assertion for this case. **Spec decision required.**
+
 **Outcome (2026-06-02):** Code fixes applied and validated against the Magebit demo as far as the shared
 store allows:
 - `CartPage.proceedToCheckoutButton` → `button[data-role="proceed-to-checkout"]` (was the ambiguous

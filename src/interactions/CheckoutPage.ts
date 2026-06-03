@@ -33,6 +33,12 @@ export const CheckoutPage = {
         .describedAs('Next button on shipping method step'),
 
     // Payment step
+    // The payment-method section is in the DOM but hidden (display:none) until the
+    // shipping step is completed; its visibility is a reliable "advanced to payment"
+    // signal (more so than the email field, which the post-submit loader transiently
+    // hides). See backlog #10.
+    paymentSection: PageElement.located(By.css('.checkout-payment-method'))
+        .describedAs('payment method section'),
     checkMoneyOrderOption: PageElement.located(By.css('input[value="checkmo"]'))
         .describedAs('Check / Money Order payment option'),
     // Scope to the active payment method content. The bare `button.action.primary.checkout`
@@ -51,7 +57,16 @@ export const CheckoutPage = {
     orderSubtotal: PageElement.located(By.css('.opc-block-summary .totals.sub .amount .price'))
         .describedAs('order subtotal on confirmation'),
 
-    // Validation
-    firstValidationMessage: PageElement.located(By.css('div.mage-error, span.mage-error'))
+    // Validation. The generated field error inserted by Magento on submit.
+    // NOTE (backlog #10): asserting this is unreliable in the KO.js checkout — the
+    // invalid-email case renders it but it can flicker during re-render, and the
+    // "missing details" case surfaces NO message at all (Magento silently declines
+    // to advance). The two checkout-validation scenarios are pending a decision on
+    // how to assert "checkout rejected the input" robustly.
+    firstValidationMessage: PageElement.located(By.css('div.mage-error'))
         .describedAs('field validation message'),
+    // The email field itself is marked invalid (aria-invalid="true", class mage-error)
+    // and this signal is stable, unlike the transient error div.
+    emailFieldInvalid: PageElement.located(By.css('#customer-email.mage-error'))
+        .describedAs('email field in an invalid state'),
 };

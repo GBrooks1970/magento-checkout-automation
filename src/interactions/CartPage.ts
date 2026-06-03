@@ -4,7 +4,9 @@ import { BASE_URL } from '../serenity.config';
 export const CartPage = {
     url: (): string => `${BASE_URL}/checkout/cart`,
 
-    subtotal: PageElement.located(By.css('.cart-totals .subtotal .price'))
+    // The cart-page order summary subtotal row. (The earlier
+    // `.cart-totals .subtotal .price` matched nothing on Luma 2.4.8.)
+    subtotal: PageElement.located(By.css('.totals.sub .price'))
         .describedAs('cart subtotal'),
 
     itemCounter: PageElement.located(By.css('span.counter-number'))
@@ -22,16 +24,21 @@ export const CartPage = {
     itemRows: PageElements.located(By.css('tbody tr.item-info'))
         .describedAs('cart item rows'),
 
+    // Scope to the row by the product link carrying title="<name>". On Luma the
+    // name link has no title attribute; the product *photo* link does, so match
+    // any `a[title=...]` within the row rather than `.product-item-name a[title=...]`.
     quantityInputFor: (productName: string) =>
         PageElement.located(
-            By.css(`tr:has(td .product-item-name a[title="${productName}"]) input.qty`)
+            By.css(`tr.item-info:has(a[title="${productName}"]) input.qty`)
         ).describedAs(`quantity input for "${productName}"`),
 
     updateCartButton: PageElement.located(By.css('button[name="update_cart_action"]'))
         .describedAs('Update Cart button'),
 
+    // The delete ("Remove item") link sits in a sibling `tr.item-actions` row, not
+    // `tr.item-info`, so scope to the whole `tbody.cart.item` for the product.
     deleteButtonFor: (productName: string) =>
         PageElement.located(
-            By.css(`tr:has(td .product-item-name a[title="${productName}"]) a.action-delete`)
+            By.css(`tbody.cart.item:has(a[title="${productName}"]) a.action-delete`)
         ).describedAs(`delete button for "${productName}"`),
 };

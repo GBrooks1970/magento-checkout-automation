@@ -1,7 +1,7 @@
 import { When, Then } from '@cucumber/cucumber';
-import { actorCalled } from '@serenity-js/core';
+import { actorCalled, Duration, Wait } from '@serenity-js/core';
 import { Ensure, equals, includes } from '@serenity-js/assertions';
-import { isVisible } from '@serenity-js/web';
+import { Navigate, isVisible } from '@serenity-js/web';
 import { UpdateCartQuantity } from '../tasks/UpdateCartQuantity';
 import { RemoveFromCart } from '../tasks/RemoveFromCart';
 import { CartItemCount } from '../questions/CartItemCount';
@@ -20,20 +20,28 @@ When('I remove {string} from my cart', async (productName: string) => {
     );
 });
 
-Then('my cart should contain {int} item', async (expectedCount: number) => {
-    await actorCalled('User').attemptsTo(
-        Ensure.that(CartItemCount(), equals(String(expectedCount))),
+// The header cart counter is refreshed asynchronously (customer-data) after a
+// cart change — notably the page reload following a quantity update — so poll the
+// question until it settles on the expected value rather than reading it once.
+const ensureCartCount = (expectedCount: number) =>
+    actorCalled('User').attemptsTo(
+        Wait.upTo(Duration.ofSeconds(10)).until(CartItemCount(), equals(String(expectedCount))),
     );
+
+Then('my cart should contain {int} item', async (expectedCount: number) => {
+    await ensureCartCount(expectedCount);
 });
 
 Then('my cart should contain {int} items', async (expectedCount: number) => {
-    await actorCalled('User').attemptsTo(
-        Ensure.that(CartItemCount(), equals(String(expectedCount))),
-    );
+    await ensureCartCount(expectedCount);
 });
 
 Then('the cart subtotal should be {string}', async (expectedSubtotal: string) => {
+    // The subtotal lives on the cart page; some scenarios assert it straight after
+    // adding from a product page, so view the cart before reading the total.
     await actorCalled('User').attemptsTo(
+        Navigate.to(CartPage.url()),
+        Wait.until(CartPage.subtotal, isVisible()),
         Ensure.that(CartSubtotal(), includes(expectedSubtotal)),
     );
 });

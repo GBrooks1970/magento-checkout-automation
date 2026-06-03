@@ -105,6 +105,12 @@ MSYS_NO_PATHCONV=1 docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
   php bin/magento indexer:reindex && \
   php bin/magento cache:flush'
 
+# 6b. Make the header cart counter show total item QUANTITY (not distinct-item
+#     count), so "cart should contain N items" matches the feature semantics
+#     (e.g. quantity 3 -> counter shows 3). Required for the cart-quantity scenario.
+docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+  php bin/magento config:set checkout/cart_link/use_qty 1 && php bin/magento cache:flush'
+
 # 7. Sanity check, then run the suite
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/   # expect 200
 BASE_URL=http://localhost:8080 npm run test:smoke                 # read-only subset
