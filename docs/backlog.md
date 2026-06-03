@@ -66,9 +66,18 @@ docker-magento v53.0.0 (the maintained reference config):
 
 **Two facts that resize this item:** (1) it **requires Adobe Commerce Marketplace auth keys** (free account;
 real secret, local + CI) — a hard dependency the old notes missed; (2) a from-scratch install is **~30 min**
-and needs **≥6 GB RAM** on Docker. **NOT yet validated** — the Docker Desktop daemon was down this session and
-no auth keys are configured. First-bring-up risk: the upstream nginx may force HTTPS, conflicting with the
-plain-HTTP `:8080` BASE_URL (see runbook "Open decisions"). Revised effort: **6–10 hrs**, not 4–8.
+and needs **≥6 GB RAM** on Docker. Revised effort: **6–10 hrs**, not 4–8.
+
+**Update (2026-06-03) — VALIDATED end-to-end; store stands up green.** With Marketplace keys supplied, the
+runbook sequence brought up a working store: **Magento 2.4.8, 2040 Luma products, HTTP 200 on
+`http://localhost:8080`**, reindexed and cached. Four first-bring-up snags were found and resolved (all now
+captured in `docs/docker-magento-setup.md`): (1) Git-Bash MSYS path mangling of `/var/www/html` →
+`MSYS_NO_PATHCONV=1`; (2) `sampledata:deploy` 401 — its child composer needs a **project-root** `auth.json`,
+not just the global one; (3) the upstream nginx redirects `:8000`→HTTPS — **solved in-repo** via a committed
+`docker/nginx/default.conf` serving plain HTTP on `:8080`; (4) a manual install ships only `nginx.conf.sample`
+— copy to `nginx.conf` + reload. Also corrected the version pin to **2.4.8** (2.4.7 fails the PHP-8.4 platform
+check). Remaining for full closure: flesh out `ci.yml`'s install step + CI auth-key secrets, and the
+test-isolation defect below (now in #10). Infra (compose nginx mount, vhost, gitignored auth.json) committed.
 
 **Update (2026-06-02):** A read-only smoke test was run against the **Magebit** public demo
 (`https://magento2-demo.magebit.com`, Luma sample data) to de-risk ahead of Docker — see
@@ -166,7 +175,24 @@ Discovered by the 2026-06-02 live smoke test re-run (§7).
 **Success Criteria:**
 - [x] `ProceedToCheckout` resolves to exactly one element on Luma — strict-mode violation gone, click executes
 - [x] No spurious 5 s step timeouts — Cucumber step ceiling raised to 30 s; KO.js checkout-render wait raised to 20 s
-- [ ] Cart-count and subtotal scenarios pass on the clean Docker store — still pending Item #1
+- [ ] Cart-count and subtotal scenarios pass on the clean Docker store — **still failing; root cause found (below)**
+
+**Update (2026-06-03) — ran on the clean Docker store (Item #1); the "contamination" theory was WRONG.**
+The v3/v4 notes attributed the cart count "8" to shared-demo contamination. On the **pristine, single-user
+Docker store** the same happens: adding 1 item reads 3, then 8 across the run. Two genuine defects, both
+previously masked:
+1. **Test-isolation bug (dominant).** Guest-cart state **leaks across scenarios** — the run reuses one
+   browser session, so carts accumulate (sc2 expected 2 got 3 = 1 leftover + 2; sc7 expected 1 got 8). The
+   hooks comment claims Serenity gives each scenario a fresh context; empirically it does not with this
+   `BrowseTheWebWithPlaywright.using(browser)` wiring. Fix: a fresh browser context per scenario, or clear
+   cart/cookies/localStorage per scenario. `CartItemCount` reads `span.counter-number` (the mini-cart total),
+   which faithfully reflects the leaked cart — the selector is fine; the isolation is not.
+2. **`AddToCart` success-message wait too short.** `Wait.until(StorefrontPage.successMessage, isVisible())`
+   uses Serenity's **5 s default**, NOT the 30 s Cucumber `setDefaultTimeout` (which only bounds step length).
+   Scenario 1's cold first add exceeded 5 s. Fix: `Wait.upTo(Duration.ofSeconds(15)).until(...)`.
+
+Both must be fixed for a green run. This is the headline value of the Docker target: it exposed a real
+test-isolation defect the shared demo had hidden.
 
 **Outcome (2026-06-02):** Code fixes applied and validated against the Magebit demo as far as the shared
 store allows:

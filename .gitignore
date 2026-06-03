@@ -26,6 +26,9 @@ npm-debug.log*
 .env
 .env.local
 
+# Magento Composer auth keys — never commit (repo.magento.com credentials)
+auth.json
+
 # Editor and OS
 .idea/
 .vscode/

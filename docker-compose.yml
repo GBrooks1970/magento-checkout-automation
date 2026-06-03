@@ -14,10 +14,11 @@
 # services (Xdebug, Mailcatcher, Blackfire) and host SSH/Composer mounts are
 # dropped, since the goal is a disposable test target, not a dev workstation.
 #
-# STATUS: authored from the upstream config but NOT yet validated end-to-end on
-# this machine (the Docker daemon was not running, and Marketplace auth keys are
-# not yet configured). Treat the HTTP/port and install specifics as provisional
-# until a first green bring-up — see the validation checklist in the runbook.
+# STATUS: validated end-to-end on 2026-06-03 — this compose brought up a working
+# Magento 2.4.8 store (2040 Luma products, HTTP 200 on http://localhost:8080).
+# The app service bind-mounts docker/nginx/default.conf to serve plain HTTP on
+# :8080 (the stock image redirects :8000 -> HTTPS:8443). Full install sequence
+# and the Windows/auth/nginx snags are in docs/docker-magento-setup.md.
 
 services:
   # nginx — serves the storefront. Upstream listens on 8000 (http) / 8443
@@ -29,6 +30,9 @@ services:
     volumes:
       - appdata:/var/www/html
       - sockdata:/sock
+      # Override the upstream vhost (which redirects 8000 -> HTTPS) so the
+      # storefront is served over plain HTTP on 8000 == host :8080.
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: "curl --fail 127.0.0.1:8000 || exit 1"
       interval: 5s
