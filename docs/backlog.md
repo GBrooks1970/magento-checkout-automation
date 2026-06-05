@@ -175,7 +175,14 @@ Discovered by the 2026-06-02 live smoke test re-run (§7).
 **Success Criteria:**
 - [x] `ProceedToCheckout` resolves to exactly one element on Luma — strict-mode violation gone, click executes
 - [x] No spurious 5 s step timeouts — Cucumber step ceiling raised to 30 s; KO.js checkout-render wait raised to 20 s
-- [ ] Cart-count and subtotal scenarios pass on the clean Docker store — **still failing; root cause found (below)**
+- [x] Cart-count and subtotal scenarios pass on the clean Docker store — **DONE; full read-only smoke suite green**
+
+**RESOLVED (2026-06-03): the read-only smoke suite is fully green — 7/7 scenarios, 43/43 steps — against the
+Dockerised Magento 2.4.8 store** (`BASE_URL=http://localhost:8080 npm run test:smoke`). The two
+checkout-validation scenarios were reconciled with the version's real behaviour: invalid-email asserts the
+email field's stable `aria-invalid="true"` attribute (visibility checks are unreliable — the post-submit
+Knockout.js `blockLoader` overlays the field and Serenity's `isVisible()` is occlusion-aware); missing-details
+asserts only non-advancement (Magento surfaces no message there). Final fix in commit `9f322b4`.
 
 **Update (2026-06-03) — ran on the clean Docker store (Item #1); the "contamination" theory was WRONG.**
 The v3/v4 notes attributed the cart count "8" to shared-demo contamination. On the **pristine, single-user
