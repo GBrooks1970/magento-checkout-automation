@@ -242,6 +242,50 @@ require the clean, resettable Docker store (Item #1). The shared demo remains us
 
 ---
 
+#### Item #11: Make the `@placesOrder` end-to-end checkout suite pass — Score: 16 — ✅ DONE 2026-06-05
+
+**Priority Score:** Breakage Probability (6) + Portfolio Impact (7) + Maintenance Burden (3) = **16 points**
+**Impact:** The two order-placing scenarios (`@placesOrder`) had never been executed — the multi-step
+Knockout.js checkout (shipping address → shipping method → payment → confirmation) was only ever validated by
+reasoning. This is the headline end-to-end proof of the suite.
+**Effort:** ~2 hours (diagnosed against the live Docker store)
+**Status:** ✅ DONE & validated 2026-06-05 — **4/4 scenarios, 40/40 steps green** (`BASE_URL=http://localhost:8080
+npx cucumber-js --profile default --tags "@placesOrder"`); read-only smoke still 7/7; `npx tsc --noEmit` clean.
+**Area:** Implementation
+
+**Problem / findings (all diagnosed with throwaway Playwright probes against the live Luma DOM, then deleted):**
+1. **Payment radio is hidden by design.** Luma renders `input[value="checkmo"]` as a zero-size, `display:none`
+   input (`offsetParent` null) and overlays a styled label, so the radio is *never* `isVisible()` — the task
+   timed out waiting for it. With a single payment method Magento auto-selects checkmo. Same class of issue as
+   Item #10's invalid-email field: act on what Magento keeps visible.
+2. **Order-number selector matched nothing.** The success page renders `<p>Your order # is: <span>…</span></p>`
+   — there is no `.order-number` element.
+3. **The success page has no order-totals block at all.** The old `orderSubtotal` success-page selector was
+   unsatisfiable. Luma exposes totals only in the checkout Order Summary sidebar
+   (`.opc-block-summary .table-totals`), which is Knockout-rendered and appears only *after* a shipping method
+   is chosen (not at the shipping-address step).
+
+**Resolution:**
+1. Act on the visible `label[for="checkmo"]` (`CheckoutPage.checkMoneyOrderLabel`); `Wait.upTo(15 s)` for the
+   AJAX-rendered payment step (past Serenity's 5 s default).
+2. `CheckoutPage.orderNumber` → `.checkout-success p span`.
+3. **Spec decision (user, 2026-06-05): verify the subtotal on the checkout Order Summary.** New
+   `CheckoutPage.orderSummarySubtotal` (`.opc-block-summary .table-totals .totals.sub .price`), new
+   `OrderSummary` question, new step `the order summary subtotal should be "…"`. The "Order multiple
+   quantities" outline was rewritten into explicit steps that assert the subtotal at the **payment step**,
+   before placing the order. `OrderConfirmation` slimmed to `orderNumber` only.
+4. `PlaceTheOrder` confirmation wait hardened to `upTo(20 s)` (AJAX submit + redirect exceeds 5 s default).
+
+**Success Criteria:**
+- [x] Both `@placesOrder` scenarios place a real order and reach the confirmation page on the Docker store
+- [x] Quantity outline verifies the subtotal (45/90/135) at a real Magento surface
+- [x] Read-only smoke unaffected (still 7/7); `tsc` clean
+
+**Follow-up:** `CompleteCheckout` task + the "I complete checkout with valid details" step are now unused (the
+outline uses explicit steps) — left as a reusable composite; candidate to prune.
+
+---
+
 #### Item #2: Activate `payment-failure.feature` — Score: 21
 
 **Priority Score:** Breakage Probability (7) + Portfolio Impact (8) + Maintenance Burden (6) = **21 points**

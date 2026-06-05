@@ -41,6 +41,15 @@ export const CheckoutPage = {
         .describedAs('payment method section'),
     checkMoneyOrderOption: PageElement.located(By.css('input[value="checkmo"]'))
         .describedAs('Check / Money Order payment option'),
+    // Luma renders the real payment radio as a zero-size, display:none input (offsetParent
+    // is null) and overlays a styled label — so the radio is never `isVisible()`. With a
+    // single payment method Magento auto-selects checkmo, but we click the *visible label*
+    // to be explicit and to stay correct if more methods are ever configured. Validated by
+    // live DOM probe on the Docker store (backlog #11): the radio reports visible=false,
+    // `label[for="checkmo"]` reports visible=true. Same class of issue as the invalid-email
+    // field (#10) — assert/act on what Magento actually keeps visible.
+    checkMoneyOrderLabel: PageElement.located(By.css('label[for="checkmo"]'))
+        .describedAs('Check / Money Order payment label'),
     // Scope to the active payment method content. The bare `button.action.primary.checkout`
     // selector also matches the header mini-cart button, causing a strict-mode violation
     // (same root cause as the cart-page button). See backlog #10. NOTE: validated by
@@ -49,13 +58,24 @@ export const CheckoutPage = {
     placeOrderButton: PageElement.located(By.css('.payment-method-content button.action.primary.checkout'))
         .describedAs('Place Order button'),
 
-    // Order confirmation
+    // Order confirmation. Luma's guest success page renders the order id as
+    // `<p>Your order # is: <span>000000004</span>.</p>` inside `.checkout-success`
+    // — there is no `.order-number` element (the prior selector matched nothing) and,
+    // notably, NO order-totals block on this page at all. Validated by live DOM probe
+    // (backlog #11).
     confirmationContainer: PageElement.located(By.css('div.checkout-success'))
         .describedAs('order confirmation section'),
-    orderNumber: PageElement.located(By.css('a.order-number, span.order-number'))
+    orderNumber: PageElement.located(By.css('.checkout-success p span'))
         .describedAs('order number'),
-    orderSubtotal: PageElement.located(By.css('.opc-block-summary .totals.sub .amount .price'))
-        .describedAs('order subtotal on confirmation'),
+
+    // Order summary subtotal — read from the checkout's Order Summary sidebar, which is
+    // where Luma actually exposes totals (the success page has none, see above). The
+    // `.table-totals` rows are Knockout-rendered and only appear once a shipping method is
+    // chosen, so this is reliable from the payment step onward — assert it there, before
+    // placing the order. Validated by live DOM probe (backlog #11): at the payment step the
+    // `.totals.sub` row reads e.g. "$90.00" for quantity 2.
+    orderSummarySubtotal: PageElement.located(By.css('.opc-block-summary .table-totals .totals.sub .price'))
+        .describedAs('order summary subtotal'),
 
     // Validation. The generated field error inserted by Magento on submit.
     // NOTE (backlog #10): asserting this is unreliable in the KO.js checkout — the

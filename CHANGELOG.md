@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `docker/nginx/default.conf` — a test-target nginx vhost that serves Magento over plain HTTP on `:8000` (host `:8080`), overriding the upstream image's HTTP→HTTPS redirect so `BASE_URL=http://localhost:8080` works without self-signed-cert handling. Bind-mounted by `docker-compose.yml` (backlog Item #1)
 - Added `auth.json` to `.gitignore` — Magento Marketplace Composer credentials must never be committed (backlog Item #1)
 
+- Added `src/questions/OrderSummary.ts` and a `the order summary subtotal should be "…"` step — the guest-checkout quantity outline now verifies the subtotal on the checkout Order Summary sidebar (the only Luma 2.4.8 surface that exposes order totals), asserted at the payment step before the order is placed (backlog Item #11)
+- Added `CheckoutPage.checkMoneyOrderLabel` and `CheckoutPage.orderSummarySubtotal` PageElements; first full `@placesOrder` end-to-end run is green — 4/4 scenarios, 40/40 steps, placing real orders against the Docker store (backlog Item #11)
+
 ### Changed
 
 - Changed `docker-compose.yml` — replaced the unpinned skeleton with a pinned, healthchecked infrastructure stack derived from Mark Shust's docker-magento v53.0.0 (nginx 1.28, PHP 8.4-FPM, MariaDB 11.4, Valkey 8.1, OpenSearch 3, RabbitMQ 4.2), storefront on `:8080`, developer-only services and host mounts dropped. The `app` service bind-mounts the HTTP vhost override. **Validated end-to-end on 2026-06-03**: brings up a working Magento 2.4.8 store with 2040 Luma products (backlog Item #1)
@@ -48,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `docs/adr/0002-use-serenity-js.md` — corrected the browser-hook example and accompanying note, which previously showed the per-`Before` launch/close pattern (proven defective by Item #8) and asserted it was canonical; now shows the launch-once `BeforeAll`/`Before`/`AfterAll` pattern (backlog Item #5)
 
 - Changed `docs/gherkin-style-guide.md` — replaced the before/after worked-example placeholder with a real refactor: a bloated imperative scenario rewritten into the actual `Complete a guest order with valid details` scenario, with commentary mapping each change to a documented principle (backlog Item #6)
+
+- Changed `src/tasks/ProvidePaymentDetails.ts` — selects Check / Money Order via the visible `label[for="checkmo"]` rather than the radio input, which Luma renders zero-size/`display:none` (never `isVisible()`); waits `upTo(15 s)` for the AJAX-rendered payment step (backlog Item #11)
+- Changed `src/tasks/PlaceTheOrder.ts` — waits `upTo(20 s)` for the order confirmation, since placing the order is an AJAX submit followed by a redirect that exceeds Serenity's 5 s default (backlog Item #11)
+- Changed `src/interactions/CheckoutPage.ts` — fixed `orderNumber` to `.checkout-success p span` (Luma renders the id as `Your order # is: <span>…</span>`; there is no `.order-number` element) and replaced the unsatisfiable success-page `orderSubtotal` with `orderSummarySubtotal` reading the checkout Order Summary (the success page carries no totals) (backlog Item #11)
+- Changed `features/guest-checkout.feature` — rewrote the "Order multiple quantities" outline into explicit checkout steps that assert the subtotal on the Order Summary at the payment step before placing the order (backlog Item #11)
 
 ---
 

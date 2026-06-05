@@ -26,9 +26,13 @@ Feature: Guest checkout
   @placesOrder
   Scenario Outline: Order multiple quantities of a single product
     When I add "Push It Messenger Bag" to my cart with quantity <quantity>
-    And I complete checkout with valid details
+    And I proceed to checkout
+    And I provide valid shipping details
+    And I select a shipping method
+    And I provide valid payment details
+    Then the order summary subtotal should be "<subtotal>"
+    When I place the order
     Then I should see an order confirmation
-    And the order subtotal should be "<subtotal>"
 
     Examples:
       | quantity | subtotal |

@@ -9,7 +9,7 @@ import { SelectShippingMethod } from '../tasks/SelectShippingMethod';
 import { ProvidePaymentDetails } from '../tasks/ProvidePaymentDetails';
 import { PlaceTheOrder } from '../tasks/PlaceTheOrder';
 import { CompleteCheckout } from '../tasks/CompleteCheckout';
-import { OrderConfirmation } from '../questions/OrderConfirmation';
+import { OrderSummary } from '../questions/OrderSummary';
 import { CheckoutPage } from '../interactions/CheckoutPage';
 
 When('I add {string} to my cart', async (productName: string) => {
@@ -73,8 +73,8 @@ Then('the confirmation should include an order number', async () => {
     );
 });
 
-Then('the order subtotal should be {string}', async (expectedSubtotal: string) => {
+Then('the order summary subtotal should be {string}', async (expectedSubtotal: string) => {
     await actorCalled('User').attemptsTo(
-        Ensure.that(OrderConfirmation.subtotal(), includes(expectedSubtotal)),
+        Ensure.that(OrderSummary.subtotal(), includes(expectedSubtotal)),
     );
 });
