@@ -86,6 +86,13 @@ and was discarded. The smoke test validated the live target and the core methodo
 passed end-to-end) but surfaced two new blockers, Items #8 and #9 below, which gate any green run
 regardless of target. Docker remains the route for checkout/API/payment work.
 
+**Update (2026-06-06) — cold-bring-up quick win applied.** Raised the OpenSearch healthcheck
+`start_period` `5s`→`60s` in `docker-compose.yml`. OpenSearch boots in ~50s, longer than
+`retries × interval` (6 × 5s = 30s), so the first cold `compose up` aborted with "opensearch is
+unhealthy" and `phpfpm`/`app` never started — the double-`compose up` documented in session-notes v6
+§3. With the generous `start_period` a **single** cold `compose up` now reaches all-healthy +
+storefront HTTP 200. Validated 2026-06-06: smoke 7/7 (43/43), `@placesOrder` 4/4 (40/40), `tsc` clean.
+
 ---
 
 #### Item #8: Fix browser-lifecycle defect in Cucumber hooks — Score: 26
