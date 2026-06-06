@@ -327,7 +327,7 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 **Priority Score:** Breakage Probability (5) + Portfolio Impact (7) + Maintenance Burden (5) = **17 points**
 **Impact:** Background steps currently verify product availability via UI navigation (a fallback). The stated pattern — API setup, UI assertion — is not yet demonstrated in the Background steps.
 **Effort:** 3–5 hours
-**Status:** BLOCKED on Item #1 (needs a live Magento instance with admin API access)
+**Status:** ✅ DONE & validated 2026-06-06 — Background is API-driven; smoke 7/7 (43/43) and `@placesOrder` 4/4 (40/40) green with the API precondition exercised in every scenario; `tsc` clean.
 **Area:** Implementation
 
 **Problem:**
@@ -344,9 +344,18 @@ is fully specified and tagged `@deferred`; it needs only one new Task and a test
 5. Document the REST endpoints used in `docs/adr/0003-api-driven-test-data-setup.md`
 
 **Success Criteria:**
-- [ ] Background steps call the Magento REST API, not the UI
-- [ ] `MAGENTO_ADMIN_TOKEN` documented in README and CI env vars
-- [ ] ADR-0003 updated with the concrete endpoint and response shape
+- [x] Background steps call the Magento REST API, not the UI
+- [x] `MAGENTO_ADMIN_TOKEN` documented in README and CI env vars
+- [x] ADR-0003 updated with the concrete endpoint and response shape
+
+**Outcome (2026-06-06):** `MagentoApiClient` now authenticates (resolves an admin bearer token once
+per run — prefers `MAGENTO_ADMIN_TOKEN`, else mints one from `MAGENTO_ADMIN_USERNAME`/`PASSWORD`) and
+`verifyProductIsAvailable(name, price)` queries `/rest/V1/products` (camelCase `searchCriteria`
+filter), asserting HTTP 200, `total_count > 0`, the matched name, and the price. The Background step
+`background.steps.ts` calls it instead of navigating the UI; the actor gains the `CallAnApi` ability
+in `browser.hooks.ts`. A real Magento 2.4.x blocker was found and documented: mandatory admin 2FA
+blocks the token endpoint until disabled on the test target (runbook step 6c +
+`docs/admin-api-token-guide.md`). Verified green: smoke 7/7, `@placesOrder` 4/4, `tsc` clean.
 
 ---
 

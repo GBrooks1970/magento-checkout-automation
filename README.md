@@ -109,6 +109,23 @@ BASE_URL=http://localhost:8080 npm test          # active suite, excludes @defer
 The Dockerised target is still being stood up; see `docker-compose.yml` and the
 session notes. Until it lands, use the smoke command above.
 
+### Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `BASE_URL` | `https://magento.softwaretestingboard.com` | Target store base URL (set to `http://localhost:8080` for Docker). |
+| `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
+| `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
+| `MAGENTO_ADMIN_USERNAME` | `admin` | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. |
+| `MAGENTO_ADMIN_PASSWORD` | `Password123!` | Password for token minting (the Docker test-target admin password). |
+
+The Background step verifies product preconditions through the Magento REST API, so it needs an
+admin token. The suite resolves one once per run (`MagentoApi.authenticate()` in the `BeforeAll`
+hook): it uses `MAGENTO_ADMIN_TOKEN` if provided, otherwise mints one from the admin
+username/password. **Magento 2.4.x blocks admin-token issuance until admin 2FA is disabled** on the
+test target — see `docs/admin-api-token-guide.md` and `docs/docker-magento-setup.md` (step 6c).
+Never commit a real token; the defaults above are local Docker test-target credentials only.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` (the `e2e` workflow) runs the active suite on every push to `main`, stands
