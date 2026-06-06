@@ -111,6 +111,19 @@ MSYS_NO_PATHCONV=1 docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
 docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
   php bin/magento config:set checkout/cart_link/use_qty 1 && php bin/magento cache:flush'
 
+# 6c. Disable mandatory admin 2FA so the REST admin-token endpoint works.
+#     TEST TARGET ONLY — Magento 2.4.x ships compulsory admin two-factor auth
+#     (Magento_TwoFactorAuth + Magento_AdminAdobeImsTwoFactorAuth). Until 2FA is
+#     configured, BOTH the admin UI login AND POST /rest/V1/integration/admin/token
+#     return "Please ask an administrator with sufficient access to configure 2FA
+#     first" — which blocks API-driven test setup (backlog #3). On this disposable,
+#     local-only store we disable the modules; NEVER do this on a public/production
+#     instance. Reverse with `module:enable` + `setup:upgrade`. See
+#     docs/admin-api-token-guide.md for the full rationale and token walkthrough.
+docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+  php bin/magento module:disable Magento_TwoFactorAuth Magento_AdminAdobeImsTwoFactorAuth && \
+  php bin/magento cache:flush'
+
 # 7. Sanity check, then run the suite
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/   # expect 200
 BASE_URL=http://localhost:8080 npm run test:smoke                 # read-only subset
