@@ -1,17 +1,18 @@
 import { Given } from '@cucumber/cucumber';
-import { actorCalled, Wait } from '@serenity-js/core';
-import { Navigate, isVisible } from '@serenity-js/web';
+import { actorCalled } from '@serenity-js/core';
 import { BrowseStorefront } from '../tasks/BrowseStorefront';
 import { AddToCart } from '../tasks/AddToCart';
-import { StorefrontPage } from '../interactions/StorefrontPage';
+import { MagentoApi } from '../api/MagentoApiClient';
 
-// Product availability: on the public Luma demo the sample products are pre-loaded.
-// With a Docker instance the MagentoApiClient will be wired in here to create/verify
-// products via the REST API before each scenario.
-Given('a product {string} priced at {string} is available', async (productName: string, _price: string) => {
+// Product availability is established as an API precondition (ADR-0003: "API setup,
+// UI assertion"). Rather than navigating the storefront, the actor queries the
+// Magento REST catalogue API and asserts the product exists at the expected price —
+// so a scenario fails fast with a clear API error if its assumption is wrong, instead
+// of failing obscurely later in the UI. The admin token is resolved once in the
+// BeforeAll hook (see src/hooks/browser.hooks.ts).
+Given('a product {string} priced at {string} is available', async (productName: string, price: string) => {
     await actorCalled('User').attemptsTo(
-        Navigate.to(StorefrontPage.urlFor(productName)),
-        Wait.until(StorefrontPage.addToCartButton, isVisible()),
+        MagentoApi.verifyProductIsAvailable(productName, Number.parseFloat(price)),
     );
 });
 

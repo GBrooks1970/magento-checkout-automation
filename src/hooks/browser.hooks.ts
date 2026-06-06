@@ -1,8 +1,11 @@
 import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { Cast, engage } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
+import { CallAnApi } from '@serenity-js/rest';
 import { chromium } from 'playwright';
 import type { Browser } from 'playwright';
+import { BASE_URL } from '../serenity.config';
+import { MagentoApi } from '../api/MagentoApiClient';
 
 // Cucumber's default per-step timeout is 5 s. A real Magento checkout step combines
 // network latency with several Knockout.js re-renders, which can legitimately exceed
@@ -24,6 +27,11 @@ BeforeAll(async () => {
     browser = await chromium.launch({
         headless: (process.env.HEADLESS ?? 'true') === 'true',
     });
+
+    // Resolve the admin bearer token once for the whole run, so API-driven
+    // Background steps (ADR-0003) can authenticate against the catalogue API.
+    // Prefers MAGENTO_ADMIN_TOKEN; otherwise mints one from admin credentials.
+    await MagentoApi.authenticate();
 });
 
 // Enforce per-scenario isolation. A Magento guest cart is keyed on the session
@@ -59,7 +67,10 @@ Before(async () => {
     }
 
     engage(Cast.where(actor =>
-        actor.whoCan(BrowseTheWebWithPlaywright.using(browser))
+        actor.whoCan(
+            BrowseTheWebWithPlaywright.using(browser),
+            CallAnApi.at(BASE_URL),
+        )
     ));
 });
 

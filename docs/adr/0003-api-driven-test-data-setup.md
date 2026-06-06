@@ -34,9 +34,15 @@ documented and is part of what the suite exists to show.
 
 **Magento REST V1 base URL:** `${BASE_URL}/rest/V1`
 
-**Authentication:** Bearer token via `MAGENTO_ADMIN_TOKEN` environment variable
+**Authentication:** admin bearer token. The client resolves one once per run
+(`MagentoApi.authenticate()`, called from the `BeforeAll` hook): it prefers an explicit
+`MAGENTO_ADMIN_TOKEN`, otherwise mints one via `POST /rest/V1/integration/admin/token` from
+`MAGENTO_ADMIN_USERNAME` / `MAGENTO_ADMIN_PASSWORD` (default `admin` / `Password123!` on the
+Docker test target). The token is sent as `Authorization: Bearer <token>` per request. On Magento
+2.4.x the token endpoint is blocked until admin 2FA is disabled — see
+`docs/admin-api-token-guide.md`.
 
-**Background step pattern:**
+**Background step pattern (implemented):**
 
 ```gherkin
 # features/guest-checkout.feature
@@ -48,24 +54,38 @@ Background:
 ```typescript
 // src/step-definitions/background.steps.ts
 Given('a product {string} priced at {string} is available',
-  async (productName: string, _price: string) => {
+  async (productName: string, price: string) => {
     await actorCalled('User').attemptsTo(
-        // Current: UI fallback — navigates to product page to verify existence
-        // Target: MagentoApi.verifyProductIsAvailable(productName, price)
-        Navigate.to(StorefrontPage.urlFor(productName)),
-        Wait.until(StorefrontPage.addToCartButton, isVisible()),
+        MagentoApi.verifyProductIsAvailable(productName, Number.parseFloat(price)),
     );
 });
 ```
 
-**Target REST endpoint (once fully wired):**
+**REST endpoint used** (note: Magento expects the camelCase `filterGroups` / `conditionType`
+search-criteria keys):
 
 ```
-GET /rest/V1/products?searchCriteria[filter_groups][0][filters][0][field]=name
-                     &searchCriteria[filter_groups][0][filters][0][value]=Push+It+Messenger+Bag
-                     &searchCriteria[filter_groups][0][filters][0][condition_type]=eq
-Authorization: Bearer <MAGENTO_ADMIN_TOKEN>
+GET /rest/V1/products?searchCriteria[filterGroups][0][filters][0][field]=name
+                     &searchCriteria[filterGroups][0][filters][0][value]=Push%20It%20Messenger%20Bag
+                     &searchCriteria[filterGroups][0][filters][0][conditionType]=eq
+Authorization: Bearer <token>
 ```
+
+**Response shape** (asserted by `verifyProductIsAvailable`):
+
+```jsonc
+{
+  "items": [
+    { "sku": "24-WB04", "name": "Push It Messenger Bag", "price": 45 /* … */ }
+  ],
+  "total_count": 1
+}
+```
+
+The task asserts: HTTP `200`; `total_count > 0` (a no-match search is still `200`, so the count is
+what proves existence); `items[0].name` equals the requested name; and `items[0].price` equals the
+expected price. Verified 2026-06-06 against the Docker store for *Push It Messenger Bag* (sku
+`24-WB04`, price 45) and *Fusion Backpack* (sku `24-MB02`, price 59).
 
 **CI indexer/cache requirement:**
 
@@ -79,5 +99,7 @@ Products created or modified via the REST API are not visible on the storefront 
 catalogue and price indexers have run and the full-page cache has been flushed. Skipping this
 step is the single most common cause of "product not found" flakiness in Magento automation suites.
 
-**Note:** The API client is currently a stub. Background steps use UI verification as a fallback
-while the live test target decision is open. Full API wiring is tracked in `docs/backlog.md` Item #3.
+**Status:** Implemented 2026-06-06 (backlog Item #3). The Background product-availability step is
+API-driven — `MagentoApi.verifyProductIsAvailable` queries the REST catalogue API and asserts the
+product exists at the expected price; the UI fallback has been removed. The actor is granted both
+`BrowseTheWebWithPlaywright` and `CallAnApi` abilities in `src/hooks/browser.hooks.ts`.
