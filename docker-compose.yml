@@ -103,7 +103,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 6
-      start_period: 5s
+      # OpenSearch takes ~50s to boot, longer than retries*interval (6*5s=30s).
+      # Without a generous start_period the first `compose up` aborts with
+      # "opensearch is unhealthy" and phpfpm/app never start, forcing a second
+      # `compose up`. 60s covers the boot so a single cold bring-up succeeds.
+      start_period: 60s
 
   rabbitmq:
     image: markoshust/magento-rabbitmq:4.2-0
