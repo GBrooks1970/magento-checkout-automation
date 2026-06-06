@@ -97,4 +97,23 @@ never started — the double-`compose up` workaround documented in session-notes
 
 ---
 
+## Loop Closeout — 2026-06-06
+
+The autonomous loop stopped after one completed item because no further *cleanly
+unblocked* work remained:
+
+- ✅ **Completed & committed (`667db4d`):** OpenSearch `start_period` 60s fix —
+  single-pass cold bring-up restored; verify gate green (smoke 7/7, `@placesOrder`
+  4/4, `tsc` clean).
+- ⏸️ **Deferred (needs maintainer decision):** `CompleteCheckout` prune — entangled
+  with the ADR-0001 worked example and three guide docs (see Technical Decisions).
+- ⛔ **Blocked (need inputs I was not given):** #2 payment gateway, #3 admin token,
+  #4 CI secrets.
+
+PR opened from `loop/backlog-20260606` into `main` (not merged — left for review).
+Docker stack left running (all healthy, storefront HTTP 200) for any follow-up run;
+bring down with `docker compose down` (never `-v`).
+
+---
+
 *Session logged: 2026-06-06. Author: Claude Code (autonomous /loop) for Gary Brooks.*
