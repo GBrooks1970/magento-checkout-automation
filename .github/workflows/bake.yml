@@ -1,0 +1,206 @@
+# One-time (or infrequent) workflow that installs Magento 2.4.8 + Luma sample
+# data inside a full docker-compose stack, then packages the installed state
+# into two GHCR images:
+#
+#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+#     — markoshust/magento-php:8.4-fpm-2 + full /var/www/html tree (source,
+#       vendor, generated, env.php, 2FA disabled, qty-counter set)
+#
+#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+#     — mariadb:11.4 + magento-db.sql.gz in /docker-entrypoint-initdb.d/
+#
+# ci.yml pulls these images instead of doing a fresh install on every push,
+# cutting CI time from ~40 min to ~15 min.
+#
+# WHEN TO RE-RUN:
+#   Trigger manually (workflow_dispatch) or push a tag matching 'bake/**'
+#   whenever the Magento version, sample data, or any runbook config step
+#   (config:set, module:disable) changes. The resulting images are immutable
+#   snapshots; ci.yml pins them by the :2.4.8 tag.
+#
+# REQUIRED SECRETS (repository or 'bake' environment secrets):
+#   MAGENTO_PUBLIC_KEY  — Adobe Commerce Marketplace public key (Composer username)
+#   MAGENTO_PRIVATE_KEY — Adobe Commerce Marketplace private key (Composer password)
+#   GITHUB_TOKEN        — provided automatically; used for GHCR push
+#
+# The test-suite secrets (admin username/password) are NOT needed here —
+# they are hard-coded test defaults baked into the store image itself.
+
+name: bake-store-images
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'bake/**'
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    permissions:
+      contents: read
+      packages: write   # GHCR push via GITHUB_TOKEN
+
+    # If you chose the 'environment secret' option, uncomment the next two
+    # lines and set MAGENTO_PUBLIC_KEY / MAGENTO_PRIVATE_KEY on the 'bake'
+    # environment in Settings → Environments instead of as repo secrets.
+    # environment: bake
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Infrastructure ────────────────────────────────────────────────────
+      - name: Start infrastructure and wait for all healthchecks
+        run: docker compose up -d --wait
+        timeout-minutes: 10
+        # OpenSearch start_period is 60s (see docker-compose.yml); total
+        # wait is typically 2–3 min until all services are healthy.
+
+      # ── Magento install (mirrors docs/docker-magento-setup.md §steps 2–6c) ─
+      - name: Configure Composer auth (global + project root)
+        # The global auth satisfies `composer create-project`.
+        # The project-root copy satisfies the child composer spawned by
+        # sampledata:deploy (snag 2 in docker-magento-setup.md).
+        run: |
+          docker compose exec -T phpfpm composer config --global \
+            http-basic.repo.magento.com \
+            "${{ secrets.MAGENTO_PUBLIC_KEY }}" \
+            "${{ secrets.MAGENTO_PRIVATE_KEY }}"
+
+      - name: Download Magento 2.4.8 (composer create-project)
+        timeout-minutes: 30
+        # 2.4.8 is pinned: 2.4.7 fails the PHP 8.4 platform check in the
+        # markoshust v53 images (see docker-magento-setup.md §step 3).
+        run: |
+          docker compose exec -T phpfpm sh -c \
+            'composer create-project \
+               --repository-url=https://repo.magento.com/ \
+               "magento/project-community-edition=2.4.8" \
+               /var/www/html \
+               --no-interaction'
+          docker compose exec -T phpfpm sh -c \
+            'cp /var/www/.config/composer/auth.json /var/www/html/auth.json'
+
+      - name: Run setup:install
+        timeout-minutes: 10
+        run: |
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && php bin/magento setup:install \
+            --base-url=http://localhost:8080/ \
+            --db-host=db --db-name=magento --db-user=magento --db-password=magento \
+            --admin-firstname=Test --admin-lastname=Admin \
+            --admin-email=admin@example.com \
+            --admin-user=admin --admin-password=Password123! \
+            --language=en_US --currency=USD --timezone=America/New_York \
+            --search-engine=opensearch \
+              --opensearch-host=opensearch --opensearch-port=9200 \
+            --cache-backend=redis \
+              --cache-backend-redis-server=redis --cache-backend-redis-db=0 \
+            --page-cache=redis \
+              --page-cache-redis-server=redis --page-cache-redis-db=1 \
+            --session-save=redis \
+              --session-save-redis-host=redis --session-save-redis-db=2 \
+            --amqp-host=rabbitmq --amqp-port=5672 \
+              --amqp-user=magento --amqp-password=magento \
+            --use-rewrites=1 --cleanup-database --no-interaction'
+
+      - name: Copy nginx.conf from sample and reload nginx
+        # A manual install ships only nginx.conf.sample; the vhost include
+        # requires nginx.conf to exist (snag 4 in docker-magento-setup.md).
+        run: |
+          docker compose exec -T phpfpm sh -c \
+            'cp /var/www/html/nginx.conf.sample /var/www/html/nginx.conf'
+          docker compose exec -T app sh -c 'nginx -t && nginx -s reload'
+
+      - name: Deploy sample data, reindex, configure
+        timeout-minutes: 30
+        run: |
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento sampledata:deploy && \
+            php bin/magento setup:upgrade --no-interaction && \
+            php bin/magento indexer:reindex && \
+            php bin/magento cache:flush'
+
+          # Step 6b: show total item quantity in the header cart counter
+          # (not distinct-item count) so "cart should contain N items"
+          # matches the feature semantics when quantity > 1.
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento config:set checkout/cart_link/use_qty 1 && \
+            php bin/magento cache:flush'
+
+          # Step 6c: disable mandatory admin 2FA so the REST admin-token
+          # endpoint works (required by MagentoApiClient in the Background
+          # step — see docs/admin-api-token-guide.md).
+          # TEST TARGET ONLY — never do this on a public/production instance.
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento module:disable \
+              Magento_TwoFactorAuth Magento_AdminAdobeImsTwoFactorAuth && \
+            php bin/magento cache:flush'
+
+      - name: Smoke-check storefront
+        run: |
+          curl -sf http://localhost:8080/ -o /dev/null
+          echo "Storefront HTTP 200 — install complete"
+
+      # ── Export and package ────────────────────────────────────────────────
+      - name: Clean runtime artifacts before export
+        # Keeps the image lean: cache is already flushed; logs and sessions
+        # are noise; auth.json must NOT be baked into a public image.
+        run: |
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            rm -f auth.json && \
+            rm -rf var/log/* var/session/* var/tmp/* var/cache/*'
+
+      - name: Export appdata volume to host
+        # Tar the installed /var/www/html out of the running phpfpm container.
+        # The stream is ~1–2 GB compressed; extraction takes ~2–4 min.
+        run: |
+          mkdir -p /tmp/magento-appdata
+          docker compose exec -T phpfpm sh -c \
+            'tar -C /var/www/html -czf - .' \
+            | tar -C /tmp/magento-appdata -xzf -
+
+      - name: Dump Magento database
+        run: |
+          docker compose exec -T db \
+            mysqldump -u magento -pmagento magento \
+            | gzip > /tmp/magento-db.sql.gz
+          echo "DB dump size: $(du -sh /tmp/magento-db.sql.gz | cut -f1)"
+
+      - name: Build and push store-app image
+        # Build context is the exported /var/www/html tree (not the repo root).
+        # Dockerfile.store-app does: COPY --chown=app:app . /var/www/html/
+        run: |
+          cp Dockerfile.store-app /tmp/magento-appdata/Dockerfile
+          docker build \
+            -t ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8 \
+            /tmp/magento-appdata
+          docker push \
+            ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+
+      - name: Build and push store-db image
+        # Dockerfile.store-db does:
+        #   FROM mariadb:11.4
+        #   COPY magento-db.sql.gz /docker-entrypoint-initdb.d/
+        run: |
+          mkdir -p /tmp/magento-db-build
+          cp /tmp/magento-db.sql.gz /tmp/magento-db-build/
+          cp Dockerfile.store-db /tmp/magento-db-build/Dockerfile
+          docker build \
+            -t ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8 \
+            /tmp/magento-db-build
+          docker push \
+            ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

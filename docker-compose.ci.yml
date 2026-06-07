@@ -1,0 +1,34 @@
+# CI overlay for docker-compose.yml.
+#
+# Usage (GitHub Actions — see .github/workflows/ci.yml):
+#   docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
+#
+# This file overrides exactly two image references so CI pulls the pre-baked
+# GHCR images instead of the plain upstream ones. Everything else — healthchecks,
+# depends_on, volumes, env vars, the nginx bind-mount — is inherited from
+# docker-compose.yml without change.
+#
+# How the seeding works
+# ---------------------
+# phpfpm: the pre-baked image has the full Magento 2.4.8 + Luma source at
+#   /var/www/html (baked in by bake.yml). On first run Docker finds the
+#   'appdata' named volume empty and copies the image's /var/www/html into
+#   it (standard Docker volume-seeding behaviour). The 'app' (nginx) service
+#   mounts the same 'appdata' volume, so it sees the same files.
+#
+# db: the pre-baked image has the Magento database dump at
+#   /docker-entrypoint-initdb.d/magento-db.sql.gz. MariaDB's entrypoint
+#   auto-restores it into the empty 'dbdata' volume on first start.
+#   The restore completes before mysqladmin ping succeeds, so phpfpm's
+#   service_healthy dependency on db is always satisfied with a live schema.
+#
+# Pre-baked images are built by .github/workflows/bake.yml (manual trigger).
+# Rebuild when: Magento version changes, sample data changes, or any
+# bin/magento config:set / module:disable step in the runbook changes.
+
+services:
+  phpfpm:
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+
+  db:
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8

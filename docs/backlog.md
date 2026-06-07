@@ -363,20 +363,37 @@ blocks the token endpoint until disabled on the test target (runbook step 6c +
 
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (8) + Maintenance Burden (4) = **15 points**
 **Impact:** The Serenity BDD HTML report is a key portfolio artifact — reviewers click through narrated, passing scenarios. Without publishing it, the report only exists locally.
-**Effort:** 1–2 hours
-**Status:** BLOCKED on Item #1 (needs passing runs to have something to publish)
+**Effort:** 1–2 hours implementation (done); ~60-min one-time bake run + 3 maintainer steps to activate
+**Status:** 🟡 IN PROGRESS — code merged to `backlog-4-ci-prebake` branch (PR open); awaiting maintainer steps to activate
 **Area:** CI / Documentation
 
-**Resolution Strategy:**
-1. Add a GitHub Actions step to run `npm run test:report` after the test step
-2. Configure GitHub Pages to serve from `docs/reports/` or use the `peaceiris/actions-gh-pages` action
-3. Add the published URL to the README
-4. Optionally add a report badge alongside the CI badge
+**Strategy (implemented 2026-06-07):**
+A from-scratch Magento install (~30–40 min) is too slow per push. Two pre-baked GHCR images
+snapshot the installed state:
+- `magento-store-app:2.4.8` — phpfpm with full Magento source (baked in)
+- `magento-store-db:2.4.8` — MariaDB with DB dump in `/docker-entrypoint-initdb.d/`
+
+CI pulls both (~3–5 min) and `docker compose up --wait` seeds volumes from the images
+automatically (Docker/MariaDB built-in seeding behaviour). Total CI: ~15–25 min.
+
+**Files added:**
+- `Dockerfile.store-app`, `Dockerfile.store-db` — image definitions
+- `docker-compose.ci.yml` — compose overlay swapping images for CI
+- `.github/workflows/bake.yml` — one-time image builder (manual trigger; needs Marketplace secrets on `bake` environment)
+- `.github/workflows/ci.yml` — rewritten: pull images → start store → run suite → deploy Pages
+
+**Maintainer steps remaining (cannot be automated):**
+1. Add `MAGENTO_PUBLIC_KEY` + `MAGENTO_PRIVATE_KEY` as secrets on the `bake` GitHub environment
+2. Enable GitHub Pages (Settings → Pages → Source → GitHub Actions)
+3. Trigger `bake.yml` once (Actions → bake-store-images → Run workflow; ~60 min)
+4. Set both GHCR packages to public (profile → Packages → Package settings → Change visibility)
+5. Push to main (or trigger `ci.yml` manually) — first green badge appears
 
 **Success Criteria:**
 - [ ] GitHub Pages URL serves the Serenity BDD report
-- [ ] Report URL linked in the README
+- [x] Report URL linked in the README (`https://gbrooks1970.github.io/magento-checkout-automation/`)
 - [ ] Report updates automatically on every passing CI run
+- [ ] Green badge visible on the repo
 
 ---
 
@@ -464,11 +481,10 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 
 | Priority | Count | Status |
 |---|---|---|
-| HIGH (20–30) | 4 | #1 ready to start; #2 blocked on #1; #8 ✅ done; #9 ✅ done |
-| MEDIUM (10–19) | 4 | #3, #4 blocked on #1; #5 ✅ done; #10 code done & validated, full validation Docker-gated |
+| HIGH (20–30) | 4 | #1 ✅ done; #2 blocked (needs test gateway); #8 ✅ done; #9 ✅ done |
+| MEDIUM (10–19) | 4 | #3 ✅ done; #4 🟡 in progress (code merged, awaiting bake run); #5 ✅ done; #10 ✅ done |
 | LOW (0–9) | 2 | #6 ✅ done; #7 ✅ done |
-| **Outstanding (not fully done)** | **#1, #2, #3, #4, #10** | Most gated on the Docker target (#1) |
-| Done this work | #5, #6, #7, #8, #9 (+#10 code) | 2026-06-02 |
+| **Outstanding** | **#2, #4** | #4 awaiting 3 maintainer steps; #2 needs payment gateway |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
@@ -479,8 +495,8 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
 | ADRs complete with concrete examples | ✅ Done | Item #5 |
-| Green CI badge, demonstrably non-flaky | ❌ Blocked | Item #1 |
-| Living documentation published (GitHub Pages) | ❌ Blocked | Items #1, #4 |
+| Green CI badge, demonstrably non-flaky | 🟡 Code ready; awaiting bake run + maintainer steps | Item #4 |
+| Living documentation published (GitHub Pages) | 🟡 Code ready; awaiting bake run + maintainer steps | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Scaffolded | Item #2 to activate |
 

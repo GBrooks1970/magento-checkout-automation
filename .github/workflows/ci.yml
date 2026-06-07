@@ -1,15 +1,21 @@
-# CI for the Magento checkout automation suite.
+# End-to-end suite against a pre-baked Magento 2.4.8 store, with Serenity
+# living documentation published to GitHub Pages on every green main push.
 #
-# DRAFT — not yet validated against a live bring-up. The bring-up here mirrors
-# docs/docker-magento-setup.md (the authoritative runbook); reconcile the two
-# once a first install passes locally. Magento has no pull-and-run image, so the
-# store is *installed* at run time: this requires Adobe Marketplace auth keys
-# (repository secrets MAGENTO_PUBLIC_KEY / MAGENTO_PRIVATE_KEY) and a ~30-minute
-# install. Caching or a pre-baked installed image is likely needed before this
-# is run on every push — see the runbook's "CI runtime" note.
+# PREREQUISITES (one-off, before this workflow can pass):
+#   1. Run bake.yml (workflow_dispatch) to build and push the two GHCR images.
+#      That workflow needs MAGENTO_PUBLIC_KEY / MAGENTO_PRIVATE_KEY secrets.
+#      After bake.yml succeeds, ci.yml needs NO Magento secrets — it pulls
+#      pre-baked images and uses the hard-coded test credentials (admin /
+#      Password123!) that are already baked into the store image.
+#   2. Enable GitHub Pages: Settings → Pages → Source → GitHub Actions.
 #
-# The green badge from this workflow on a checkout E2E repo is the headline
-# portfolio claim, so it must run the active suite to a reliable pass.
+# TIMING (ubuntu-latest):
+#   Pull GHCR images     ~3–5 min   (same Azure network as Actions runners)
+#   docker compose up    ~4–6 min   (DB restore from dump + OpenSearch 60s boot)
+#   npm ci + playwright  ~2–3 min
+#   npm test             ~5–10 min  (7 smoke + 4 @placesOrder scenarios)
+#   Serenity report      ~1 min
+#   Total                ~15–25 min (vs ~40 min for a fresh install)
 
 name: e2e
 
@@ -20,62 +26,112 @@ on:
   workflow_dispatch:
 
 jobs:
-  checkout-e2e:
+  # ── Test ──────────────────────────────────────────────────────────────────
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+
+    permissions:
+      contents: read
 
     steps:
       - name: Check out
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # --- Magento bring-up (Docker route) -------------------------------
-      # The PHP/store service is "phpfpm"; nginx is "app" (see docker-compose.yml).
-      - name: Stand up infrastructure
-        run: docker compose up -d --wait
-
-      - name: Authenticate Composer for the Magento repo
+      - name: Pull pre-baked store images
+        # Explicit pull so the layer-cache warm-up is a named step in the log.
+        # docker-compose.ci.yml references these image tags.
         run: |
-          docker compose exec -T phpfpm composer config --global \
-            http-basic.repo.magento.com \
-            "${{ secrets.MAGENTO_PUBLIC_KEY }}" "${{ secrets.MAGENTO_PRIVATE_KEY }}"
+          docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+          docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
 
-      - name: Install Magento with Luma sample data
-        # Full sequence (create-project, setup:install, sampledata:deploy,
-        # setup:upgrade) is in docs/docker-magento-setup.md. ~30 min from scratch;
-        # cache or pre-bake before relying on this per push.
-        run: echo "TODO: run the install sequence from docs/docker-magento-setup.md"
-
-      # Catalog/price/search changes are not visible on the storefront until
-      # a reindex and cache flush. Without these, create-then-assert flakes.
-      - name: Reindex and flush cache
+      - name: Start Magento store
+        # Merges the CI overlay (pre-baked images) over the base compose.
+        # --wait blocks until every healthcheck passes:
+        #   db    — MariaDB restores the DB dump first (~2–3 min), then pings
+        #   opensearch — start_period: 60s covers its ~50s cold boot
+        #   app   — curl 127.0.0.1:8000 (nginx serving Magento)
+        # appdata named volume is auto-seeded from the store-app image on
+        # first start (Docker copies image content into the empty volume).
         run: |
-          docker compose exec -T phpfpm bin/magento indexer:reindex
-          docker compose exec -T phpfpm bin/magento cache:flush
-      # -------------------------------------------------------------------
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.ci.yml \
+            up -d --wait
+        timeout-minutes: 15
 
-      - name: Run the active suite
+      - name: Smoke-check storefront
+        run: |
+          curl -sf http://localhost:8080/ -o /dev/null
+          echo "Storefront HTTP 200 OK"
+
+      - name: Run full test suite
         env:
           BASE_URL: http://localhost:8080
-        run: npm test -- --tags "not @deferred"
+          # Admin credentials match what is baked into the store image.
+          # MagentoApiClient uses these to mint a bearer token for the
+          # API-driven Background step (backlog #3 / ADR-0003).
+          MAGENTO_ADMIN_USERNAME: admin
+          MAGENTO_ADMIN_PASSWORD: Password123!
+        run: npm test
+        # 'default' profile already excludes @deferred (see cucumber.js);
+        # @placesOrder scenarios ARE included — CI runs against a clean,
+        # disposable store so placing real orders is fine.
 
-      - name: Publish living documentation
+      - name: Generate Serenity living documentation
+        # Run even when tests fail so reviewers can inspect the failing run.
+        # Java 11+ is pre-installed on ubuntu-latest; the serenity-bdd CLI
+        # uses it to render the HTML report from the JSON in docs/reports/.
+        if: always()
+        run: npm run test:report
+
+      - name: Upload Pages artifact
         if: always()
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/reports
+          # serenity-bdd run writes HTML to target/site/serenity/ by default.
+          # docs/reports/ holds the JSON source data (ArtifactArchiver path
+          # in src/serenity.config.ts); the CLI reads from there and outputs
+          # the self-contained HTML here.
+          path: target/site/serenity
 
-      - name: Tear down Magento
+      - name: Tear down store
         if: always()
-        run: docker compose down -v
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.ci.yml \
+            down -v
+
+  # ── Deploy Pages ──────────────────────────────────────────────────────────
+  deploy-pages:
+    needs: test
+    # Only deploy from main; still deploy on test failure so a broken run
+    # produces a visible (red) report rather than leaving the last good one.
+    if: github.ref == 'refs/heads/main' && always()
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy Serenity report to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
