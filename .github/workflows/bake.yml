@@ -64,7 +64,11 @@ jobs:
 
       # ── Infrastructure ────────────────────────────────────────────────────
       - name: Start infrastructure and wait for all healthchecks
-        run: docker compose up -d --wait
+        # Excludes 'app' (nginx) intentionally: docker/nginx/default.conf
+        # includes /var/www/html/nginx.conf, which only exists after setup:install.
+        # nginx exits (code 1) if that file is missing, causing --wait to fail.
+        # 'app' is started in the "Copy nginx.conf" step below, after the file exists.
+        run: docker compose up -d --wait db redis rabbitmq opensearch phpfpm
         timeout-minutes: 10
         # OpenSearch start_period is 60s (see docker-compose.yml); total
         # wait is typically 2–3 min until all services are healthy.
@@ -119,9 +123,12 @@ jobs:
       - name: Copy nginx.conf from sample and reload nginx
         # A manual install ships only nginx.conf.sample; the vhost include
         # requires nginx.conf to exist (snag 4 in docker-magento-setup.md).
+        # Now that nginx.conf exists, start the app (nginx) container and reload.
         run: |
           docker compose exec -T phpfpm sh -c \
             'cp /var/www/html/nginx.conf.sample /var/www/html/nginx.conf'
+          docker compose up -d app
+          sleep 5
           docker compose exec -T app sh -c 'nginx -t && nginx -s reload'
 
       - name: Deploy sample data, reindex, configure
