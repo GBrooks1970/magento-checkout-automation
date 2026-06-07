@@ -9,7 +9,15 @@
 #      Password123!) that are already baked into the store image.
 #   2. Enable GitHub Pages: Settings → Pages → Source → GitHub Actions.
 #
-# TIMING (ubuntu-latest):
+# BOOTSTRAPPING GUARD (preflight job)
+#   The 'test' and 'deploy-pages' jobs are gated on a preflight job that
+#   checks whether the GHCR images exist. If they don't (i.e. bake.yml has
+#   not been run yet), both downstream jobs are SKIPPED — the PR check shows
+#   ⊘ rather than ❌, which correctly signals "not ready" rather than
+#   "broken". Once bake.yml has run and the images are public, every
+#   subsequent push goes through the full test path automatically.
+#
+# TIMING (ubuntu-latest, after bake.yml has run):
 #   Pull GHCR images     ~3–5 min   (same Azure network as Actions runners)
 #   docker compose up    ~4–6 min   (DB restore from dump + OpenSearch 60s boot)
 #   npm ci + playwright  ~2–3 min
@@ -26,8 +34,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Preflight: check images exist ─────────────────────────────────────────
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+
+    outputs:
+      images-available: ${{ steps.check.outputs.available }}
+
+    steps:
+      - name: Check whether pre-baked GHCR images exist
+        id: check
+        # docker manifest inspect queries the registry without pulling the
+        # image. It succeeds (exit 0) if the manifest exists and is public,
+        # and fails (exit 1) if the image is absent or private.
+        # Both images must be present; we check store-app as the proxy for
+        # both (they are always built and pushed together by bake.yml).
+        run: |
+          if docker manifest inspect \
+              ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8 \
+              > /dev/null 2>&1; then
+            echo "available=true"  >> "$GITHUB_OUTPUT"
+            echo "Pre-baked images found — proceeding to test."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Pre-baked GHCR images not yet available." \
+                 "Run bake.yml (Actions → bake-store-images → Run workflow)" \
+                 "then set both GHCR packages to public before re-running."
+          fi
+
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
+    needs: preflight
+    # Skip entirely if the images haven't been baked yet. A skipped job
+    # produces a neutral (⊘) check status rather than a failure (❌).
+    if: needs.preflight.outputs.images-available == 'true'
+
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
@@ -60,9 +105,9 @@ jobs:
       - name: Start Magento store
         # Merges the CI overlay (pre-baked images) over the base compose.
         # --wait blocks until every healthcheck passes:
-        #   db    — MariaDB restores the DB dump first (~2–3 min), then pings
+        #   db         — MariaDB restores the DB dump first (~2–3 min), then pings
         #   opensearch — start_period: 60s covers its ~50s cold boot
-        #   app   — curl 127.0.0.1:8000 (nginx serving Magento)
+        #   app        — curl 127.0.0.1:8000 (nginx serving Magento)
         # appdata named volume is auto-seeded from the store-app image on
         # first start (Docker copies image content into the empty volume).
         run: |
@@ -117,10 +162,13 @@ jobs:
 
   # ── Deploy Pages ──────────────────────────────────────────────────────────
   deploy-pages:
-    needs: test
-    # Only deploy from main; still deploy on test failure so a broken run
-    # produces a visible (red) report rather than leaving the last good one.
-    if: github.ref == 'refs/heads/main' && always()
+    needs: [preflight, test]
+    # Only deploy from main, only when images existed (test actually ran),
+    # and even on test failure so a broken run produces a visible report.
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.preflight.outputs.images-available == 'true' &&
+      always()
     runs-on: ubuntu-latest
 
     permissions:
