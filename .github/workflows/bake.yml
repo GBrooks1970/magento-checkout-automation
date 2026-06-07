@@ -46,7 +46,7 @@ jobs:
     # If you chose the 'environment secret' option, uncomment the next two
     # lines and set MAGENTO_PUBLIC_KEY / MAGENTO_PRIVATE_KEY on the 'bake'
     # environment in Settings → Environments instead of as repo secrets.
-    # environment: bake
+      environment: bake
 
     steps:
       - name: Check out
