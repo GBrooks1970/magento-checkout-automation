@@ -28,6 +28,12 @@
 
 name: bake-store-images
 
+# Opt into Node.js 24 for all actions ahead of the June 16 2026 forced
+# migration. Suppresses the deprecation warning that causes actions/checkout
+# and docker/login-action to fail on runners close to the cutoff date.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   workflow_dispatch:
   push:
