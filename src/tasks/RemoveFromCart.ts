@@ -1,4 +1,4 @@
-import { Task, Wait } from '@serenity-js/core';
+import { Duration, Task, Wait } from '@serenity-js/core';
 import { Click, Navigate, isVisible } from '@serenity-js/web';
 import { CartPage } from '../interactions/CartPage';
 
@@ -8,6 +8,9 @@ export const RemoveFromCart = {
             Navigate.to(CartPage.url()),
             Wait.until(CartPage.deleteButtonFor(productName), isVisible()),
             Click.on(CartPage.deleteButtonFor(productName)),
-            Wait.until(CartPage.emptyCartMessage, isVisible()),
+            // Removing the last item triggers Magento's AJAX cart-empty
+            // transition, which exceeds Serenity's 5 s default wait on the
+            // slower CI runner (passed locally). Allow up to 15 s.
+            Wait.upTo(Duration.ofSeconds(15)).until(CartPage.emptyCartMessage, isVisible()),
         ),
 };

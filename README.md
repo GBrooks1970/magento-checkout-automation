@@ -1,5 +1,7 @@
 # Magento Checkout Test Automation
 
+[![e2e](https://github.com/GBrooks1970/magento-checkout-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/GBrooks1970/magento-checkout-automation/actions/workflows/ci.yml)
+
 A portfolio repository demonstrating senior test-automation architecture against
 Magento (Adobe Commerce open source). The target surface is the storefront guest
 checkout journey, browse through to order confirmation, underpinned by API-driven
@@ -106,8 +108,10 @@ docker compose up -d --wait
 BASE_URL=http://localhost:8080 npm test          # active suite, excludes @deferred
 ```
 
-The Dockerised target is still being stood up; see `docker-compose.yml` and the
-session notes. Until it lands, use the smoke command above.
+See `docs/docker-magento-setup.md` for the first-time bring-up sequence (requires
+Adobe Marketplace auth keys). The Docker store is what CI uses; the pre-baked
+GHCR images mean CI skips the ~30-min install — see `docs/docker-magento-setup.md`
+§ CI section.
 
 ### Environment variables
 
@@ -128,9 +132,16 @@ Never commit a real token; the defaults above are local Docker test-target crede
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` (the `e2e` workflow) runs the active suite on every push to `main`, stands
-up the Dockerised Magento target, reindexes and flushes cache, runs the suite, and
-publishes the Serenity living documentation. It is gated on the same Docker target.
+`.github/workflows/ci.yml` (the `e2e` workflow) runs on every push to `main` and on pull requests.
+It pulls two pre-baked GHCR images (built once by `.github/workflows/bake.yml`), starts the full
+Magento stack via `docker compose`, runs the active suite, and publishes the Serenity BDD living
+documentation to GitHub Pages.
+
+**Living documentation:** https://gbrooks1970.github.io/magento-checkout-automation/
+
+The pre-baked images eliminate the ~30-min from-scratch Magento install from each CI run, keeping
+total pipeline time under 25 minutes. See `docs/docker-magento-setup.md` for the image strategy and
+`docs/adr/0003-api-driven-test-data-setup.md` for the API-driven Background that runs on every scenario.
 
 ## Design decisions
 
@@ -143,8 +154,9 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-The Screenplay layer is implemented and the methodology is validated against a
-live Magento Luma store: the read-only smoke subset passes end-to-end. Remaining
-work — the multi-step checkout assertions, the API-driven test-data client, the
-deferred payment feature, and the CI badge — is gated on the ephemeral Dockerised
-Magento target, which is being stood up next.
+All active scenarios pass against the Dockerised Magento 2.4.8 target: read-only
+smoke 7/7 (43/43 steps) and end-to-end guest checkout 4/4 (40/40 steps). The
+Background step verifies product availability through the Magento REST API on
+every scenario. CI is wired; the green badge above reflects the current `main`
+state. The one remaining backlog item is activating the `@deferred`
+payment-failure scenario, which needs a deterministically-declining test gateway.

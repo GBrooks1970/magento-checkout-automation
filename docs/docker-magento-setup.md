@@ -164,3 +164,56 @@ bring-up is clean — which is the whole point of using Docker over the shared d
 - **#3** API-driven Background via `MagentoApiClient` (needs admin API access).
 - **#2** the `@deferred` `payment-failure.feature` (needs a test payment gateway).
 - **#4** publishing the Serenity living documentation from a genuinely green run.
+
+---
+
+## CI strategy — pre-baked GHCR images (backlog #4)
+
+A from-scratch install takes ~30–40 minutes: too slow for every push. The
+solution is two pre-baked images that snapshot the installed store state and are
+stored in GHCR. CI pulls them (~3–5 min) instead of running the install sequence,
+keeping the total pipeline under 25 minutes.
+
+### The two images
+
+| Image | Based on | Contains |
+|---|---|---|
+| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8` | `markoshust/magento-php:8.4-fpm-2` | Full `/var/www/html` tree: Magento source, vendor, generated classes, `env.php`, 2FA disabled (step 6c), qty-counter set (step 6b) |
+| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8` | `mariadb:11.4` | `magento-db.sql.gz` in `/docker-entrypoint-initdb.d/` — MariaDB auto-restores on first start |
+
+### How seeding works in CI
+
+Docker has a built-in behaviour: when a named volume is first created and the
+container image has content at the mount point, Docker copies the image's
+content into the volume. So `docker compose up` with an empty `appdata` volume
+auto-populates it from `magento-store-app`'s `/var/www/html` without any extra
+step. MariaDB's Docker entrypoint does the equivalent for the database: it
+restores `magento-db.sql.gz` from `/docker-entrypoint-initdb.d/` before
+accepting connections, so by the time the healthcheck passes the full schema and
+Luma data are present.
+
+### Building the images (one-time)
+
+Images are built by `.github/workflows/bake.yml` (manual trigger). It:
+1. Runs `docker compose up -d --wait` on the Actions runner
+2. Executes the full install sequence above (steps 2–6c) — ~40 min
+3. Tars `/var/www/html` from the running `phpfpm` container; builds `store-app`
+4. Dumps the database; builds `store-db`
+5. Pushes both to GHCR
+
+Required secrets on the `bake` GitHub environment:
+`MAGENTO_PUBLIC_KEY` / `MAGENTO_PRIVATE_KEY` (Adobe Commerce Marketplace keys).
+`ci.yml` needs neither — it uses the hardcoded test-target admin defaults.
+
+After `bake.yml` completes, set both packages to **public** in GitHub (profile →
+Packages → Package settings → Change visibility) so `ci.yml` can pull without
+authentication.
+
+### Rebuild the images when
+
+- The Magento version pin changes
+- A `bin/magento config:set` or `module:disable` step is added or changed
+- The `sampledata:deploy` content changes (e.g. you add a custom fixture)
+
+The `:2.4.8` tag is intentionally static. Update `docker-compose.ci.yml` and
+the Dockerfiles when you cut a new image.
