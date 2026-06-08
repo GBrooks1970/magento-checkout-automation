@@ -6,7 +6,7 @@ export const RemoveFromCart = {
     product: (productName: string) =>
         Task.where(`#actor removes "${productName}" from their cart`,
             Navigate.to(CartPage.url()),
-            Wait.until(CartPage.deleteButtonFor(productName), isVisible()),
+            Wait.upTo(Duration.ofSeconds(15)).until(CartPage.deleteButtonFor(productName), isVisible()),
             Click.on(CartPage.deleteButtonFor(productName)),
             // Removing the last item triggers Magento's AJAX cart-empty
             // transition, which exceeds Serenity's 5 s default wait on the
