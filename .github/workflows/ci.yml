@@ -129,6 +129,27 @@ jobs:
           curl -sf http://localhost:8080/ -o /dev/null
           echo "Storefront HTTP 200 OK"
 
+      - name: Warm up the store
+        # The pre-baked store boots with an empty Redis (full-page cache) and a
+        # cold PHP OPcache, so the FIRST request to any page type pays a large
+        # compile/render penalty (>15 s observed in CI). That penalty landed on
+        # whichever scenario happened to run first, producing flaky add-to-cart /
+        # cart-update timeouts that moved between scenarios run-to-run. Prime the
+        # exact page types the suite touches (homepage, both product pages, the
+        # cart) so the cost is paid here, outside any assertion. OPcache is shared
+        # across all php-fpm workers, so two passes is enough to warm them.
+        run: |
+          for pass in 1 2; do
+            for url in \
+              "http://localhost:8080/" \
+              "http://localhost:8080/push-it-messenger-bag.html" \
+              "http://localhost:8080/fusion-backpack.html" \
+              "http://localhost:8080/checkout/cart"; do
+              code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+              echo "pass $pass  HTTP $code  $url"
+            done
+          done
+
       - name: Run full test suite
         env:
           BASE_URL: http://localhost:8080
