@@ -1,0 +1,27 @@
+# Pre-baked Magento 2.4.8 + Luma application image.
+#
+# NOT built with `docker build` directly. The setup:install step requires
+# live DB/Redis/OpenSearch/RabbitMQ connections, so this image is produced
+# by .github/workflows/bake.yml, which:
+#   1. Starts the full docker-compose stack
+#   2. Runs the complete install sequence from docs/docker-magento-setup.md
+#      (including step 6b qty-counter config and step 6c 2FA disable)
+#   3. Tars /var/www/html out of the running phpfpm container
+#   4. Builds this image from that tar (the COPY below)
+#   5. Pushes to GHCR
+#
+# In CI, docker-compose.ci.yml swaps phpfpm's image to this one.
+# Docker auto-seeds the empty 'appdata' named volume from the image's
+# /var/www/html on first container start (standard Docker behaviour:
+# a named volume mounted over a non-empty image path is populated from
+# that path when the volume is first created).
+#
+# SECURITY NOTE: this image is built from a disposable test-target store
+# (admin/Password123!, 2FA disabled). Never use these credentials or this
+# configuration on a public or production instance.
+
+FROM markoshust/magento-php:8.4-fpm-2
+
+# The build context is the exported /var/www/html tree from the installed
+# store. auth.json is removed by bake.yml before export.
+COPY --chown=app:app . /var/www/html/

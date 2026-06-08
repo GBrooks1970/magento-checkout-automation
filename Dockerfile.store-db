@@ -1,0 +1,20 @@
+# Pre-baked Magento 2.4.8 database image.
+#
+# Extends the stock MariaDB 11.4 image with the Magento database dump
+# baked into /docker-entrypoint-initdb.d/. MariaDB's Docker entrypoint
+# auto-restores all .sql.gz files in that directory when the data
+# volume is empty (standard MariaDB Docker init behaviour). By the time
+# the healthcheck (mariadb-admin ping) passes, the restore is complete
+# and phpfpm can connect safely.
+#
+# The dump is produced by bake.yml immediately after the full install,
+# so it captures the schema + Luma sample data + all config written by
+# bin/magento setup:install, sampledata:deploy, and config:set.
+#
+# The base compose's MYSQL_DATABASE / MYSQL_USER / MYSQL_PASSWORD env
+# vars still apply; MariaDB creates the database before running init
+# scripts, so the dump's INSERT statements land in the correct schema.
+
+FROM mariadb:11.4
+
+COPY magento-db.sql.gz /docker-entrypoint-initdb.d/

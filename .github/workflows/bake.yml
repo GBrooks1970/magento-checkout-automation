@@ -161,6 +161,21 @@ jobs:
           curl -sf http://localhost:8080/ -o /dev/null
           echo "Storefront HTTP 200 — install complete"
 
+          # Verify Luma sample data actually deployed (~2040 products).
+          # The install steps run far faster on a Linux runner than the local
+          # Windows runbook, so an HTTP 200 alone does not prove the catalogue
+          # populated — a base install with zero products also returns 200.
+          # Fail loudly here rather than bake a useless empty-catalogue image.
+          PRODUCT_COUNT=$(docker compose exec -T db \
+            mysql -u magento -pmagento magento -N -B \
+            -e 'SELECT COUNT(*) FROM catalog_product_entity')
+          echo "Catalog product count: $PRODUCT_COUNT"
+          if [ "$PRODUCT_COUNT" -lt 2000 ]; then
+            echo "::error::Expected >=2000 Luma sample products, found $PRODUCT_COUNT — sample data did not deploy correctly"
+            exit 1
+          fi
+          echo "Sample data verified — $PRODUCT_COUNT products"
+
       # ── Export and package ────────────────────────────────────────────────
       - name: Clean runtime artifacts before export
         # Keeps the image lean: cache is already flushed; logs and sessions
