@@ -364,8 +364,9 @@ blocks the token endpoint until disabled on the test target (runbook step 6c +
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (8) + Maintenance Burden (4) = **15 points**
 **Impact:** The Serenity BDD HTML report is a key portfolio artifact — reviewers click through narrated, passing scenarios. Without publishing it, the report only exists locally.
 **Effort:** 1–2 hours implementation (done); bake run + maintainer steps to activate
-**Status:** 🟢 **Bake validated 2026-06-08 — both GHCR images built, pushed, and verified PUBLIC
-(anonymous pull HTTP 200). Only the PR #3 merge remains to turn the badge green and publish Pages.**
+**Status:** ✅ **DONE & LIVE 2026-06-08 — green badge on `main`; Serenity report published to
+GitHub Pages (`<title>Serenity Reports</title>`, HTTP 200). Full suite 11/11, 83/83 steps green
+against the pre-baked store in CI.**
 **Area:** CI / Documentation
 
 **Strategy (implemented 2026-06-07):**
@@ -383,18 +384,18 @@ automatically (Docker/MariaDB built-in seeding behaviour). Total CI: ~15–25 mi
 - `.github/workflows/bake.yml` — one-time image builder (manual trigger; needs Marketplace secrets on `bake` environment)
 - `.github/workflows/ci.yml` — rewritten: pull images → start store → run suite → deploy Pages
 
-**Maintainer steps remaining (cannot be automated):**
-1. Add `MAGENTO_PUBLIC_KEY` + `MAGENTO_PRIVATE_KEY` as secrets on the `bake` GitHub environment
-2. Enable GitHub Pages (Settings → Pages → Source → GitHub Actions)
-3. Trigger `bake.yml` once (Actions → bake-store-images → Run workflow; ~60 min)
-4. Set both GHCR packages to public (profile → Packages → Package settings → Change visibility)
-5. Push to main (or trigger `ci.yml` manually) — first green badge appears
+**Maintainer steps (all completed 2026-06-08):**
+1. ✅ Add `MAGENTO_PUBLIC_KEY` + `MAGENTO_PRIVATE_KEY` as secrets on the `bake` GitHub environment
+2. ✅ Enable GitHub Pages (Settings → Pages → Source → GitHub Actions)
+3. ✅ Trigger `bake.yml` (succeeded run `27131449803`; both images built and pushed)
+4. ✅ Both GHCR packages public (verified anonymous pull HTTP 200)
+5. ✅ Merged to main (PR #3 then PR #4) — green badge live, Pages published
 
 **Success Criteria:**
-- [ ] GitHub Pages URL serves the Serenity BDD report
-- [x] Report URL linked in the README (`https://gbrooks1970.github.io/magento-checkout-automation/`)
-- [ ] Report updates automatically on every passing CI run
-- [ ] Green badge visible on the repo
+- [x] GitHub Pages URL serves the Serenity BDD report (`https://gbrooks1970.github.io/magento-checkout-automation/`)
+- [x] Report URL linked in the README
+- [x] Report updates automatically on every passing CI run (deploy-pages job on every green main push)
+- [x] Green badge visible on the repo
 
 **Update (2026-06-08) — `bake.yml` fully debugged and validated; images published.** After five
 prior failed runs (session-notes v9 §2), the bake pipeline now completes green end-to-end
@@ -413,9 +414,21 @@ prior failed runs (session-notes v9 §2), the bake pipeline now completes green 
 1.4M / 1,401,581 bytes**, both images built and pushed:
 `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8` and `…/magento-store-db:2.4.8`.
 
-**Remaining (maintainer, browser-only):** (a) make both GHCR packages **public**; (b) merge PR #3 —
-the `e2e` preflight then flips to `available=true`, the badge turns green and Pages publishes the
-Serenity report. These complete the last two ❌ checklist items.
+**Update (2026-06-08, cont.) — ITEM CLOSED; badge green and Pages live.** After the bake images
+went public, two more rounds surfaced and were fixed:
+4. **Empty DB image in CI** — the first `e2e` run pulled the broken 4K `store-db` (pushed before the
+   `mariadb-dump` fix); `db-1 exited (1)`. Resolved by the fixed image; re-run got past store start.
+5. **Cold-store test flakiness** — the pre-baked store boots with empty Redis FPC + cold OPcache, so
+   whichever scenario hit each page type first paid a >15 s render penalty, tripping Serenity's 5 s
+   default `Wait` ceiling. The failing scenario migrated run-to-run (add-to-cart, then update/remove,
+   then the checkout outline). Fixed in two steps: a **store warm-up** step in `ci.yml` (primes
+   homepage + product pages + cart, PR #3), then **hardening every remaining bare `Wait.until`** in
+   the checkout/cart tasks to `Wait.upTo(15–20 s)` + polling the order-summary subtotal + raising the
+   Cucumber step ceiling 30→60 s (PR #4, commit `552229d`).
+
+**Final green run `27141209665` (main, commit `4e8a738`):** preflight ✅, test ✅ (**11 scenarios /
+83 steps, all passed**), deploy-pages ✅. Badge green; report live at
+`https://gbrooks1970.github.io/magento-checkout-automation/` (`<title>Serenity Reports</title>`).
 
 ---
 
@@ -504,9 +517,9 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 ✅ done; #2 blocked (needs test gateway); #8 ✅ done; #9 ✅ done |
-| MEDIUM (10–19) | 4 | #3 ✅ done; #4 🟡 in progress (code merged, awaiting bake run); #5 ✅ done; #10 ✅ done |
+| MEDIUM (10–19) | 4 | #3 ✅ done; #4 ✅ DONE (badge green, Pages live); #5 ✅ done; #10 ✅ done |
 | LOW (0–9) | 2 | #6 ✅ done; #7 ✅ done |
-| **Outstanding** | **#2, #4** | #4 awaiting 3 maintainer steps; #2 needs payment gateway |
+| **Outstanding** | **#2 only** | #2 needs a deterministically-declining payment gateway |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
@@ -517,8 +530,8 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
 | ADRs complete with concrete examples | ✅ Done | Item #5 |
-| Green CI badge, demonstrably non-flaky | 🟡 Code ready; awaiting bake run + maintainer steps | Item #4 |
-| Living documentation published (GitHub Pages) | 🟡 Code ready; awaiting bake run + maintainer steps | Item #4 |
+| Green CI badge, demonstrably non-flaky | ✅ Done — 11/11 green on main (run `27141209665`) | Item #4 |
+| Living documentation published (GitHub Pages) | ✅ Done — live at gbrooks1970.github.io/magento-checkout-automation | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Scaffolded | Item #2 to activate |
 
