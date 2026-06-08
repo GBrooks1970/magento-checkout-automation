@@ -41,7 +41,7 @@ Then('the cart subtotal should be {string}', async (expectedSubtotal: string) =>
     // adding from a product page, so view the cart before reading the total.
     await actorCalled('User').attemptsTo(
         Navigate.to(CartPage.url()),
-        Wait.until(CartPage.subtotal, isVisible()),
+        Wait.upTo(Duration.ofSeconds(15)).until(CartPage.subtotal, isVisible()),
         Ensure.that(CartSubtotal(), includes(expectedSubtotal)),
     );
 });

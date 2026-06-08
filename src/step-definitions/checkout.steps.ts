@@ -1,5 +1,5 @@
 import { When, Then } from '@cucumber/cucumber';
-import { actorCalled } from '@serenity-js/core';
+import { actorCalled, Duration, Wait } from '@serenity-js/core';
 import { Ensure, includes, isPresent } from '@serenity-js/assertions';
 import { isVisible } from '@serenity-js/web';
 import { AddToCart } from '../tasks/AddToCart';
@@ -74,7 +74,11 @@ Then('the confirmation should include an order number', async () => {
 });
 
 Then('the order summary subtotal should be {string}', async (expectedSubtotal: string) => {
+    // The order summary is Knockout.js-rendered and updates asynchronously after
+    // the shipping method is selected, so poll until the subtotal settles on the
+    // expected value rather than reading it once (it can be empty/stale on a cold
+    // CI render — backlog #10/#11).
     await actorCalled('User').attemptsTo(
-        Ensure.that(OrderSummary.subtotal(), includes(expectedSubtotal)),
+        Wait.upTo(Duration.ofSeconds(20)).until(OrderSummary.subtotal(), includes(expectedSubtotal)),
     );
 });

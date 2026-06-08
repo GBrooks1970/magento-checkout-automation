@@ -13,7 +13,7 @@ export const ProceedToCheckout = {
     fromCart: () =>
         Task.where('#actor proceeds to checkout from the cart',
             Navigate.to(CartPage.url()),
-            Wait.until(CartPage.proceedToCheckoutButton, isVisible()),
+            Wait.upTo(CHECKOUT_RENDER).until(CartPage.proceedToCheckoutButton, isVisible()),
             Click.on(CartPage.proceedToCheckoutButton),
             Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
         ),

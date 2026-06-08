@@ -9,9 +9,11 @@ import { MagentoApi } from '../api/MagentoApiClient';
 
 // Cucumber's default per-step timeout is 5 s. A real Magento checkout step combines
 // network latency with several Knockout.js re-renders, which can legitimately exceed
-// that against a live store, producing spurious "function timed out" failures. Raise
-// it to a realistic ceiling for live/CI runs. See backlog #10.
-setDefaultTimeout(30 * 1000);
+// that against a live store, producing spurious "function timed out" failures. Some
+// steps now chain multiple 20 s Serenity Wait ceilings (e.g. the shipping form waits
+// on both the email input and the dependent state dropdown), so the step ceiling must
+// sit comfortably above their sum on a cold CI store. See backlog #10.
+setDefaultTimeout(60 * 1000);
 
 // The browser is launched once for the whole run and kept open, and each
 // scenario gets its own fresh browser context (see Before).

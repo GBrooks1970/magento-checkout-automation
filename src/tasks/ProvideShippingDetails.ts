@@ -1,6 +1,10 @@
-import { Task, Wait } from '@serenity-js/core';
+import { Duration, Task, Wait } from '@serenity-js/core';
 import { Click, Enter, Select, isVisible } from '@serenity-js/web';
 import { CheckoutPage } from '../interactions/CheckoutPage';
+
+// The checkout form and its dependent state dropdown are Knockout.js-rendered
+// and can exceed Serenity's 5 s default Wait ceiling on a cold CI store.
+const CHECKOUT_RENDER = Duration.ofSeconds(20);
 
 export interface ShippingDetails {
     email: string;
@@ -28,14 +32,14 @@ const defaults: ShippingDetails = {
 
 const fillForm = (details: ShippingDetails) =>
     Task.where('#actor fills in the shipping address form',
-        Wait.until(CheckoutPage.emailInput, isVisible()),
+        Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
         Enter.theValue(details.email).into(CheckoutPage.emailInput),
         Enter.theValue(details.firstName).into(CheckoutPage.firstNameInput),
         Enter.theValue(details.lastName).into(CheckoutPage.lastNameInput),
         Enter.theValue(details.street).into(CheckoutPage.streetAddressInput),
         Enter.theValue(details.city).into(CheckoutPage.cityInput),
         Select.option(details.country).from(CheckoutPage.countrySelect),
-        Wait.until(CheckoutPage.stateSelect, isVisible()),
+        Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.stateSelect, isVisible()),
         Select.option(details.state).from(CheckoutPage.stateSelect),
         Enter.theValue(details.postcode).into(CheckoutPage.postcodeInput),
         Enter.theValue(details.phone).into(CheckoutPage.phoneInput),
@@ -55,7 +59,7 @@ export const ProvideShippingDetails = {
 
     incomplete: () =>
         Task.where('#actor provides incomplete shipping details',
-            Wait.until(CheckoutPage.emailInput, isVisible()),
+            Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
             Enter.theValue('incomplete@example.com').into(CheckoutPage.emailInput),
             Click.on(CheckoutPage.shippingNextButton),
         ),
