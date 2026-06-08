@@ -166,9 +166,12 @@ jobs:
           # Windows runbook, so an HTTP 200 alone does not prove the catalogue
           # populated — a base install with zero products also returns 200.
           # Fail loudly here rather than bake a useless empty-catalogue image.
-          PRODUCT_COUNT=$(docker compose exec -T db \
-            mysql -u magento -pmagento magento -N -B \
-            -e 'SELECT COUNT(*) FROM catalog_product_entity')
+          # MariaDB 11.4's client binary is `mariadb`; the legacy `mysql`
+          # symlink is not present (though `mysqldump` still is). Try the
+          # canonical name first, fall back to `mysql` for older base images.
+          PRODUCT_COUNT=$(docker compose exec -T db sh -c \
+            "mariadb -u magento -pmagento magento -N -B -e 'SELECT COUNT(*) FROM catalog_product_entity' 2>/dev/null \
+             || mysql -u magento -pmagento magento -N -B -e 'SELECT COUNT(*) FROM catalog_product_entity' 2>/dev/null")
           echo "Catalog product count: $PRODUCT_COUNT"
           if [ "$PRODUCT_COUNT" -lt 2000 ]; then
             echo "::error::Expected >=2000 Luma sample products, found $PRODUCT_COUNT — sample data did not deploy correctly"
