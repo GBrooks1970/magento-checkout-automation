@@ -199,10 +199,25 @@ jobs:
 
       - name: Dump Magento database
         run: |
-          docker compose exec -T db \
-            mysqldump -u magento -pmagento magento \
+          # MariaDB 11.4's dump binary is `mariadb-dump`; the legacy
+          # `mysqldump` symlink is absent and errors with 127. Because it sits
+          # on the left of `| gzip`, that failure is otherwise masked by the
+          # pipeline's exit status (gzip succeeds on empty input → a useless
+          # ~4K dump, the bug that shipped an empty store-db image in run
+          # 27130932139). set -o pipefail surfaces the failure; the size guard
+          # is the backstop. --no-tablespaces avoids a PROCESS-privilege error
+          # for the non-root magento user.
+          set -o pipefail
+          docker compose exec -T db sh -c \
+            "mariadb-dump -u magento -pmagento --no-tablespaces magento 2>/dev/null \
+             || mysqldump -u magento -pmagento --no-tablespaces magento" \
             | gzip > /tmp/magento-db.sql.gz
-          echo "DB dump size: $(du -sh /tmp/magento-db.sql.gz | cut -f1)"
+          SIZE_BYTES=$(stat -c%s /tmp/magento-db.sql.gz)
+          echo "DB dump size: $(du -sh /tmp/magento-db.sql.gz | cut -f1) ($SIZE_BYTES bytes)"
+          if [ "$SIZE_BYTES" -lt 1000000 ]; then
+            echo "::error::DB dump is only $SIZE_BYTES bytes — expected >1MB; the dump command likely failed"
+            exit 1
+          fi
 
       - name: Build and push store-app image
         # Build context is the exported /var/www/html tree (not the repo root).
