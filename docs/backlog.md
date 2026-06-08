@@ -364,7 +364,8 @@ blocks the token endpoint until disabled on the test target (runbook step 6c +
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (8) + Maintenance Burden (4) = **15 points**
 **Impact:** The Serenity BDD HTML report is a key portfolio artifact — reviewers click through narrated, passing scenarios. Without publishing it, the report only exists locally.
 **Effort:** 1–2 hours
-**Status:** BLOCKED on Item #1 (needs passing runs to have something to publish)
+**Status:** 🟢 **Bake pipeline DONE & validated 2026-06-08 — both GHCR images built and pushed.**
+Two maintainer browser steps remain: make packages public, merge PR #3.
 **Area:** CI / Documentation
 
 **Resolution Strategy:**
@@ -377,6 +378,27 @@ blocks the token endpoint until disabled on the test target (runbook step 6c +
 - [ ] GitHub Pages URL serves the Serenity BDD report
 - [ ] Report URL linked in the README
 - [ ] Report updates automatically on every passing CI run
+
+**Update (2026-06-08) — `bake.yml` fully debugged and validated; images published.** After five
+prior failed runs (session-notes v9 §2), the bake pipeline now completes green end-to-end
+(run `27131449803`, commit `a4eaf02` on `main`). Three further bugs were fixed this session:
+1. **Missing Dockerfiles on `main`** — `Dockerfile.store-app`/`Dockerfile.store-db` existed only on
+   `backlog-4-ci-prebake`; the workflow checks out `main`, so `cp` failed (`cannot stat`). Brought
+   both onto `main` (commit `827bd92`).
+2. **`mysql` client absent in mariadb:11.4** — added a product-count smoke assertion that initially
+   used `mysql` (exit 127); switched to `mariadb` with a `mysql` fallback (commit `3ae126d`).
+3. **Empty DB dump (the dangerous one)** — `mysqldump` is also absent (binary is `mariadb-dump`);
+   its 127 sat on the left of `| gzip`, so the pipeline went green while pushing an empty 4K
+   `store-db` image. Fixed with `mariadb-dump` (fallback `mysqldump`), `set -o pipefail`, and a
+   >1MB size guard (commit `a4eaf02`). All fixes mirrored to `backlog-4-ci-prebake`.
+
+**Validated run `27131449803`:** install correct (**2040 Luma products** asserted live), **DB dump
+1.4M / 1,401,581 bytes**, both images built and pushed:
+`ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8` and `…/magento-store-db:2.4.8`.
+
+**Remaining (maintainer, browser-only):** (a) make both GHCR packages **public**; (b) merge PR #3 —
+the `e2e` preflight then flips to `available=true`, the badge turns green and Pages publishes the
+Serenity report. These complete the last two ❌ checklist items.
 
 ---
 
