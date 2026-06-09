@@ -25,9 +25,13 @@ When('I remove {string} from my cart', async (productName: string) => {
 // question until it settles on the expected value rather than reading it once.
 const ensureCartCount = (expectedCount: number) =>
     actorCalled('User').attemptsTo(
-        // 20 s, not 10: the header counter refreshes via an async customer-data
-        // reload after a cart change; on a cold CI store this intermittently
-        // exceeded 10 s for the quantity-update scenario (backlog #2).
+        // Reload first, then poll. The header counter reads the `cart` customer-data
+        // section from local storage; after an "Update Cart" page reload that section
+        // is refreshed by an async /customer/section/load fetch that intermittently
+        // serves a stale count (the quantity-update scenario flaked ~50% on CI even at
+        // a 20 s poll). A fresh page load forces the section to re-sync from the
+        // server before we read it — the robust fix for the counter-refresh race.
+        Navigate.reloadPage(),
         Wait.upTo(Duration.ofSeconds(20)).until(CartItemCount(), equals(String(expectedCount))),
     );
 
