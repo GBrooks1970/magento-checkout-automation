@@ -12,10 +12,14 @@ define([
 
     return Component.extend({
         defaults: {
-            // Own template, bundled in this module — the core
-            // Magento_Checkout/payment/default template does not serve in the
-            // baked store (404), which silently dropped the method. See ADR-0005.
-            template: 'Portfolio_DeclinePayment/payment/declinepayment'
+            // Reuse the offline Check/Money-Order template: it is a simple
+            // no-fields method template that is known to serve and bind
+            // correctly in this baked store (checkmo renders with it). The core
+            // Magento_Checkout/payment/default template 404s here, and a
+            // hand-written copy risks subtle KO binding errors. getCode() still
+            // resolves to 'declinepayment', so the radio/label carry that id.
+            // See ADR-0005 / backlog #2.
+            template: 'Magento_OfflinePayments/payment/checkmo'
         }
     });
 });
