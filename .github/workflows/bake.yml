@@ -131,6 +131,18 @@ jobs:
           sleep 5
           docker compose exec -T app sh -c 'nginx -t && nginx -s reload'
 
+      - name: Install the Portfolio decline-payment test module
+        # Copy the in-repo test-fixture module into the installed Magento tree
+        # so the following setup:upgrade registers it. This is the deterministic,
+        # self-contained payment method that makes payment-failure.feature
+        # runnable in CI — no real PSP, network, or credentials. See ADR-0005.
+        run: |
+          docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code/Portfolio'
+          docker compose cp app/code/Portfolio/DeclinePayment \
+            phpfpm:/var/www/html/app/code/Portfolio/DeclinePayment
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento module:enable Portfolio_DeclinePayment'
+
       - name: Deploy sample data, reindex, configure
         timeout-minutes: 30
         run: |
@@ -145,6 +157,13 @@ jobs:
           # matches the feature semantics when quantity > 1.
           docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
             php bin/magento config:set checkout/cart_link/use_qty 1 && \
+            php bin/magento cache:flush'
+
+          # Step 6d: ensure the decline-payment test method is active in the
+          # store (its config.xml already defaults active=1; this writes it to
+          # core_config_data so it is captured in the DB dump too). See ADR-0005.
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento config:set payment/declinepayment/active 1 && \
             php bin/magento cache:flush'
 
           # Step 6c: disable mandatory admin 2FA so the REST admin-token

@@ -11,4 +11,13 @@ export const ProvidePaymentDetails = {
             Wait.upTo(Duration.ofSeconds(15)).until(CheckoutPage.checkMoneyOrderLabel, isVisible()),
             Click.on(CheckoutPage.checkMoneyOrderLabel),
         ),
+
+    // Selects the always-declining test method (Portfolio_DeclinePayment, ADR-0005).
+    // The Gherkin says "a card that will be declined" — the mechanic is selecting the
+    // method that declines; there is no card form (it is an offline-style gateway).
+    declined: () =>
+        Task.where('#actor selects the test payment method that will be declined',
+            Wait.upTo(Duration.ofSeconds(15)).until(CheckoutPage.declinePaymentLabel, isVisible()),
+            Click.on(CheckoutPage.declinePaymentLabel),
+        ),
 };

@@ -297,26 +297,33 @@ outline uses explicit steps) — left as a reusable composite; candidate to prun
 
 **Priority Score:** Breakage Probability (7) + Portfolio Impact (8) + Maintenance Burden (6) = **21 points**
 **Impact:** The `@deferred` payment failure scenario is written and tagged but excluded from every run. It is the primary quarantine-strategy demonstration in the credibility checklist.
-**Effort:** 2–4 hours (once Docker CI is in place)
-**Status:** BLOCKED on Item #1
+**Effort:** 2–4 hours (estimate); actual ~real, deep Magento custom-payment work
+**Status:** ✅ **DONE & validated 2026-06-09 — full suite 12/12, 94/94 steps green in CI.**
 **Area:** Implementation / Infrastructure
 
 **Problem:**
-`features/payment-failure.feature` requires a payment gateway that can deterministically decline a
-card (e.g. a "magic number" test card). This is not achievable on a public sandbox. The scenario
-is fully specified and tagged `@deferred`; it needs only one new Task and a test gateway configuration.
+`features/payment-failure.feature` requires a payment method that can deterministically decline an
+order. Magento OSS 2.4.8 ships only offline methods (none can fail), and a real gateway sandbox would
+add a CI secret + network dependency + cross-origin iframe — against the suite's non-flaky, secret-free
+design. The scenario was fully specified and tagged `@deferred`.
 
-**Resolution Strategy:**
-1. Confirm Docker Magento instance is running (depends on Item #1)
-2. Configure a test payment method (e.g. Magento's built-in "Fake Payment" or Braintree sandbox)
-3. Implement `ProvidePaymentDetails.cardThatWillBeDeclined()` task in `src/tasks/ProvidePaymentDetails.ts`
-4. Drop the `@deferred` tag from `features/payment-failure.feature`
-5. Verify the scenario passes and is included in the CI run
+**Resolution (see ADR-0005 for the decision + alternatives):**
+A custom in-repo test-fixture module **`Portfolio_DeclinePayment`** (code `declinepayment`) baked into
+the store image. It declines every order deterministically — no PSP, network, or secrets. Key as-built
+points (each found by live DOM probe):
+1. Decline forced by an **observer on `sales_model_service_quote_submit_before`** (the gateway adapter's
+   `authorize` command was never invoked by offline-style placement → order succeeded).
+2. Frontend **renderer clones checkmo's** (`Magento_OfflinePayments` checkmo-method + template) — a bare
+   default renderer left Place Order disabled and the core default template 404'd in the baked store.
+3. `bake.yml` copies the module, `module:enable`, `config:set active`; no `static-content:deploy` needed.
+4. Screenplay: `ProvidePaymentDetails.declined()`, `PlaceTheOrder.attemptExpectingDecline()` (waits for
+   the decline message, not the success page), `PaymentError` question, 4 step defs; `placeOrderButton`
+   scoped to `.payment-method._active`; decline message at `.message-error`.
 
 **Success Criteria:**
-- [ ] Payment failure scenario runs and passes in CI
-- [ ] `@deferred` tag removed from `payment-failure.feature`
-- [ ] Quarantine rationale comment in the feature file updated to reflect completion
+- [x] Payment failure scenario runs and passes in CI (run `27232441089`, 12/12 scenarios)
+- [x] `@deferred` tag removed from `payment-failure.feature`
+- [x] Quarantine rationale comment in the feature file updated to reflect completion
 
 ---
 
@@ -516,10 +523,10 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 
 | Priority | Count | Status |
 |---|---|---|
-| HIGH (20–30) | 4 | #1 ✅ done; #2 blocked (needs test gateway); #8 ✅ done; #9 ✅ done |
+| HIGH (20–30) | 4 | #1 ✅ done; #2 ✅ DONE (decline module, 12/12 green); #8 ✅ done; #9 ✅ done |
 | MEDIUM (10–19) | 4 | #3 ✅ done; #4 ✅ DONE (badge green, Pages live); #5 ✅ done; #10 ✅ done |
 | LOW (0–9) | 2 | #6 ✅ done; #7 ✅ done |
-| **Outstanding** | **#2 only** | #2 needs a deterministically-declining payment gateway |
+| **Outstanding** | **none** | All backlog items complete 🎉 |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
@@ -533,7 +540,7 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 | Green CI badge, demonstrably non-flaky | ✅ Done — 11/11 green on main (run `27141209665`) | Item #4 |
 | Living documentation published (GitHub Pages) | ✅ Done — live at gbrooks1970.github.io/magento-checkout-automation | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
-| Quarantine strategy demonstrated (`@deferred`) | ✅ Scaffolded | Item #2 to activate |
+| Quarantine strategy demonstrated (`@deferred`) | ✅ Done — activated & exercised (12/12 green) | Item #2 |
 
 ---
 

@@ -50,12 +50,27 @@ export const CheckoutPage = {
     // field (#10) — assert/act on what Magento actually keeps visible.
     checkMoneyOrderLabel: PageElement.located(By.css('label[for="checkmo"]'))
         .describedAs('Check / Money Order payment label'),
-    // Scope to the active payment method content. The bare `button.action.primary.checkout`
-    // selector also matches the header mini-cart button, causing a strict-mode violation
-    // (same root cause as the cart-page button). See backlog #10. NOTE: validated by
-    // reasoning against the Luma DOM, not by a live run — this is on the @placesOrder path,
-    // which is not exercised against the shared demo; confirm on the Docker instance.
-    placeOrderButton: PageElement.located(By.css('.payment-method-content button.action.primary.checkout'))
+    // The always-declining test method (Portfolio_DeclinePayment, code
+    // `declinepayment`; see ADR-0005). Same hidden-radio / visible-label pattern
+    // as checkmo above — act on the label, not the radio.
+    declinePaymentLabel: PageElement.located(By.css('label[for="declinepayment"]'))
+        .describedAs('Test Declining Payment label'),
+    // The decline message Magento surfaces on the checkout when the order is
+    // rejected. Verified by live DOM probe (backlog #2): the OPC place-order error
+    // renders as `<div class="message message-error error">…</div>` in the
+    // checkout's message region — NOT under `.checkout-payment-method` — and is the
+    // only `.message-error` present (the per-method `.messages` containers are
+    // empty until an error occurs). See ADR-0005.
+    paymentErrorMessage: PageElement.located(By.css('.message-error'))
+        .describedAs('payment decline message'),
+    // Scope to the ACTIVE payment method's content. With more than one payment
+    // method enabled (checkmo + the declinepayment test method, backlog #2), every
+    // method renders its own `.payment-method-content` with its own Place Order
+    // button, so the unscoped selector matches multiple buttons and resolves to a
+    // hidden one. `.payment-method._active` is the selected method's wrapper, so
+    // this resolves to exactly the one visible Place Order button. (Also avoids the
+    // header mini-cart button — backlog #10.)
+    placeOrderButton: PageElement.located(By.css('.payment-method._active .payment-method-content button.action.primary.checkout'))
         .describedAs('Place Order button'),
 
     // Order confirmation. Luma's guest success page renders the order id as
@@ -76,6 +91,13 @@ export const CheckoutPage = {
     // `.totals.sub` row reads e.g. "$90.00" for quantity 2.
     orderSummarySubtotal: PageElement.located(By.css('.opc-block-summary .table-totals .totals.sub .price'))
         .describedAs('order summary subtotal'),
+
+    // The checkout Order Summary sidebar block (lists the cart contents/totals).
+    // Used to assert the cart is still intact after a declined order — robustly
+    // present whenever on checkout with items, unlike the nested subtotal row,
+    // which can be absent during the post-decline KO re-render. See backlog #2.
+    orderSummaryBlock: PageElement.located(By.css('.opc-block-summary'))
+        .describedAs('order summary block'),
 
     // Validation. The generated field error inserted by Magento on submit.
     // NOTE (backlog #10): asserting this is unreliable in the KO.js checkout — the

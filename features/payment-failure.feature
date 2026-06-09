@@ -1,13 +1,10 @@
-# DEFERRED: Requires a controllable payment gateway that can deterministically
-# decline a transaction (e.g. a sandbox/test gateway configured to reject a
-# known "magic" card number). This is not reliably achievable on the public
-# Magento demo sandbox. Enable this feature only once a Dockerised Magento
-# instance is implemented with a configurable test payment method.
-#
-# Tagged @deferred so it is excluded from CI runs until the above is in place
-# (e.g. cucumber --tags "not @deferred").
+# ACTIVATED (backlog #2): runs against a deterministic always-declining payment
+# method, Portfolio_DeclinePayment (code `declinepayment`), baked into the CI
+# store image. It declines every transaction with no real PSP, network call, or
+# credentials — so this scenario reliably exercises the storefront's decline
+# handling. See docs/adr/0005-deterministic-payment-failure.md. The former
+# @deferred quarantine tag has been removed; this now runs in the default profile.
 
-@deferred
 Feature: Payment failure handling
   As a guest shopper
   I want to be informed when my payment is declined
@@ -23,7 +20,7 @@ Feature: Payment failure handling
     And I provide valid shipping details
     And I select a shipping method
     And I provide payment details for a card that will be declined
-    And I place the order
+    And I attempt to place the order
     Then the order should not be placed
     And I should see a payment failure message
     And I should remain on the checkout page with my cart intact

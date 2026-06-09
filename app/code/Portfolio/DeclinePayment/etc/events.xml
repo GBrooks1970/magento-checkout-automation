@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--
+  Force the decline at order-placement time. Relying on the gateway adapter's
+  authorize command proved unreliable (offline-style placement did not invoke it,
+  so the order succeeded). This observer fires during quote submission for any
+  payment method and throws when the method is declinepayment, which aborts the
+  order and surfaces the message to the shopper. See ADR-0005 / backlog #2.
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_model_service_quote_submit_before">
+        <observer name="portfolio_declinepayment_force_decline"
+                  instance="Portfolio\DeclinePayment\Observer\DeclineOrder"/>
+    </event>
+</config>
