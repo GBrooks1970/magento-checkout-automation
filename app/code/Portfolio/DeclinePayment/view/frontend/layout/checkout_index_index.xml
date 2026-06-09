@@ -25,7 +25,12 @@
                                                                     <item name="component" xsi:type="string">Portfolio_DeclinePayment/js/view/payment/declinepayment</item>
                                                                     <item name="methods" xsi:type="array">
                                                                         <item name="declinepayment" xsi:type="array">
-                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                            <!-- false: the test method uses the shipping address and
+                                                                                 needs no separate billing address. With it required,
+                                                                                 the Place Order button stays disabled (no billing
+                                                                                 address auto-set for a plain default renderer), so it
+                                                                                 could never be clicked. See backlog #2. -->
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">false</item>
                                                                         </item>
                                                                     </item>
                                                                 </item>
