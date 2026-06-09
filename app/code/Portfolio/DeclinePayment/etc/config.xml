@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <declinepayment>
+                <active>1</active>
+                <model>PortfolioDeclinePaymentFacade</model>
+                <order_status>pending</order_status>
+                <title>Test Declining Payment (portfolio fixture)</title>
+                <payment_action>authorize</payment_action>
+                <can_use_checkout>1</can_use_checkout>
+                <can_use_internal>1</can_use_internal>
+                <group>portfolio</group>
+            </declinepayment>
+        </payment>
+    </default>
+</config>

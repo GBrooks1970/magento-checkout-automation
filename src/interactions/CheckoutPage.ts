@@ -50,6 +50,18 @@ export const CheckoutPage = {
     // field (#10) — assert/act on what Magento actually keeps visible.
     checkMoneyOrderLabel: PageElement.located(By.css('label[for="checkmo"]'))
         .describedAs('Check / Money Order payment label'),
+    // The always-declining test method (Portfolio_DeclinePayment, code
+    // `declinepayment`; see ADR-0005). Same hidden-radio / visible-label pattern
+    // as checkmo above — act on the label, not the radio.
+    declinePaymentLabel: PageElement.located(By.css('label[for="declinepayment"]'))
+        .describedAs('Test Declining Payment label'),
+    // The decline error Magento surfaces on the checkout when the gateway throws.
+    // The OPC place-order error is rendered by the message component inside the
+    // active payment method's content. Scoped to the payment area to avoid the
+    // unrelated address-step field errors. (Selector verified against the rebuilt
+    // store carrying the decline module — see ADR-0005 / backlog #2.)
+    paymentErrorMessage: PageElement.located(By.css('.checkout-payment-method .message-error'))
+        .describedAs('payment decline message'),
     // Scope to the active payment method content. The bare `button.action.primary.checkout`
     // selector also matches the header mini-cart button, causing a strict-mode violation
     // (same root cause as the cart-page button). See backlog #10. NOTE: validated by

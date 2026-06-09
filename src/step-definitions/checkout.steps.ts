@@ -1,7 +1,8 @@
 import { When, Then } from '@cucumber/cucumber';
 import { actorCalled, Duration, Wait } from '@serenity-js/core';
-import { Ensure, includes, isPresent } from '@serenity-js/assertions';
+import { Ensure, includes, isPresent, not } from '@serenity-js/assertions';
 import { isVisible } from '@serenity-js/web';
+import { PaymentError } from '../questions/PaymentError';
 import { AddToCart } from '../tasks/AddToCart';
 import { ProceedToCheckout } from '../tasks/ProceedToCheckout';
 import { ProvideShippingDetails } from '../tasks/ProvideShippingDetails';
@@ -80,5 +81,41 @@ Then('the order summary subtotal should be {string}', async (expectedSubtotal: s
     // CI render — backlog #10/#11).
     await actorCalled('User').attemptsTo(
         Wait.upTo(Duration.ofSeconds(20)).until(OrderSummary.subtotal(), includes(expectedSubtotal)),
+    );
+});
+
+// ── Payment failure (backlog #2 / ADR-0005) ────────────────────────────────
+When('I provide payment details for a card that will be declined', async () => {
+    await actorCalled('User').attemptsTo(
+        ProvidePaymentDetails.declined(),
+    );
+});
+
+When('I attempt to place the order', async () => {
+    await actorCalled('User').attemptsTo(
+        PlaceTheOrder.attemptExpectingDecline(),
+    );
+});
+
+Then('the order should not be placed', async () => {
+    // No success page ever renders when the gateway declines.
+    await actorCalled('User').attemptsTo(
+        Ensure.that(CheckoutPage.confirmationContainer, not(isVisible())),
+    );
+});
+
+Then('I should see a payment failure message', async () => {
+    // The decline message was already waited for in attemptExpectingDecline; assert its text.
+    await actorCalled('User').attemptsTo(
+        Ensure.that(PaymentError.text(), includes('declined')),
+    );
+});
+
+Then('I should remain on the checkout page with my cart intact', async () => {
+    // Still on the payment step (not redirected to a success page), and the Order
+    // Summary still renders the cart total — i.e. the quote was not consumed.
+    await actorCalled('User').attemptsTo(
+        Ensure.that(CheckoutPage.paymentSection, isVisible()),
+        Ensure.that(CheckoutPage.orderSummarySubtotal, isVisible()),
     );
 });

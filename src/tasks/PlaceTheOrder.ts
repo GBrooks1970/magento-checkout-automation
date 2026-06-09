@@ -12,4 +12,16 @@ export const PlaceTheOrder = {
             Click.on(CheckoutPage.placeOrderButton),
             Wait.upTo(Duration.ofSeconds(20)).until(CheckoutPage.confirmationContainer, isVisible()),
         ),
+
+    // The decline path: the gateway throws, so no success page ever appears. Click
+    // Place Order and wait for the decline message instead of the confirmation —
+    // using PlaceTheOrder.now() here would (correctly) time out waiting for a
+    // confirmation that never comes. The order stays unplaced and the cart intact;
+    // the Then steps assert that. See backlog #2 / ADR-0005.
+    attemptExpectingDecline: () =>
+        Task.where('#actor attempts to place the order, expecting a decline',
+            Wait.upTo(Duration.ofSeconds(15)).until(CheckoutPage.placeOrderButton, isVisible()),
+            Click.on(CheckoutPage.placeOrderButton),
+            Wait.upTo(Duration.ofSeconds(20)).until(CheckoutPage.paymentErrorMessage, isVisible()),
+        ),
 };

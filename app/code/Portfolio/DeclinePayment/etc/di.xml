@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!--
+      The payment method is a standard Gateway-adapter method. Its command pool
+      maps the authorize/sale commands to DeclineCommand, which always throws a
+      CommandException — so placing an order with this method fails every time.
+      No card form, no gateway connection, no credentials.
+    -->
+    <virtualType name="PortfolioDeclinePaymentFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="string">declinepayment</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PortfolioDeclinePaymentValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">PortfolioDeclinePaymentCommandPool</argument>
+            <argument name="infoBlockType" xsi:type="string">Magento\Payment\Block\Info</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PortfolioDeclinePaymentValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PortfolioDeclinePaymentConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PortfolioDeclinePaymentConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">PortfolioDeclinePaymentConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PortfolioDeclinePaymentConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="string">declinepayment</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PortfolioDeclinePaymentCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">Portfolio\DeclinePayment\Gateway\Command\DeclineCommand</item>
+                <item name="sale" xsi:type="string">Portfolio\DeclinePayment\Gateway\Command\DeclineCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+</config>
