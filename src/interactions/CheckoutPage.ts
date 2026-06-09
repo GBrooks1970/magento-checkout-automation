@@ -55,12 +55,13 @@ export const CheckoutPage = {
     // as checkmo above — act on the label, not the radio.
     declinePaymentLabel: PageElement.located(By.css('label[for="declinepayment"]'))
         .describedAs('Test Declining Payment label'),
-    // The decline error Magento surfaces on the checkout when the gateway throws.
-    // The OPC place-order error is rendered by the message component inside the
-    // active payment method's content. Scoped to the payment area to avoid the
-    // unrelated address-step field errors. (Selector verified against the rebuilt
-    // store carrying the decline module — see ADR-0005 / backlog #2.)
-    paymentErrorMessage: PageElement.located(By.css('.checkout-payment-method .message-error'))
+    // The decline message Magento surfaces on the checkout when the order is
+    // rejected. Verified by live DOM probe (backlog #2): the OPC place-order error
+    // renders as `<div class="message message-error error">…</div>` in the
+    // checkout's message region — NOT under `.checkout-payment-method` — and is the
+    // only `.message-error` present (the per-method `.messages` containers are
+    // empty until an error occurs). See ADR-0005.
+    paymentErrorMessage: PageElement.located(By.css('.message-error'))
         .describedAs('payment decline message'),
     // Scope to the ACTIVE payment method's content. With more than one payment
     // method enabled (checkmo + the declinepayment test method, backlog #2), every

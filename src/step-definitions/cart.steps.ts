@@ -25,7 +25,10 @@ When('I remove {string} from my cart', async (productName: string) => {
 // question until it settles on the expected value rather than reading it once.
 const ensureCartCount = (expectedCount: number) =>
     actorCalled('User').attemptsTo(
-        Wait.upTo(Duration.ofSeconds(10)).until(CartItemCount(), equals(String(expectedCount))),
+        // 20 s, not 10: the header counter refreshes via an async customer-data
+        // reload after a cart change; on a cold CI store this intermittently
+        // exceeded 10 s for the quantity-update scenario (backlog #2).
+        Wait.upTo(Duration.ofSeconds(20)).until(CartItemCount(), equals(String(expectedCount))),
     );
 
 Then('my cart should contain {int} item', async (expectedCount: number) => {
