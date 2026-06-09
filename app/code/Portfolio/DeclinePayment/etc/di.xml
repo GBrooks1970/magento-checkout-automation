@@ -13,6 +13,11 @@
             <argument name="code" xsi:type="string">declinepayment</argument>
             <argument name="valueHandlerPool" xsi:type="object">PortfolioDeclinePaymentValueHandlerPool</argument>
             <argument name="commandPool" xsi:type="object">PortfolioDeclinePaymentCommandPool</argument>
+            <!-- formBlockType is a REQUIRED constructor arg of Method\Adapter; omitting
+                 it makes the payment method fail to instantiate, which breaks the
+                 checkout/customer-data payment list store-wide. Magento\Payment\Block\Form
+                 is the generic no-fields payment form block. -->
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
             <argument name="infoBlockType" xsi:type="string">Magento\Payment\Block\Info</argument>
         </arguments>
     </virtualType>
