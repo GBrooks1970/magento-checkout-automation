@@ -78,6 +78,21 @@ try {
       return { cls: e.className, radioId: (e.querySelector('input[type=radio]') || {}).id, hasBtn: !!btn, btnVisible: !!(r && r.width > 0 && r.height > 0) };
     }));
     log('PAYMENT METHODS STATE AFTER CLICK:\n' + JSON.stringify(methodState, null, 2));
+
+    const btnInfo = await page.evaluate(() => {
+      const b = document.querySelector('.payment-method._active .payment-method-content button.action.primary.checkout');
+      if (!b) return 'no active button';
+      const walk = [];
+      for (let el = b; el && el !== document.body; el = el.parentElement) {
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') walk.push({ el: el.className || el.tagName, visibility: cs.visibility, display: cs.display, opacity: cs.opacity });
+      }
+      const r = b.getBoundingClientRect();
+      const topEl = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      const bcs = getComputedStyle(b);
+      return { disabled: b.disabled, btnVisibility: bcs.visibility, btnDisplay: bcs.display, hiddenAncestors: walk, topElementAtCenter: topEl ? (topEl.className || topEl.tagName) : null };
+    });
+    log('BUTTON INFO: ' + JSON.stringify(btnInfo, null, 2));
     await page.waitForTimeout(1500); // let the method become _active
     const placeBtn = await page.$('.payment-method._active .payment-method-content button.action.primary.checkout');
     if (placeBtn) { await placeBtn.click(); } else { log('(place order button not found)'); }
