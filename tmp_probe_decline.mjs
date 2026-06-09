@@ -72,9 +72,10 @@ try {
     log('\n>>> label[for="declinepayment"] FOUND — selecting and placing order');
     await declineLabel.click();
     await page.waitForTimeout(1000);
-    const placeBtn = await page.$('.payment-method._active .payment-method-content button.action.primary.checkout, .payment-method-content button.action.primary.checkout');
+    await page.waitForTimeout(1500); // let the method become _active
+    const placeBtn = await page.$('.payment-method._active .payment-method-content button.action.primary.checkout');
     if (placeBtn) { await placeBtn.click(); } else { log('(place order button not found)'); }
-    await page.waitForTimeout(6000);
+    await page.waitForTimeout(7000);
     log('\n========== ERROR MESSAGE CANDIDATES ==========\n');
     const errs = await page.$$eval('.message-error, .message.error, [role="alert"], .messages .message', els =>
       els.map(e => ({ cls: e.className, text: (e.textContent || '').trim().slice(0, 120) })));
