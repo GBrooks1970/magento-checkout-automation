@@ -96,10 +96,15 @@ try {
     await page.waitForTimeout(1500); // let the method become _active
     const placeBtn = await page.$('.payment-method._active .payment-method-content button.action.primary.checkout');
     if (placeBtn) { await placeBtn.click(); } else { log('(place order button not found)'); }
-    await page.waitForTimeout(7000);
+    await page.waitForTimeout(8000);
+    log('\nPOST-PLACE URL: ' + page.url());
+    log('HAS .checkout-success: ' + !!(await page.$('.checkout-success')));
+    const bodyText = await page.$eval('body', el => el.innerText.replace(/\s+/g, ' ').trim().slice(0, 700)).catch(() => '(no body)');
+    log('BODY TEXT SNIPPET: ' + bodyText);
     log('\n========== ERROR MESSAGE CANDIDATES ==========\n');
-    const errs = await page.$$eval('.message-error, .message.error, [role="alert"], .messages .message', els =>
-      els.map(e => ({ cls: e.className, text: (e.textContent || '').trim().slice(0, 120) })));
+    const errs = await page.$$eval(
+      '.message-error, .message.error, .message-error div, [role="alert"], .messages .message, .modal-popup .modal-content',
+      els => els.map(e => ({ cls: e.className, text: (e.textContent || '').trim().slice(0, 160) })).filter(x => x.text));
     log(JSON.stringify(errs, null, 2));
   } else {
     log('\n>>> label[for="declinepayment"] NOT FOUND — method not rendered in OPC');
