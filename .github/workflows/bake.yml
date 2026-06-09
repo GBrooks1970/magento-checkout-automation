@@ -175,6 +175,20 @@ jobs:
               Magento_TwoFactorAuth Magento_AdminAdobeImsTwoFactorAuth && \
             php bin/magento cache:flush'
 
+      - name: Deploy static content
+        # Pre-generate all frontend static (JS + Knockout .html templates) into
+        # pub/static so the baked image serves them directly. On-demand
+        # materialization in the baked store does not reliably serve every asset:
+        # the declinepayment renderer's Magento_Checkout/payment/default template
+        # 404'd, which silently dropped the method from the one-page checkout
+        # (the method was active and in the server list, but never drawn). See
+        # backlog #2. -f forces deployment in default mode.
+        timeout-minutes: 20
+        run: |
+          docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento setup:static-content:deploy -f en_US && \
+            php bin/magento cache:flush'
+
       - name: Smoke-check storefront
         run: |
           curl -sf http://localhost:8080/ -o /dev/null
