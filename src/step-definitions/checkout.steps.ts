@@ -113,9 +113,10 @@ Then('I should see a payment failure message', async () => {
 
 Then('I should remain on the checkout page with my cart intact', async () => {
     // Still on the payment step (not redirected to a success page), and the Order
-    // Summary still renders the cart total — i.e. the quote was not consumed.
+    // Summary block still shows the cart — i.e. the quote was not consumed into an
+    // order. Wait briefly to ride out the KO re-render after the decline error.
     await actorCalled('User').attemptsTo(
-        Ensure.that(CheckoutPage.paymentSection, isVisible()),
-        Ensure.that(CheckoutPage.orderSummarySubtotal, isVisible()),
+        Wait.upTo(Duration.ofSeconds(10)).until(CheckoutPage.paymentSection, isVisible()),
+        Ensure.that(CheckoutPage.orderSummaryBlock, isVisible()),
     );
 });

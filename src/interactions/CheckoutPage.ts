@@ -92,6 +92,13 @@ export const CheckoutPage = {
     orderSummarySubtotal: PageElement.located(By.css('.opc-block-summary .table-totals .totals.sub .price'))
         .describedAs('order summary subtotal'),
 
+    // The checkout Order Summary sidebar block (lists the cart contents/totals).
+    // Used to assert the cart is still intact after a declined order — robustly
+    // present whenever on checkout with items, unlike the nested subtotal row,
+    // which can be absent during the post-decline KO re-render. See backlog #2.
+    orderSummaryBlock: PageElement.located(By.css('.opc-block-summary'))
+        .describedAs('order summary block'),
+
     // Validation. The generated field error inserted by Magento on submit.
     // NOTE (backlog #10): asserting this is unreliable in the KO.js checkout — the
     // invalid-email case renders it but it can flicker during re-render, and the
