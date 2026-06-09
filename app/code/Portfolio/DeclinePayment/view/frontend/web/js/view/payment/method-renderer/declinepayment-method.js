@@ -12,7 +12,10 @@ define([
 
     return Component.extend({
         defaults: {
-            template: 'Magento_Checkout/payment/default'
+            // Own template, bundled in this module — the core
+            // Magento_Checkout/payment/default template does not serve in the
+            // baked store (404), which silently dropped the method. See ADR-0005.
+            template: 'Portfolio_DeclinePayment/payment/declinepayment'
         }
     });
 });
