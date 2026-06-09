@@ -71,7 +71,13 @@ try {
   if (declineLabel) {
     log('\n>>> label[for="declinepayment"] FOUND — selecting and placing order');
     await declineLabel.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
+    const methodState = await page.$$eval('.payment-method', els => els.map(e => {
+      const btn = e.querySelector('.payment-method-content button.action.primary.checkout');
+      const r = btn && btn.getBoundingClientRect();
+      return { cls: e.className, radioId: (e.querySelector('input[type=radio]') || {}).id, hasBtn: !!btn, btnVisible: !!(r && r.width > 0 && r.height > 0) };
+    }));
+    log('PAYMENT METHODS STATE AFTER CLICK:\n' + JSON.stringify(methodState, null, 2));
     await page.waitForTimeout(1500); // let the method become _active
     const placeBtn = await page.$('.payment-method._active .payment-method-content button.action.primary.checkout');
     if (placeBtn) { await placeBtn.click(); } else { log('(place order button not found)'); }
