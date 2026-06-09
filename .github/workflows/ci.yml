@@ -150,6 +150,13 @@ jobs:
             done
           done
 
+      - name: DEBUG probe payment DOM (TEMPORARY — backlog #2, remove after)
+        # One-off: dump the real checkout payment-step DOM and the decline-message
+        # DOM, so the declinepayment selector can be fixed from observation rather
+        # than guesswork. Never fails the build. Remove this step + tmp_probe_*.mjs.
+        continue-on-error: true
+        run: node tmp_probe_decline.mjs
+
       - name: Run full test suite
         env:
           BASE_URL: http://localhost:8080
