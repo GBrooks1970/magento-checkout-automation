@@ -10,6 +10,15 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
 page.setDefaultTimeout(30000);
 
+// Diagnostics: catch 404s for our module's static, and console/page errors.
+page.on('response', r => {
+  const u = r.url();
+  if (r.status() >= 400 && /DeclinePayment|declinepayment/i.test(u)) log(`HTTP ${r.status()}  ${u}`);
+});
+page.on('requestfailed', r => { if (/DeclinePayment|declinepayment/i.test(r.url())) log(`REQ FAILED ${r.url()} ${r.failure()?.errorText}`); });
+page.on('console', m => { const t = m.text(); if (/declinepayment|DeclinePayment|requirejs|failed|error/i.test(t)) log(`CONSOLE[${m.type()}] ${t.slice(0,200)}`); });
+page.on('pageerror', e => log(`PAGEERROR ${e.message.slice(0,200)}`));
+
 try {
   // Add a product to the cart
   await page.goto(`${BASE}/push-it-messenger-bag.html`, { waitUntil: 'domcontentloaded' });
@@ -47,6 +56,15 @@ try {
   const methods = await page.$$eval('.payment-method input[type="radio"], .payment-method label', els =>
     els.map(e => ({ tag: e.tagName, id: e.id || null, for: e.getAttribute('for') || null, value: e.getAttribute('value') || null, text: (e.textContent || '').trim().slice(0, 40) })));
   log(JSON.stringify(methods, null, 2));
+
+  // Is declinepayment in the SERVER-provided payment method list? (backend vs frontend)
+  const serverMethods = await page.evaluate(() => new Promise(resolve => {
+    if (!window.require) return resolve('no-require');
+    window.require(['Magento_Checkout/js/model/payment/method-list'], list => {
+      try { resolve((list() || []).map(m => m.method)); } catch (e) { resolve('err:' + e.message); }
+    }, () => resolve('require-failed'));
+  }));
+  log('\n========== SERVER PAYMENT METHODS (method-list) ==========\n', JSON.stringify(serverMethods));
 
   // Try to select declinepayment + place order, then dump any error
   const declineLabel = await page.$('label[for="declinepayment"]');
