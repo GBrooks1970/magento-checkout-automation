@@ -6,6 +6,15 @@
  * payment-failure.feature scenario has a payment method that fails every time,
  * exercising the storefront's decline-handling path without a real PSP, network
  * call, or credentials. See docs/adr/0005-deterministic-payment-failure.md.
+ *
+ * IMPORTANT: this command does NOT execute at runtime. Offline-style order
+ * placement never invokes the gateway adapter's authorize/sale commands (observed
+ * live — orders succeeded with only this command wired). The real decline is the
+ * sales_model_service_quote_submit_before observer (Observer/DeclineOrder.php).
+ * This command is retained for gateway-contract completeness only, so any future
+ * code path that DOES invoke authorize/sale declines rather than silently
+ * succeeding. Keep its message in sync with the observer's — the test asserts
+ * the text contains "declined".
  */
 declare(strict_types=1);
 
