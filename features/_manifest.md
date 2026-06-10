@@ -27,7 +27,7 @@ exception in the language rules. Version metadata lives here instead.
 | `guest-checkout.feature` | Happy-path guest order, cart-total check, Scenario Outline for multiple quantities. | active |
 | `cart-management.feature` | Add single/multiple, update quantity, remove item. | active |
 | `checkout-validation.feature` | Sad paths: missing shipping details, invalid email. No payment. | active |
-| `payment-failure.feature` | Declined-card handling. Tagged `@deferred`, excluded from CI until a Dockerised Magento with a configurable test gateway exists. | deferred |
+| `payment-failure.feature` | Declined-card handling. `@deferred` removed 2026-06-09 — runs in CI against the in-repo `Portfolio_DeclinePayment` always-decline module (ADR-0005). | active |
 
 ## Carry-in note
 

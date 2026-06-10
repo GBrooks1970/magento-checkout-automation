@@ -1,7 +1,7 @@
 # Magento Checkout Automation — Architecture Guide
 
-**Version:** 1
-**Last Updated:** 2026-06-02
+**Version:** 2
+**Last Updated:** 2026-06-10
 
 ---
 
@@ -10,8 +10,8 @@
 - **Purpose:** Demonstrate senior test-automation architecture against the Magento Luma storefront guest checkout journey, using Spec-Driven Development, BDD, and the Screenplay pattern.
 - **Surface type:** UI — Magento Luma storefront (Knockout.js checkout)
 - **Language / Framework:** TypeScript + Serenity/JS 3.43 + Playwright 1.60 + Cucumber 11
-- **Test target:** `BASE_URL` env var — defaults to `https://magento.softwaretestingboard.com` (SSL issue as of 2026-06-02; see `docs/backlog.md` for the open live-target decision)
-- **Automation entry point:** `npm test` — runs Cucumber with `--tags "not @deferred"`
+- **Test target:** `BASE_URL` env var — the supported target is the Dockerised Magento 2.4.8 store (`http://localhost:8080` locally; pre-baked GHCR images in CI — see `docs/docker-magento-setup.md`). The code default still points at the retired public sandbox; always set `BASE_URL` explicitly.
+- **Automation entry point:** `npm test` — runs Cucumber with `--tags "not @deferred"` (no scenario currently carries the tag; the full suite of 12 scenarios runs)
 
 ---
 
@@ -33,8 +33,8 @@ The subject application is the Magento Open Source (Luma theme) storefront. It i
 - **Screenplay interactions:** `src/interactions/` — PageElement definitions per page area
 - **Screenplay tasks:** `src/tasks/` — composed activities
 - **Screenplay questions:** `src/questions/` — state assertions
-- **Hooks:** `src/hooks/browser.hooks.ts` — Playwright browser lifecycle per scenario
-- **API client:** `src/api/MagentoApiClient.ts` — Magento REST V1 (stub; Background steps currently use UI verification)
+- **Hooks:** `src/hooks/browser.hooks.ts` — browser launched once per run (`BeforeAll`); per-scenario state reset (cookies + storage) in `Before` for cart isolation
+- **API client:** `src/api/MagentoApiClient.ts` — Magento REST V1; Background steps verify product preconditions through it (admin token resolved once per run, ADR-0003)
 - **Serenity config:** `src/serenity.config.ts` — crew: ArtifactArchiver, SerenityBDDReporter, ConsoleReporter
 
 ### Tooling
@@ -57,11 +57,11 @@ magento-checkout-automation/
 │   ├── guest-checkout.feature         # Happy path: add to cart → order confirmation
 │   ├── cart-management.feature        # Add, update quantity, remove
 │   ├── checkout-validation.feature    # Required fields, invalid email
-│   └── payment-failure.feature        # @deferred — requires Docker + test gateway
+│   └── payment-failure.feature        # Active — deterministic decline via Portfolio_DeclinePayment (ADR-0005)
 ├── src/
 │   ├── serenity.config.ts             # Crew configuration (reporters, ArtifactArchiver)
 │   ├── hooks/
-│   │   └── browser.hooks.ts           # Playwright Browser launched in Before; closed in After
+│   │   └── browser.hooks.ts           # Browser launched once (BeforeAll); per-scenario state reset (Before)
 │   ├── interactions/                  # PageElement definitions per page area
 │   │   ├── StorefrontPage.ts          # Product page elements + URL slug map
 │   │   ├── CartPage.ts                # Cart page elements
@@ -81,9 +81,11 @@ magento-checkout-automation/
 │   │   ├── CartItemCount.ts
 │   │   ├── CartSubtotal.ts
 │   │   ├── OrderConfirmation.ts
+│   │   ├── OrderSummary.ts            # Checkout Order Summary subtotal (asserted at the payment step)
+│   │   ├── PaymentError.ts            # Decline message (payment-failure scenario)
 │   │   └── ValidationMessage.ts
 │   ├── api/
-│   │   └── MagentoApiClient.ts        # REST V1 client stub — full wiring in Docker CI phase
+│   │   └── MagentoApiClient.ts        # REST V1 client — admin token + product verification (ADR-0003)
 │   ├── actors/                        # Reserved — actor setup handled via hooks
 │   └── step-definitions/
 │       ├── background.steps.ts        # Given steps (product availability, guest context, cart)
@@ -91,7 +93,7 @@ magento-checkout-automation/
 │       ├── cart.steps.ts              # When/Then for cart management
 │       └── validation.steps.ts        # When/Then for validation scenarios
 ├── docs/
-│   ├── adr/                           # Architecture Decision Records (0001–0004)
+│   ├── adr/                           # Architecture Decision Records (0001–0005)
 │   ├── templates/                     # Document templates for this project
 │   ├── implementation-logs/           # Per-session development logs
 │   ├── reports/                       # Serenity BDD output (runtime — gitignored)
@@ -100,8 +102,14 @@ magento-checkout-automation/
 │   ├── qa-strategy.md
 │   ├── backlog.md
 │   └── gherkin-style-guide.md
-├── .github/workflows/ci.yml           # CI skeleton — pending live target decision
-├── docker-compose.yml                 # Docker skeleton — pending live target decision
+├── app/code/Portfolio/DeclinePayment/ # In-repo Magento test-fixture module — deterministic decline (ADR-0005)
+├── .github/workflows/
+│   ├── ci.yml                         # e2e: pull pre-baked images → start store → warm-up → suite → Pages
+│   └── bake.yml                       # Manual: install Magento once, push store-app/store-db images to GHCR
+├── docker-compose.yml                 # Full local stack (nginx, phpfpm, mariadb, valkey, opensearch, rabbitmq)
+├── docker-compose.ci.yml              # Overlay swapping in the pre-baked GHCR images
+├── Dockerfile.store-app               # Pre-baked image definitions (built by bake.yml)
+├── Dockerfile.store-db
 ├── cucumber.js                        # Cucumber profile — paths, tags, format, ts-node
 ├── tsconfig.json                      # CommonJS, ES2020, strict
 ├── package.json
@@ -114,18 +122,19 @@ magento-checkout-automation/
 
 What happens when `npm test` runs:
 
-1. Cucumber discovers `features/**/*.feature`, skipping `@deferred` tagged files
+1. Cucumber discovers `features/**/*.feature`, skipping `@deferred` tagged files (none currently carry the tag)
 2. `ts-node/register` (loaded via `requireModule`) compiles TypeScript on-the-fly
 3. `src/serenity.config.ts` is required — configures ArtifactArchiver, SerenityBDDReporter, ConsoleReporter
-4. `src/hooks/browser.hooks.ts` is required — registers `Before` and `After` hooks
-5. Per scenario: `Before` hook launches Chromium; calls `engage(Cast.where(...))` equipping the actor with `BrowseTheWebWithPlaywright`
-6. Cucumber matches Gherkin steps to step definitions in `src/step-definitions/`
-7. Step definitions call `actorCalled('User').attemptsTo(Task...)` or `Ensure.that(Question, matcher)`
-8. Tasks decompose to Interactions (`Click`, `Enter`, `Navigate`, `Wait`, `Select`) against Playwright via Serenity/JS web
-9. `Wait.until(element, isVisible())` guards every async Knockout.js transition
-10. `After` hook closes the browser; the actor is dismissed
-11. `ArtifactArchiver` writes Serenity JSON artifacts to `docs/reports/`
-12. `SerenityBDDReporter` emits structured BDD events; `npm run test:report` converts to HTML living documentation
+4. `src/hooks/browser.hooks.ts` is required — registers `BeforeAll`, `Before` and `AfterAll` hooks
+5. Once per run: `BeforeAll` launches Chromium and resolves the admin API token (`MagentoApi.authenticate()`)
+6. Per scenario: `Before` resets browser state (cookies + local/session storage — cart isolation), then calls `engage(Cast.where(...))` equipping the actor with `BrowseTheWebWithPlaywright` and `CallAnApi`
+7. Cucumber matches Gherkin steps to step definitions in `src/step-definitions/`
+8. Step definitions call `actorCalled('User').attemptsTo(Task...)` or `Ensure.that(Question, matcher)`
+9. Tasks decompose to Interactions (`Click`, `Enter`, `Navigate`, `Wait`, `Select`) against Playwright via Serenity/JS web
+10. `Wait.upTo(15–20 s).until(element, isVisible())` guards every async Knockout.js transition (Serenity's bare `Wait.until` 5 s default is too short for cold KO.js renders)
+11. Once per run: `AfterAll` closes the browser
+12. `ArtifactArchiver` writes Serenity JSON artifacts to `docs/reports/`
+13. `SerenityBDDReporter` emits structured BDD events; `npm run test:report` converts to HTML living documentation (published to GitHub Pages by CI)
 
 ---
 
@@ -135,7 +144,7 @@ What happens when `npm test` runs:
 |---|---|---|---|
 | KO.js async checkout | `Wait.until(element, isVisible())` on every step transition; no hard waits | Each checkout step re-renders asynchronously after XHR | ADR-0004 |
 | Indexer and cache | CI must run `bin/magento indexer:reindex` and `cache:flush` before tests | Product and price changes are not visible on the storefront until reindexed | ADR-0003 |
-| Payment testing | `payment-failure.feature` is `@deferred` | Requires a controllable test gateway that can deterministically decline a card; not achievable on a public sandbox | See feature file header |
+| Payment testing | `payment-failure.feature` runs against the in-repo `Portfolio_DeclinePayment` module | A real gateway sandbox would add secrets, network dependency and a cross-origin iframe; the custom module declines deterministically with none of those | ADR-0005 |
 | Test data setup | API-driven via `MagentoApiClient.ts` | UI-based product setup is slow and brittle under Magento's EAV model | ADR-0003 |
 | Assertion currency | Subtotals use `includes(expectedAmount)` | Currency symbol in displayed price varies by locale; bare-number comparison avoids locale fragility | `docs/gherkin-style-guide.md` |
 | Scope leakage | Test data must be scoped to a dedicated website/store view | Magento configuration, pricing, and catalogue all scope to store view | Mitigated via API setup |
@@ -145,8 +154,16 @@ What happens when `npm test` runs:
 
 ## 6. Known Issues / Technical Debt
 
-- **Live test target unresolved** — `softwaretestingboard.com` returns SSL error 526 as of 2026-06-02. Docker Magento is the recommended resolution. See `docs/backlog.md` Item #1.
-- **API client is a stub** — Background steps verify product availability via UI navigation rather than REST API. Full `MagentoApiClient` wiring is a backlog item (Item #3).
-- **ADR examples not yet populated** — The four ADRs have content but their "skeleton" expansion markers reference concrete code examples not yet added. See `docs/backlog.md` Item #5.
-- **CI workflow non-functional** — `.github/workflows/ci.yml` and `docker-compose.yml` are skeletons. Unblocked by the live target decision (backlog Item #1).
-- **Gherkin style guide worked example pending** — `docs/gherkin-style-guide.md` has a placeholder for the before/after refactor. See `docs/backlog.md` Item #6.
+All items the v1 of this guide listed here are resolved (see `docs/backlog.md` for the full
+record): the Dockerised Magento 2.4.8 target replaced the dead public sandbox (Item #1), the
+API-driven Background is live (Item #3), all five ADRs carry concrete examples (Item #5), CI is
+fully wired with pre-baked GHCR images and a green badge (Item #4), and the Gherkin style guide's
+worked example is complete (Item #6).
+
+Remaining debt, deliberately accepted and recorded:
+
+- **Default `BASE_URL` points at the retired sandbox** — set the env var explicitly; the
+  supported target is the Dockerised store.
+- **Cart seeding in Backgrounds is UI-driven** — product preconditions are API-verified, but
+  `I have "..." in my cart` reuses the `AddToCart` UI journey rather than the guest-cart REST
+  endpoints. Resolution (implement API seeding, or re-scope ADR-0003's claim) is pending.

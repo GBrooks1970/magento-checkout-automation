@@ -151,12 +151,16 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 - Serenity/JS as the framework
 - API-driven test-data setup
 - Playwright over Cypress
+- Deterministic payment failure via an in-repo Magento module
 
 ## Status
 
-All active scenarios pass against the Dockerised Magento 2.4.8 target: read-only
-smoke 7/7 (43/43 steps) and end-to-end guest checkout 4/4 (40/40 steps). The
-Background step verifies product availability through the Magento REST API on
-every scenario. CI is wired; the green badge above reflects the current `main`
-state. The one remaining backlog item is activating the `@deferred`
-payment-failure scenario, which needs a deterministically-declining test gateway.
+Complete. The full suite — **12 scenarios, 94 steps** — runs green in CI against
+the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
+scenario, which declines deterministically via the in-repo
+`Portfolio_DeclinePayment` test-fixture module (no gateway sandbox, secrets, or
+network dependency — see `docs/adr/0005-deterministic-payment-failure.md`). The
+Background step verifies product preconditions through the Magento REST API on
+every scenario. The green badge above reflects the current `main` state, and the
+Serenity living documentation publishes to GitHub Pages on every `main` run. All
+backlog items are closed — `docs/backlog.md` records each with its evidence.

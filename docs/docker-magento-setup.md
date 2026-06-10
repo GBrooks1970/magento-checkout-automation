@@ -143,27 +143,29 @@ bring-up is clean — which is the whole point of using Docker over the shared d
 
 ## Still open
 
-- **CI auth keys.** Add the two Marketplace keys as repository secrets
-  (`MAGENTO_PUBLIC_KEY` / `MAGENTO_PRIVATE_KEY`) and inject them at the auth step.
-  `.github/workflows/ci.yml` carries the placeholders; flesh out its install step
-  from steps 3–6 above.
-- **CI runtime.** A from-scratch install is ~30 min. Cache the Composer/Magento
-  layers or pre-bake an installed image before running this on every push.
-- **Test-isolation defect (feeds backlog #10).** The first green-store run revealed
-  that guest-cart state **accumulates across scenarios** (cart count read 3 where 2
-  expected, 8 where 1 expected) — a real test-isolation bug, NOT the "shared-demo
-  contamination" the v3/v4 notes assumed. Plus `AddToCart`'s success-message wait
-  uses Serenity's 5 s default (not the 30 s Cucumber `setDefaultTimeout`) and times
-  out on a cold first add. Both must be fixed for a green run; see backlog #10.
+Nothing — the three items this section originally tracked are all closed:
 
-## Once the store is up — the items it unblocks
+- **CI auth keys.** ✅ The Marketplace keys live as secrets on the `bake` GitHub
+  environment and are used only by `bake.yml`. `ci.yml` needs no Magento secrets —
+  it pulls the public pre-baked images (see the CI strategy section below).
+- **CI runtime.** ✅ Solved by the pre-baked GHCR images: CI pulls the installed
+  store (~3–5 min) instead of running the ~30–40 min install.
+- **Test-isolation defect (backlog #10).** ✅ Fixed in `src/hooks/browser.hooks.ts`:
+  the `Before` hook resets cookies and local/session storage per scenario (a Magento
+  guest cart is keyed on the session cookie), and `AddToCart`'s success-message wait
+  was raised past Serenity's 5 s default with `Wait.upTo(15 s)`.
 
-- **#10** cart-count / subtotal assertions (deterministic on a clean store).
-- The multi-step KO.js checkout flow and `CheckoutPage.placeOrderButton`
-  (only ever fixed by reasoning; never run on the shared demo).
-- **#3** API-driven Background via `MagentoApiClient` (needs admin API access).
-- **#2** the `@deferred` `payment-failure.feature` (needs a test payment gateway).
-- **#4** publishing the Serenity living documentation from a genuinely green run.
+## Once the store is up — the items it unblocked
+
+All complete (see `docs/backlog.md` for evidence):
+
+- **#10** cart-count / subtotal assertions — deterministic on the clean store. ✅
+- The multi-step KO.js checkout flow and `CheckoutPage.placeOrderButton` —
+  validated end-to-end (`@placesOrder` 4/4). ✅
+- **#3** API-driven Background via `MagentoApiClient`. ✅
+- **#2** `payment-failure.feature` — active via the `Portfolio_DeclinePayment`
+  module (ADR-0005); `@deferred` removed. ✅
+- **#4** Serenity living documentation published from a green run. ✅
 
 ---
 
