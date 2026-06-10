@@ -80,10 +80,8 @@ magento-checkout-automation/
 │   ├── questions/                     # Screenplay Questions
 │   │   ├── CartItemCount.ts
 │   │   ├── CartSubtotal.ts
-│   │   ├── OrderConfirmation.ts
 │   │   ├── OrderSummary.ts            # Checkout Order Summary subtotal (asserted at the payment step)
-│   │   ├── PaymentError.ts            # Decline message (payment-failure scenario)
-│   │   └── ValidationMessage.ts
+│   │   └── PaymentError.ts            # Decline message (payment-failure scenario)
 │   ├── api/
 │   │   └── MagentoApiClient.ts        # REST V1 client — admin token + product verification (ADR-0003)
 │   ├── actors/                        # Reserved — actor setup handled via hooks
