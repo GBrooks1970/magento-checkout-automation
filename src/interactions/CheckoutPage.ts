@@ -56,14 +56,16 @@ export const CheckoutPage = {
     declinePaymentLabel: PageElement.located(By.css('label[for="declinepayment"]'))
         .describedAs('Test Declining Payment label'),
     // The decline message Magento surfaces on the checkout when the order is
-    // rejected. Verified by live DOM probe (backlog #2): the OPC place-order error
-    // renders as `<div class="message message-error error">…</div>` inside the
-    // page-level messages region (`<div class="page messages">`) — NOT under
-    // `.checkout-payment-method`. Scoped to that region rather than bare
-    // `.message-error`: an unscoped selector would also match any other error
-    // banner (session expiry, stock, totals), letting the decline wait succeed on
-    // the wrong message and fail later with a confusing text mismatch. See ADR-0005.
-    paymentErrorMessage: PageElement.located(By.css('.page.messages .message-error'))
+    // rejected. The OPC place-order error renders as
+    // `<div class="message message-error error">…</div>` by the checkout's own
+    // errors component INSIDE the OPC wrapper (`#checkout`) — NOT under
+    // `.checkout-payment-method`, and NOT in the page-level `.page.messages`
+    // region (CI run 27295475559 proved that scoping wrong: the decline wait
+    // timed out, while the same scenario passed pre-scoping). Scoped to
+    // `#checkout` rather than bare `.message-error` so a page-level banner
+    // (session expiry, stock) cannot satisfy the decline wait and masquerade
+    // as a text mismatch. See ADR-0005 / review R-05.
+    paymentErrorMessage: PageElement.located(By.css('#checkout .message-error'))
         .describedAs('payment decline message'),
     // Scope to the ACTIVE payment method's content. With more than one payment
     // method enabled (checkmo + the declinepayment test method, backlog #2), every
