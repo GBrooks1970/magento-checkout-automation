@@ -33,7 +33,10 @@ why, is the senior signal here.
 
 ## Concrete detail
 
-**Installed version:** `@serenity-js/*` 3.43.2 (all packages pinned to the same minor)
+**Installed version:** `@serenity-js/*` 3.43.2 — pinned **exactly** in `package.json` (not a range).
+The pin is deliberate: the per-scenario isolation strategy in `src/hooks/browser.hooks.ts` depends on
+observed Serenity/JS v3 behaviour (a single reused Playwright context under the `using(browser)`
+wiring); a floated minor could change that silently and reintroduce the backlog #10 cart-leak defect.
 
 **Key integration points:**
 
