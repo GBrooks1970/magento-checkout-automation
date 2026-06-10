@@ -3,10 +3,17 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
 
     <!--
-      The payment method is a standard Gateway-adapter method. Its command pool
-      maps the authorize/sale commands to DeclineCommand, which always throws a
-      CommandException — so placing an order with this method fails every time.
-      No card form, no gateway connection, no credentials.
+      The payment method is a standard Gateway-adapter method. No card form, no
+      gateway connection, no credentials.
+
+      NOTE — the command pool below is NOT the runtime decline mechanism. Offline-
+      style order placement never invokes the adapter's authorize/sale commands
+      (observed live: orders SUCCEEDED with only the command wired — see ADR-0005).
+      The actual decline is forced by Observer/DeclineOrder.php on
+      sales_model_service_quote_submit_before (etc/events.xml). DeclineCommand is
+      retained for gateway-contract completeness: if a future Magento code path
+      does invoke authorize/sale, it declines consistently rather than silently
+      succeeding.
     -->
     <virtualType name="PortfolioDeclinePaymentFacade" type="Magento\Payment\Model\Method\Adapter">
         <arguments>
