@@ -39,8 +39,6 @@ export const CheckoutPage = {
     // hides). See backlog #10.
     paymentSection: PageElement.located(By.css('.checkout-payment-method'))
         .describedAs('payment method section'),
-    checkMoneyOrderOption: PageElement.located(By.css('input[value="checkmo"]'))
-        .describedAs('Check / Money Order payment option'),
     // Luma renders the real payment radio as a zero-size, display:none input (offsetParent
     // is null) and overlays a styled label — so the radio is never `isVisible()`. With a
     // single payment method Magento auto-selects checkmo, but we click the *visible label*
@@ -99,16 +97,10 @@ export const CheckoutPage = {
     orderSummaryBlock: PageElement.located(By.css('.opc-block-summary'))
         .describedAs('order summary block'),
 
-    // Validation. The generated field error inserted by Magento on submit.
-    // NOTE (backlog #10): asserting this is unreliable in the KO.js checkout — the
-    // invalid-email case renders it but it can flicker during re-render, and the
-    // "missing details" case surfaces NO message at all (Magento silently declines
-    // to advance). The two checkout-validation scenarios are pending a decision on
-    // how to assert "checkout rejected the input" robustly.
-    firstValidationMessage: PageElement.located(By.css('div.mage-error'))
-        .describedAs('field validation message'),
-    // The email field itself is marked invalid (aria-invalid="true", class mage-error)
-    // and this signal is stable, unlike the transient error div.
-    emailFieldInvalid: PageElement.located(By.css('#customer-email.mage-error'))
-        .describedAs('email field in an invalid state'),
+    // NOTE on validation assertions (backlog #10): Magento's generated field-error
+    // div (`div.mage-error`) is unreliable to assert on in the KO.js checkout — it
+    // flickers during re-render, and the "missing details" case surfaces no message
+    // at all. The validation steps therefore assert the email field's stable
+    // `aria-invalid` attribute (via `emailInput` above) and non-advancement (via
+    // `paymentSection`) instead — see validation.steps.ts.
 };

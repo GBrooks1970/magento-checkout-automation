@@ -5,7 +5,7 @@ import { StorefrontPage } from '../interactions/StorefrontPage';
 // The add-to-cart confirmation arrives via an AJAX round-trip plus a Knockout.js
 // re-render, which on a cold page (first add of a run, or production-mode static
 // regeneration) can exceed Serenity's 5 s default Wait ceiling. NB the Cucumber
-// `setDefaultTimeout(30 s)` in browser.hooks bounds the *step*, not a Serenity
+// `setDefaultTimeout(60 s)` in browser.hooks bounds the *step*, not a Serenity
 // `Wait.until`, so the per-wait ceiling must be raised explicitly. See backlog #10.
 const successMessageTimeout = Duration.ofSeconds(15);
 
