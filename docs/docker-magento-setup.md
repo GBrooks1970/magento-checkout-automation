@@ -19,6 +19,11 @@ cannot provide deterministic cart state.
 >
 > This is the genuine cost of the green-CI-badge claim. It is worth doing, but it
 > is a session of real work, not a config tweak.
+>
+> **That cost has since been paid once and snapshotted:** the install was baked
+> into two public GHCR images, so the usual local bring-up is now a pull, not an
+> install — see "The fast path" below. The keys/RAM/time warnings above apply
+> only to the from-scratch route.
 
 > **Validated end-to-end on 2026-06-03.** The sequence below is no longer
 > theoretical — it brought up a working store (Magento 2.4.8, 2040 Luma products,
@@ -39,7 +44,7 @@ see snag 3 below).
 It does **not** install Magento. After the services are healthy the `appdata`
 volume is still empty; the install step below populates it.
 
-## Prerequisites (one-off)
+## Prerequisites (one-off — from-scratch install route only)
 
 1. **Docker Desktop running**, with ≥6 GB RAM allocated (Settings → Resources).
 2. **Magento Marketplace auth keys.** Create a free account at
@@ -47,7 +52,29 @@ volume is still empty; the install step below populates it.
    Magento 2 key pair. The **public key** is the Composer username, the **private
    key** is the Composer password. Keep these out of git.
 
-## Bring-up sequence (local) — validated 2026-06-03
+## The fast path — pull the pre-baked images (no Marketplace keys needed)
+
+Since the CI images went public, the from-scratch install below is **optional**
+for local work. The same overlay CI uses brings up the complete, ready-to-test
+store — Luma sample data, qty-counter config, 2FA disabled, the decline-payment
+module installed, test admin credentials baked in:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/   # expect 200
+BASE_URL=http://localhost:8080 npm test                           # full suite
+```
+
+First start takes ~5–10 min (image pull + DB restore + OpenSearch boot); no
+secrets are required — both GHCR packages are public. Tear down with
+`docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v` for a
+clean slate, or leave the volumes in place to restart instantly.
+
+Use the install sequence below only when you need to *change* what is baked into
+the images (Magento version, sample data, a config step) — and then re-run
+`bake.yml` so CI picks the change up.
+
+## Bring-up sequence (local, from scratch) — validated 2026-06-03
 
 > **Windows / Git-Bash note (snag 1).** A bare Unix path argument like
 > `/var/www/html` passed to `docker compose exec` is rewritten by MSYS path
@@ -122,6 +149,19 @@ docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
 #     docs/admin-api-token-guide.md for the full rationale and token walkthrough.
 docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
   php bin/magento module:disable Magento_TwoFactorAuth Magento_AdminAdobeImsTwoFactorAuth && \
+  php bin/magento cache:flush'
+
+# 6d. Install the in-repo decline-payment test module (ADR-0005). REQUIRED for a
+#     full-suite run: the default cucumber profile includes payment-failure.feature,
+#     whose scenario needs the always-declining "declinepayment" method to exist.
+#     Without this step the suite times out waiting for label[for="declinepayment"].
+#     (Mirrors the same step in .github/workflows/bake.yml.)
+docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code/Portfolio'
+docker compose cp app/code/Portfolio/DeclinePayment phpfpm:/var/www/html/app/code/Portfolio/DeclinePayment
+docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+  php bin/magento module:enable Portfolio_DeclinePayment && \
+  php bin/magento setup:upgrade --no-interaction && \
+  php bin/magento config:set payment/declinepayment/active 1 && \
   php bin/magento cache:flush'
 
 # 7. Sanity check, then run the suite

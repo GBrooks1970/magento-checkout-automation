@@ -10,7 +10,7 @@
 - **Purpose:** Demonstrate senior test-automation architecture against the Magento Luma storefront guest checkout journey, using Spec-Driven Development, BDD, and the Screenplay pattern.
 - **Surface type:** UI — Magento Luma storefront (Knockout.js checkout)
 - **Language / Framework:** TypeScript + Serenity/JS 3.43 + Playwright 1.60 + Cucumber 11
-- **Test target:** `BASE_URL` env var — the supported target is the Dockerised Magento 2.4.8 store (`http://localhost:8080` locally; pre-baked GHCR images in CI — see `docs/docker-magento-setup.md`). The code default still points at the retired public sandbox; always set `BASE_URL` explicitly.
+- **Test target:** `BASE_URL` env var — defaults to `http://localhost:8080`, the local Dockerised Magento 2.4.8 store (pre-baked GHCR images locally and in CI — see `docs/docker-magento-setup.md`).
 - **Automation entry point:** `npm test` — runs Cucumber with `--tags "not @deferred"` (no scenario currently carries the tag; the full suite of 12 scenarios runs)
 
 ---
@@ -160,8 +160,6 @@ worked example is complete (Item #6).
 
 Remaining debt, deliberately accepted and recorded:
 
-- **Default `BASE_URL` points at the retired sandbox** — set the env var explicitly; the
-  supported target is the Dockerised store.
 - **Cart seeding in Backgrounds is UI-driven** — product preconditions are API-verified, but
   `I have "..." in my cart` reuses the `AddToCart` UI journey rather than the guest-cart REST
   endpoints. Resolution (implement API seeding, or re-scope ADR-0003's claim) is pending.

@@ -82,42 +82,43 @@ npm install
 npx playwright install chromium
 ```
 
-There are two ways to run, depending on the target store.
-
-**Live read-only smoke (no setup required).** A public Magento Luma demo serves as
-a read-only target. Only the read-only subset is run — scenarios that place an
-order are excluded — so it is safe against a shared, non-resettable store:
+The suite runs against the local Dockerised Magento store (the same store CI
+uses). The quickest bring-up pulls the pre-baked public GHCR images — no Magento
+install, no Marketplace keys, no secrets:
 
 ```bash
-BASE_URL=https://magento2-demo.magebit.com npm run test:smoke
+# bring up the complete store (~5–10 min first start: pull + DB restore)
+docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
+
+# run the full suite (12 scenarios — BASE_URL already defaults to this store)
+npm test
 ```
 
-The `smoke` profile filters by tag (`not @deferred and not @placesOrder`). Scope
-the run through this profile, **not** through CLI path or `feature:line`
-arguments — the default profile's path glob wins over those, and an unscoped run
-would place real orders on the shared demo. On Windows PowerShell set the
-variable first: `$env:BASE_URL = 'https://magento2-demo.magebit.com'`.
+The pre-baked images carry everything the suite needs: Luma sample data, the
+`Portfolio_DeclinePayment` test module for the payment-failure scenario, admin
+2FA disabled for the API-driven Background, and the test admin credentials.
+Placing real orders is fine — the store is disposable; tear down with
+`docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v`.
 
-**Full suite (order placement and checkout).** The order-placing and `@deferred`
-scenarios need a clean, resettable store — a shared demo's cart is
-nondeterministic and cannot be asserted on. This runs against the ephemeral
-Dockerised Magento target:
+**Read-only subset.** The `smoke` profile (`npm run test:smoke`) runs only the 7
+scenarios that neither place orders nor depend on the decline module — filter by
+this profile (tags `not @deferred and not @placesOrder`), **not** by CLI path or
+`feature:line` arguments, which the default profile's path glob overrides.
 
-```bash
-docker compose up -d --wait
-BASE_URL=http://localhost:8080 npm test          # active suite, excludes @deferred
-```
+> An earlier README recommended running the smoke subset against a public Luma
+> demo (Magebit). That path no longer works: the Background now verifies product
+> preconditions through the Magento admin REST API on every scenario, and a
+> public demo will not honour the test credentials. Use the local store.
 
-See `docs/docker-magento-setup.md` for the first-time bring-up sequence (requires
-Adobe Marketplace auth keys). The Docker store is what CI uses; the pre-baked
-GHCR images mean CI skips the ~30-min install — see `docs/docker-magento-setup.md`
-§ CI section.
+**From-scratch install.** Only needed to change what is baked into the images —
+see `docs/docker-magento-setup.md` for the full runbook (requires Adobe
+Marketplace auth keys) and the image-baking strategy CI uses.
 
 ### Environment variables
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `BASE_URL` | `https://magento.softwaretestingboard.com` | Target store base URL (set to `http://localhost:8080` for Docker). |
+| `BASE_URL` | `http://localhost:8080` | Target store base URL — the default matches the local Docker store. Point it elsewhere only at a store you own (the Background mints an admin token there). |
 | `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
 | `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
 | `MAGENTO_ADMIN_USERNAME` | `admin` | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. |
