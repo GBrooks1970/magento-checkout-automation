@@ -144,6 +144,14 @@ The pre-baked images eliminate the ~30-min from-scratch Magento install from eac
 total pipeline time under 25 minutes. See `docs/docker-magento-setup.md` for the image strategy and
 `docs/adr/0003-api-driven-test-data-setup.md` for the API-driven Background that runs on every scenario.
 
+Two deliberate quirks of the report pipeline, so they don't read as mistakes: the suite archives
+its Serenity JSON to `docs/reports/` (gitignored) and the HTML report is rendered from there to
+`target/site/serenity`, which is what Pages publishes — a two-stage path, not a misconfiguration.
+And the Pages deploy runs **even when the suite fails** (`always()` on `main`), so a broken run
+still produces inspectable living documentation: if you ever see failing scenarios in the
+published report while the badge is red, that is the publish-on-failure policy working as
+intended, not a stale deploy.
+
 ## Design decisions
 
 The architectural decisions are recorded as short ADRs in `docs/adr/`:

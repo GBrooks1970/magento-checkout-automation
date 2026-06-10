@@ -98,7 +98,7 @@ They are passed to framework Interactions (`Click`, `Enter`, `Wait`, `Select`) i
 |---|---|---|
 | `src/interactions/StorefrontPage.ts` | Product page | `addToCartButton`, `quantityInput`, `successMessage`; `urlFor(productName)` slug map |
 | `src/interactions/CartPage.ts` | Cart page | `subtotal`, `itemCounter`, `proceedToCheckoutButton`, `emptyCartMessage`, `quantityInputFor(name)`, `deleteButtonFor(name)` |
-| `src/interactions/CheckoutPage.ts` | Checkout (all steps) | Shipping fields, `shippingNextButton`, `flatRateOption`, `checkMoneyOrderOption`, `placeOrderButton`, `confirmationContainer`, `orderNumber`, `firstValidationMessage` |
+| `src/interactions/CheckoutPage.ts` | Checkout (all steps) | Shipping fields, `shippingNextButton`, `flatRateOption`, `checkMoneyOrderLabel`, `declinePaymentLabel`, `placeOrderButton`, `paymentErrorMessage`, `confirmationContainer`, `orderNumber`, `orderSummarySubtotal` |
 
 ---
 
@@ -137,9 +137,11 @@ Questions return `QuestionAdapter<string>` from `Text.of(element)`. They are pas
 | `CartItemCount()` | `src/questions/CartItemCount.ts` | Counter text, e.g. `"2"` | `equals(String(n))` |
 | `CartSubtotal()` | `src/questions/CartSubtotal.ts` | Price text including symbol, e.g. `"$45.00"` | `includes("45.00")` |
 | `OrderSummary.subtotal()` | `src/questions/OrderSummary.ts` | Checkout Order Summary subtotal, e.g. `"$90.00"` | `includes("90.00")` — asserted at the payment step, before placing the order |
-| `OrderConfirmation.orderNumber()` | `src/questions/OrderConfirmation.ts` | Order number text from the success page | Currently unused — steps assert via `CheckoutPage.orderNumber` + `isVisible()` directly |
 | `PaymentError.text()` | `src/questions/PaymentError.ts` | Decline error message text | `includes('declined')` (payment-failure scenario) |
-| `ValidationMessage.text()` | `src/questions/ValidationMessage.ts` | First visible validation message text | Currently unused — validation steps assert `Attribute.called('aria-invalid')` instead |
+
+Order confirmation is asserted directly on `CheckoutPage.orderNumber` + `isVisible()`, and
+validation on the email field's `aria-invalid` attribute — the once-planned `OrderConfirmation`
+and `ValidationMessage` Questions were pruned as unused (review R-07).
 
 **Why `includes` for money:** The Luma store displays `$45.00`; the Gherkin spec states `"45.00"`.
 Using `includes` keeps assertions currency-symbol-agnostic and locale-safe. Grand totals are never
