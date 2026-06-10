@@ -211,11 +211,11 @@ require adjustment depending on the Magento theme version. Verify against the li
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `TimeoutExpiredError` on shipping form | `BASE_URL` unreachable, or KO.js still loading | Confirm `BASE_URL` is correct; check the live target status in `docs/backlog.md` |
+| `TimeoutExpiredError` on shipping form | `BASE_URL` unreachable, or KO.js still loading | Confirm the store is up (`curl http://localhost:8080/`); cold KO.js renders need the `Wait.upTo` ceilings above |
 | State dropdown never becomes visible | Country selection not complete before wait fires | Confirm `Select.option(country)` is the last activity before `Wait.until(stateSelect, ...)` |
 | `Cast.where` async error | Browser launch inside `Cast.where` synchronous callback | Browser launch must be in the `BeforeAll` hook; `Cast.where` is synchronous-only in Serenity/JS v3 |
 | Only the first scenario passes; rest fail with "browser has been closed" | Browser launched/closed per scenario (the backlog #8 defect) | Launch once in `BeforeAll`, close in `AfterAll`; never per scenario |
 | Cart counts accumulate across scenarios (e.g. expected 1, got 8) | Per-scenario state reset missing — guest cart keyed on session cookie leaks | Keep the `Before` hook's cookie + storage reset (backlog #10) |
 | Subtotal assertion fails | Currency symbol present in displayed price | Use `includes(expectedAmount)` — not `equals` — for all money assertions |
-| All scenarios fail with connection refused | `BASE_URL` default is unreachable | Set `BASE_URL` env var to a working Magento instance; see `docs/backlog.md` |
+| All scenarios fail with connection refused | The local Docker store is not running (`BASE_URL` defaults to `http://localhost:8080`) | `docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait` — see `docs/docker-magento-setup.md` |
 | `Select.option(state)` throws not found | State name mismatch with Magento region data | Verify the exact state name shown in the dropdown on the live store |

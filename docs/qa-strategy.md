@@ -135,5 +135,3 @@ Currently open, deliberately accepted and tracked:
 1. **API-driven cart seeding** — the `I have "..." in my cart` Background step seeds via the
    `AddToCart` UI journey, not the guest-cart REST endpoints; resolution (implement, or re-scope
    the ADR-0003 claim) is pending (see `docs/architecture.md` §6)
-2. **Default `BASE_URL` hygiene** — the code default still points at the retired public sandbox;
-   set the env var explicitly until the default moves to the Dockerised target
