@@ -53,10 +53,10 @@ BeforeAll(async () => {
 // Before (per scenario) while the async launch lives in BeforeAll (once).
 Before(async () => {
     for (const context of browser.contexts()) {
-        await context.clearCookies().catch(() => { /* nothing to clear */ });
         for (const page of context.pages()) {
-            // Runs in the browser; reach storage via globalThis so this type-checks
-            // under the Node tsconfig (no DOM lib) without pulling in DOM types.
+            // 1. Clear the store-origin web storage while the page is still on it.
+            //    Runs in the browser; reach storage via globalThis so this
+            //    type-checks under the Node tsconfig (no DOM lib).
             await page.evaluate(() => {
                 const w = globalThis as unknown as {
                     localStorage?: { clear(): void };
@@ -65,7 +65,23 @@ Before(async () => {
                 w.localStorage?.clear();
                 w.sessionStorage?.clear();
             }).catch(() => { /* no accessible storage on this page */ });
+
+            // 2. Park the page on about:blank to ABORT the previous scenario's
+            //    in-flight requests before cookies are cleared. Magento re-sends
+            //    `Set-Cookie: PHPSESSID=<same>` on every response, so a late
+            //    async customer-data response landing AFTER clearCookies()
+            //    re-installs the old session — the previous scenario's server-side
+            //    cart then leaks into this one (observed in CI run 27295894167:
+            //    count read 3 where 2 expected; the count survived a reload + 20 s
+            //    poll, proving a server-side leak, not a stale client cache).
+            await page.goto('about:blank').catch(() => { /* page already closing */ });
         }
+
+        // 3. Clear cookies LAST, once nothing can re-set them. Deliberately NOT
+        //    wrapped in a swallowing catch: if the reset genuinely fails, fail
+        //    THIS scenario loudly at Before rather than as a baffling cart-count
+        //    mismatch three steps later.
+        await context.clearCookies();
     }
 
     engage(Cast.where(actor =>
