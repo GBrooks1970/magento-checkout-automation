@@ -19,9 +19,6 @@ export const StorefrontPage = {
     quantityInput: PageElement.located(By.css('#qty'))
         .describedAs('quantity input'),
 
-    cartCounter: PageElement.located(By.css('span.counter-number'))
-        .describedAs('cart item counter'),
-
     successMessage: PageElement.located(By.css('div.message-success'))
         .describedAs('add-to-cart success message'),
 };

@@ -8,6 +8,10 @@
  * message and the shopper stays on checkout. This is the reliable decline
  * trigger for the test method — the gateway authorize command was not invoked
  * by offline-style placement. See ADR-0005 / backlog #2.
+ *
+ * Keep the message text in sync with Gateway/Command/DeclineCommand.php (the
+ * contract-completeness fallback) — the payment-failure scenario asserts the
+ * shopper-visible text contains "declined".
  */
 declare(strict_types=1);
 

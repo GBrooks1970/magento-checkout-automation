@@ -1,4 +1,4 @@
-import { By, PageElement, PageElements } from '@serenity-js/web';
+import { By, PageElement } from '@serenity-js/web';
 import { BASE_URL } from '../serenity.config';
 
 export const CartPage = {
@@ -20,9 +20,6 @@ export const CartPage = {
 
     emptyCartMessage: PageElement.located(By.css('div.cart-empty'))
         .describedAs('empty cart message'),
-
-    itemRows: PageElements.located(By.css('tbody tr.item-info'))
-        .describedAs('cart item rows'),
 
     // Scope to the row by the product link carrying title="<name>". On Luma the
     // name link has no title attribute; the product *photo* link does, so match

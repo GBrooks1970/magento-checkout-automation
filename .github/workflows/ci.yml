@@ -58,20 +58,26 @@ jobs:
         # docker manifest inspect queries the registry without pulling the
         # image. It succeeds (exit 0) if the manifest exists and is public,
         # and fails (exit 1) if the image is absent or private.
-        # Both images must be present; we check store-app as the proxy for
-        # both (they are always built and pushed together by bake.yml).
+        # BOTH images are checked individually. An earlier version checked
+        # store-app as a proxy for both ("always built and pushed together"),
+        # but the recorded empty-dump incident (backlog #4, bug 4) was exactly
+        # a bake where store-app was good and store-db was a useless 4K image
+        # — the proxy assumption does not hold.
         run: |
-          if docker manifest inspect \
-              ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8 \
-              > /dev/null 2>&1; then
-            echo "available=true"  >> "$GITHUB_OUTPUT"
-            echo "Pre-baked images found — proceeding to test."
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Pre-baked GHCR images not yet available." \
-                 "Run bake.yml (Actions → bake-store-images → Run workflow)" \
-                 "then set both GHCR packages to public before re-running."
-          fi
+          available=true
+          for image in magento-store-app magento-store-db; do
+            if docker manifest inspect \
+                "ghcr.io/gbrooks1970/magento-checkout-automation/${image}:2.4.8" \
+                > /dev/null 2>&1; then
+              echo "${image}: manifest found."
+            else
+              available=false
+              echo "::warning::Pre-baked image ${image} not available." \
+                   "Run bake.yml (Actions → bake-store-images → Run workflow)" \
+                   "then set both GHCR packages to public before re-running."
+            fi
+          done
+          echo "available=${available}" >> "$GITHUB_OUTPUT"
 
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
@@ -138,6 +144,10 @@ jobs:
         # exact page types the suite touches (homepage, both product pages, the
         # cart) so the cost is paid here, outside any assertion. OPcache is shared
         # across all php-fpm workers, so two passes is enough to warm them.
+        # Each curl must return 200: a non-200 here means the store is only
+        # half-up (e.g. DB restored but Magento erroring), and proceeding would
+        # fail later inside the suite with a far less specific signal. Fail the
+        # step at the first bad code instead.
         run: |
           for pass in 1 2; do
             for url in \
@@ -147,6 +157,10 @@ jobs:
               "http://localhost:8080/checkout/cart"; do
               code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
               echo "pass $pass  HTTP $code  $url"
+              if [ "$code" != "200" ]; then
+                echo "::error::Warm-up request to $url returned HTTP $code — store is not fully up."
+                exit 1
+              fi
             done
           done
 
