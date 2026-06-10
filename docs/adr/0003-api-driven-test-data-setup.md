@@ -103,3 +103,10 @@ step is the single most common cause of "product not found" flakiness in Magento
 API-driven — `MagentoApi.verifyProductIsAvailable` queries the REST catalogue API and asserts the
 product exists at the expected price; the UI fallback has been removed. The actor is granted both
 `BrowseTheWebWithPlaywright` and `CallAnApi` abilities in `src/hooks/browser.hooks.ts`.
+
+**Amendment (2026-06-10, review finding R-03):** the pre-seeded-cart half of this decision was
+UI-driven until 2026-06-10 — the `I have "..." in my cart` Background step clicked through the
+Add to Cart journey. It now seeds via the REST guest-cart endpoints
+(`POST /V1/guest-carts` + `/items`), bound to the browser session through the
+`Portfolio_CartSeed` test-fixture adopt endpoint. The binding problem and the fixture-module
+decision are recorded in [ADR-0006](0006-api-guest-cart-seeding.md).

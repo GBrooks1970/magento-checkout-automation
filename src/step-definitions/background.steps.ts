@@ -1,7 +1,7 @@
 import { Given } from '@cucumber/cucumber';
 import { actorCalled } from '@serenity-js/core';
 import { BrowseStorefront } from '../tasks/BrowseStorefront';
-import { AddToCart } from '../tasks/AddToCart';
+import { AdoptSeededCart } from '../tasks/AdoptSeededCart';
 import { MagentoApi } from '../api/MagentoApiClient';
 
 // Product availability is established as an API precondition (ADR-0003: "API setup,
@@ -22,8 +22,17 @@ Given('I am browsing the storefront as a guest', async () => {
     );
 });
 
+// Cart preconditions are seeded through the REST API, not by clicking through the
+// storefront (ADR-0003 / ADR-0006): create a guest cart, add the item by SKU, then
+// bind the quote to the browser session via the Portfolio_CartSeed adopt endpoint.
+// AddToCart (the UI journey) remains the implementation of the When steps, where
+// adding to the cart is the behaviour under test rather than setup.
 Given('I have {string} in my cart with quantity {int}', async (productName: string, quantity: number) => {
+    const sku = await MagentoApi.skuForProduct(productName);
+    const maskedCartId = await MagentoApi.createGuestCart();
+    await MagentoApi.addItemToGuestCart(maskedCartId, sku, quantity);
+
     await actorCalled('User').attemptsTo(
-        AddToCart.productWithQuantity(productName, quantity),
+        AdoptSeededCart.withId(maskedCartId),
     );
 });

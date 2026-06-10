@@ -22,3 +22,4 @@ decision gets a new ADR that supersedes the old one, rather than an edit.
 | [0003](0003-api-driven-test-data-setup.md) | Set up test data through the API, assert through the UI | Accepted |
 | [0004](0004-playwright-over-cypress.md) | Use Playwright as the UI driver, over Cypress | Accepted |
 | [0005](0005-deterministic-payment-failure.md) | Deterministic payment failure via a custom always-decline module | Accepted |
+| [0006](0006-api-guest-cart-seeding.md) | Seed guest carts through the REST API, bound to the session by a test-fixture endpoint | Accepted |

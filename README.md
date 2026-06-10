@@ -161,6 +161,7 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 - API-driven test-data setup
 - Playwright over Cypress
 - Deterministic payment failure via an in-repo Magento module
+- API guest-cart seeding, session-bound via an in-repo test-fixture endpoint
 
 ## Status
 
@@ -168,8 +169,11 @@ Complete. The full suite — **12 scenarios, 94 steps** — runs green in CI aga
 the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
 scenario, which declines deterministically via the in-repo
 `Portfolio_DeclinePayment` test-fixture module (no gateway sandbox, secrets, or
-network dependency — see `docs/adr/0005-deterministic-payment-failure.md`). The
-Background step verifies product preconditions through the Magento REST API on
-every scenario. The green badge above reflects the current `main` state, and the
+network dependency — see `docs/adr/0005-deterministic-payment-failure.md`).
+Backgrounds are fully API-driven: product preconditions are verified through the
+Magento REST API on every scenario, and cart preconditions are seeded through the
+REST guest-cart endpoints, bound to the browser session via the in-repo
+`Portfolio_CartSeed` endpoint (`docs/adr/0006-api-guest-cart-seeding.md`). The
+green badge above reflects the current `main` state, and the
 Serenity living documentation publishes to GitHub Pages on every `main` run. All
 backlog items are closed — `docs/backlog.md` records each with its evidence.
