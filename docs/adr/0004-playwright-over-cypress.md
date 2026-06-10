@@ -30,7 +30,9 @@ tool is better than the other; each is the right choice for a different shape of
 
 ## Concrete detail
 
-**Installed version:** `@playwright/test` 1.60.0, `playwright` (peer) 1.60.0
+**Installed version:** `@playwright/test` 1.60.0 and `playwright` 1.60.0 — both declared explicitly
+and pinned exactly in `package.json` (`playwright` was previously a phantom dependency: imported by
+`src/hooks/browser.hooks.ts` but resolved only transitively through `@playwright/test`)
 
 **The KO.js wait pattern — what this decision enables:**
 
