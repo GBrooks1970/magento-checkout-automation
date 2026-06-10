@@ -1,7 +1,7 @@
 # QA Strategy — Magento Checkout Automation
 
-**Version:** 1
-**Last Updated:** 2026-06-02
+**Version:** 2
+**Last Updated:** 2026-06-10
 
 ---
 
@@ -18,13 +18,15 @@
 
 | Feature file | Scenarios | Scope | Tags | CI status |
 |---|---|---|---|---|
-| `features/guest-checkout.feature` | 3 (1 scenario outline × 3 rows) | Happy path: add to cart → shipping → payment → confirmation; cart total | — | Active |
+| `features/guest-checkout.feature` | 5 (2 + a 3-row quantity outline) | Happy path: add to cart → shipping → payment → confirmation; subtotal checks | `@placesOrder` on the order-placing scenarios | Active |
 | `features/cart-management.feature` | 4 | Add single product, add multiple products, update quantity, remove item | — | Active |
 | `features/checkout-validation.feature` | 2 | Reject checkout with missing fields; reject with invalid email | — | Active |
-| `features/payment-failure.feature` | 1 | Declined card reported to shopper; cart intact | `@deferred` | Excluded until Docker CI |
+| `features/payment-failure.feature` | 1 | Declined card reported to shopper; cart intact | — (`@deferred` removed 2026-06-09) | Active — deterministic decline via `Portfolio_DeclinePayment` (ADR-0005) |
 
-**Total active scenarios:** 9 (plus 2 more via the quantity outline)
-**Deferred scenarios:** 1
+**Total active scenarios:** 12 (94 steps — the figure CI runs green: 12/12, 94/94)
+**Deferred scenarios:** 0
+**Smoke subset:** the `smoke` profile (`not @deferred and not @placesOrder`) runs the 7 read-only
+scenarios — safe against shared, non-resettable stores.
 
 ---
 
@@ -36,16 +38,17 @@ Gates that must pass before a merge is accepted:
 2. **Active scenario suite** — `npm test` (`--tags "not @deferred"`) — all scenarios pass
 3. **Serenity BDD report generated** — `npm run test:report` — no report generation errors
 
-Once CI is configured (see backlog Item #1), the GitHub Actions workflow will enforce these gates on every pull request.
+The `e2e` GitHub Actions workflow (`.github/workflows/ci.yml`) enforces these gates on every push
+to `main` and on every pull request, running the full suite against the pre-baked Dockerised store.
 
 ---
 
 ## 4. Metrics and Reporting
 
 - **Run artifacts:** Serenity BDD JSON written to `docs/reports/` by `ArtifactArchiver` on every run
-- **Living documentation:** `npm run test:report` converts JSON to HTML; publishing via GitHub Pages is a backlog item (Item #4)
-- **Flake monitoring:** The `@deferred` tag quarantines scenarios that cannot run reliably without a controllable payment gateway. Any scenario that begins flaking under normal conditions should be tagged `@pending` with a comment explaining the instability trigger
-- **Baseline:** All 9+ active scenarios must pass on every run against the live target; zero tolerance for intermittent failures once the target is stable
+- **Living documentation:** `npm run test:report` converts JSON to HTML; CI publishes it to GitHub Pages on every `main` run — https://gbrooks1970.github.io/magento-checkout-automation/
+- **Flake monitoring:** The `@deferred` tag quarantines scenarios that cannot yet run reliably; it was used to hold `payment-failure.feature` out of every run until the deterministic decline module existed (removed 2026-06-09 — the quarantine demonstration in full). Any scenario that begins flaking under normal conditions should be tagged `@pending` with a comment explaining the instability trigger
+- **Baseline:** All 12 active scenarios must pass on every run against the Dockerised target; zero tolerance for intermittent failures
 
 ---
 
@@ -55,7 +58,7 @@ Once CI is configured (see backlog Item #1), the GitHub Actions workflow will en
 |---|---|---|---|
 | High | Knockout.js checkout async | Steps fire before KO.js has re-rendered, causing element-not-found or stale-element errors | `Wait.until(element, isVisible())` on every step transition; zero hard waits — see `docs/screenplay-guide.md` |
 | High | Magento indexer / cache | Products created or modified via API are not visible on the storefront until `indexer:reindex` and `cache:flush` run | CI startup sequence must include both commands before any test run |
-| High | Live test target availability | Current default URL (`softwaretestingboard.com`) has an SSL error; suite cannot run | Docker Magento is the resolution — see `docs/backlog.md` Item #1 |
+| High | Live test target availability | The original public sandbox died (SSL 526); shared demos are nondeterministic | Resolved: Dockerised Magento 2.4.8 store, pre-baked as GHCR images for CI — see `docs/docker-magento-setup.md` |
 | Medium | Async order processing | Order state (e.g. "Pending") may not be set immediately after placement on Commerce edition | Poll or wait on order state; avoid immediate state assertions |
 | Medium | API / UI parity lag | Test data created via REST API not yet visible when the first UI step fires | Ensure reindex + cache flush runs between API setup and UI navigation |
 | Medium | Layered caching | Pass-then-fail on identical input usually means stale FPC, block cache, or Varnish | Flush Varnish and Magento cache in CI before test run |
@@ -88,35 +91,49 @@ npx tsc --noEmit
 npm run test:report
 ```
 
-### CI (Docker — pending)
+### CI (the `e2e` workflow, as implemented)
+
+What `.github/workflows/ci.yml` actually runs (no Magento secrets needed — the
+pre-baked images carry the installed store and test credentials):
 
 ```bash
-# Step 1: Start the Magento Docker stack
-docker-compose up -d
+# Step 1: Pull the pre-baked store images (built once by bake.yml)
+docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
 
-# Step 2: Wait for Magento to be ready (health check)
-# [to be documented once docker-compose.yml is finalised]
+# Step 2: Start the stack — the CI overlay swaps in the pre-baked images;
+# --wait blocks on healthchecks (DB restores its dump; OpenSearch ~50s boot)
+docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
 
-# Step 3: Flush caches and reindex
-docker exec magento bin/magento indexer:reindex
-docker exec magento bin/magento cache:flush
+# Step 3: Smoke-check and WARM UP the store — the pre-baked store boots with an
+# empty full-page cache and cold OPcache; priming homepage, product pages and
+# cart pays the first-render penalty outside any assertion
+curl -sf http://localhost:8080/ -o /dev/null
+# (two passes over /, both product pages, /checkout/cart — see ci.yml)
 
-# Step 4: Run the active suite
+# Step 4: Run the active suite (includes @placesOrder — the store is disposable)
 BASE_URL=http://localhost:8080 npm test
 
-# Step 5: Publish Serenity report (GitHub Pages)
+# Step 5: Render the Serenity report and deploy to GitHub Pages (main only)
 npm run test:report
 ```
 
-See `docs/backlog.md` Item #1 for the open Docker CI decision.
+Reindex/cache-flush steps are unnecessary at runtime: the baked image snapshots an
+already-indexed store, and no test mutates catalogue data. The indexer/cache requirement
+documented in §5 applies when *baking* the image (`bake.yml`), not when running the suite.
 
 ---
 
 ## 7. Open Improvements
 
-1. **Resolve live test target** — Docker Magento vs public sandbox decision is open and blocks all CI progress (see `docs/backlog.md` Item #1)
-2. **Activate `payment-failure.feature`** — requires Docker + configurable test payment gateway; tagged `@deferred` until that is in place (backlog Item #2)
-3. **Wire API-driven Background steps** — `src/api/MagentoApiClient.ts` is scaffolded; Background steps currently fall back to UI product verification (backlog Item #3)
-4. **Publish living documentation** — configure GitHub Pages to serve `docs/reports/` after each CI run (backlog Item #4)
-5. **Complete ADR concrete examples** — four ADRs have content but their worked examples (before/after code snippets) are placeholders (backlog Item #5)
-6. **Finish Gherkin style guide worked example** — `docs/gherkin-style-guide.md` has a placeholder refactor example (backlog Item #6)
+All six improvements this section listed in v1 are complete (live Docker target, payment-failure
+activation, API-driven Background, published living documentation, ADR examples, style-guide
+worked example) — `docs/backlog.md` records each with its resolution and validation evidence.
+
+Currently open, deliberately accepted and tracked:
+
+1. **API-driven cart seeding** — the `I have "..." in my cart` Background step seeds via the
+   `AddToCart` UI journey, not the guest-cart REST endpoints; resolution (implement, or re-scope
+   the ADR-0003 claim) is pending (see `docs/architecture.md` §6)
+2. **Default `BASE_URL` hygiene** — the code default still points at the retired public sandbox;
+   set the env var explicitly until the default moves to the Dockerised target

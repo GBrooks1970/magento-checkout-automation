@@ -21,3 +21,4 @@ decision gets a new ADR that supersedes the old one, rather than an edit.
 | [0002](0002-use-serenity-js.md) | Use Serenity/JS rather than hand-rolling Screenplay | Accepted |
 | [0003](0003-api-driven-test-data-setup.md) | Set up test data through the API, assert through the UI | Accepted |
 | [0004](0004-playwright-over-cypress.md) | Use Playwright as the UI driver, over Cypress | Accepted |
+| [0005](0005-deterministic-payment-failure.md) | Deterministic payment failure via a custom always-decline module | Accepted |

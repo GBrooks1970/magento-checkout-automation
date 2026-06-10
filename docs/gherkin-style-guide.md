@@ -34,10 +34,13 @@ their own feature with controlled configuration.
 ## Composite versus granular steps
 
 Use granular checkout steps when the steps themselves are the subject of the test,
-for example when validating each stage of checkout. Use the composite step,
-`I complete checkout with valid details`, when checkout is just the plumbing
-needed to reach an assertion, for example in the quantity Scenario Outline where
-the subject is the subtotal, not the checkout flow.
+for example when validating each stage of checkout. A composite step,
+`I complete checkout with valid details`, exists for cases where checkout is just
+the plumbing needed to reach an assertion — though no current scenario uses it:
+the quantity Scenario Outline, the obvious candidate, asserts the subtotal on the
+checkout Order Summary at the payment step, *mid*-checkout, so it needs the
+granular steps after all. The composite step remains available for a future
+scenario whose assertion genuinely sits past the confirmation page.
 
 ## A bad scenario refactored
 
