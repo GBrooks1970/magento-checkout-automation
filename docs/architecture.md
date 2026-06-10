@@ -69,7 +69,6 @@ magento-checkout-automation/
 │   ├── tasks/                         # Screenplay Tasks
 │   │   ├── AddToCart.ts
 │   │   ├── BrowseStorefront.ts
-│   │   ├── CompleteCheckout.ts        # Compound: shipping + method + payment + place
 │   │   ├── PlaceTheOrder.ts
 │   │   ├── ProceedToCheckout.ts
 │   │   ├── ProvidePaymentDetails.ts

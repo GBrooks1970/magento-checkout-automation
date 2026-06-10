@@ -121,7 +121,6 @@ The `#actor` token in descriptions is replaced at runtime with the actor's name.
 | `ProvidePaymentDetails.declined()` | `src/tasks/ProvidePaymentDetails.ts` | Select the always-declining test method (`Portfolio_DeclinePayment`, ADR-0005) |
 | `PlaceTheOrder.now()` | `src/tasks/PlaceTheOrder.ts` | Click Place Order; wait for confirmation container |
 | `PlaceTheOrder.attemptExpectingDecline()` | `src/tasks/PlaceTheOrder.ts` | Click Place Order; wait for the decline error message, not the success page |
-| `CompleteCheckout.withValidDetails()` | `src/tasks/CompleteCheckout.ts` | Compound: `ProvideShippingDetails.valid()` → `SelectShippingMethod.flatRate()` → `ProvidePaymentDetails.checkMoneyOrder()` → `PlaceTheOrder.now()` |
 | `UpdateCartQuantity.of(name, qty)` | `src/tasks/UpdateCartQuantity.ts` | Navigate to cart; clear and set quantity; click Update |
 | `RemoveFromCart.product(name)` | `src/tasks/RemoveFromCart.ts` | Navigate to cart; click delete button; wait for empty-cart message |
 
