@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+  Declares the cartseed/general/active config path. Required: `bin/magento
+  config:set` validates paths against the system structure and refuses unknown
+  ones ("The path doesn't exist") — proven by bake run 27311621780, which failed
+  exactly there. Also makes the fixture toggleable in admin. See ADR-0006.
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="portfolio" translate="label" sortOrder="9999">
+            <label>Portfolio Test Fixtures</label>
+        </tab>
+        <section id="cartseed" translate="label" sortOrder="10"
+                 showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>Cart Seed (portfolio fixture)</label>
+            <tab>portfolio</tab>
+            <resource>Magento_Config::config</resource>
+            <group id="general" translate="label" sortOrder="10" showInDefault="1">
+                <label>General</label>
+                <field id="active" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enable adopt endpoint</label>
+                    <comment>TEST STORES ONLY — exposes /cartseed/cart/adopt, which swaps the
+                        session quote for any masked cart id. Keep disabled anywhere else.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
