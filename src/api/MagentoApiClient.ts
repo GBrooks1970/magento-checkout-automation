@@ -84,6 +84,63 @@ export const MagentoApi = {
     },
 
     /**
+     * Resolve a product's SKU from its exact display name via the catalogue API.
+     * Used by the cart-seeding Background step (ADR-0006): the guest-cart items
+     * endpoint takes a SKU, while the Gherkin speaks in product names.
+     */
+    skuForProduct: async (productName: string): Promise<string> => {
+        const response = await fetch(
+            `${MagentoApi.restBaseUrl()}/products` +
+            `?searchCriteria[filterGroups][0][filters][0][field]=name` +
+            `&searchCriteria[filterGroups][0][filters][0][value]=${encodeURIComponent(productName)}` +
+            `&searchCriteria[filterGroups][0][filters][0][conditionType]=eq`,
+            { headers: { Authorization: `Bearer ${MagentoApi.token()}` } },
+        );
+        if (!response.ok) {
+            throw new Error(`Product lookup for "${productName}" failed (HTTP ${response.status}).`);
+        }
+        const result = (await response.json()) as ProductSearchResult;
+        if (result.total_count < 1 || !result.items[0]?.sku) {
+            throw new Error(`No catalogue product matches name "${productName}".`);
+        }
+        return result.items[0].sku;
+    },
+
+    /**
+     * Create an empty guest cart via the anonymous REST endpoint and return its
+     * masked id (ADR-0006). No auth required — this is the same surface a
+     * headless storefront uses.
+     */
+    createGuestCart: async (): Promise<string> => {
+        const response = await fetch(`${MagentoApi.restBaseUrl()}/guest-carts`, { method: 'POST' });
+        if (!response.ok) {
+            throw new Error(`Failed to create a guest cart (HTTP ${response.status}): ${await response.text()}`);
+        }
+        // The endpoint returns the masked quote id as a bare JSON string.
+        return (await response.json()) as string;
+    },
+
+    /**
+     * Add an item to an API-created guest cart (ADR-0006).
+     */
+    addItemToGuestCart: async (maskedCartId: string, sku: string, qty: number): Promise<void> => {
+        const response = await fetch(
+            `${MagentoApi.restBaseUrl()}/guest-carts/${encodeURIComponent(maskedCartId)}/items`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cartItem: { quote_id: maskedCartId, sku, qty } }),
+            },
+        );
+        if (!response.ok) {
+            throw new Error(
+                `Failed to add ${qty} x ${sku} to guest cart ${maskedCartId} ` +
+                `(HTTP ${response.status}): ${await response.text()}`,
+            );
+        }
+    },
+
+    /**
      * Verify a product exists in the catalogue at the expected price, via the
      * REST API. Filters products by exact name and asserts the match and price.
      *

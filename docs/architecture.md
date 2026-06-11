@@ -68,6 +68,7 @@ magento-checkout-automation/
 │   │   └── CheckoutPage.ts            # Checkout steps: shipping, method, payment, confirmation
 │   ├── tasks/                         # Screenplay Tasks
 │   │   ├── AddToCart.ts
+│   │   ├── AdoptSeededCart.ts         # Binds the API-seeded guest cart to the session (ADR-0006)
 │   │   ├── BrowseStorefront.ts
 │   │   ├── PlaceTheOrder.ts
 │   │   ├── ProceedToCheckout.ts
@@ -90,7 +91,7 @@ magento-checkout-automation/
 │       ├── cart.steps.ts              # When/Then for cart management
 │       └── validation.steps.ts        # When/Then for validation scenarios
 ├── docs/
-│   ├── adr/                           # Architecture Decision Records (0001–0005)
+│   ├── adr/                           # Architecture Decision Records (0001–0006)
 │   ├── templates/                     # Document templates for this project
 │   ├── implementation-logs/           # Per-session development logs
 │   ├── reports/                       # Serenity BDD output (runtime — gitignored)
@@ -99,7 +100,9 @@ magento-checkout-automation/
 │   ├── qa-strategy.md
 │   ├── backlog.md
 │   └── gherkin-style-guide.md
-├── app/code/Portfolio/DeclinePayment/ # In-repo Magento test-fixture module — deterministic decline (ADR-0005)
+├── app/code/Portfolio/                # In-repo Magento test-fixture modules
+│   ├── DeclinePayment/                #   deterministic decline (ADR-0005)
+│   └── CartSeed/                      #   API-seeded-cart session binding (ADR-0006)
 ├── .github/workflows/
 │   ├── ci.yml                         # e2e: pull pre-baked images → start store → warm-up → suite → Pages
 │   └── bake.yml                       # Manual: install Magento once, push store-app/store-db images to GHCR
@@ -153,12 +156,9 @@ What happens when `npm test` runs:
 
 All items the v1 of this guide listed here are resolved (see `docs/backlog.md` for the full
 record): the Dockerised Magento 2.4.8 target replaced the dead public sandbox (Item #1), the
-API-driven Background is live (Item #3), all five ADRs carry concrete examples (Item #5), CI is
+API-driven Background is live (Item #3), all ADRs carry concrete examples (Item #5), CI is
 fully wired with pre-baked GHCR images and a green badge (Item #4), and the Gherkin style guide's
-worked example is complete (Item #6).
-
-Remaining debt, deliberately accepted and recorded:
-
-- **Cart seeding in Backgrounds is UI-driven** — product preconditions are API-verified, but
-  `I have "..." in my cart` reuses the `AddToCart` UI journey rather than the guest-cart REST
-  endpoints. Resolution (implement API seeding, or re-scope ADR-0003's claim) is pending.
+worked example is complete (Item #6). The last recorded debt — UI-driven cart seeding in the
+Backgrounds — was closed on 2026-06-10: cart preconditions now go through the REST guest-cart
+endpoints, bound to the browser session by the `Portfolio_CartSeed` test-fixture endpoint
+(ADR-0006).

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!-- Frontend route for the test-fixture adopt endpoint:
+     GET /cartseed/cart/adopt?id=<maskedQuoteId>  (see ADR-0006). -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
+    <router id="standard">
+        <route id="cartseed" frontName="cartseed">
+            <module name="Portfolio_CartSeed"/>
+        </route>
+    </router>
+</config>

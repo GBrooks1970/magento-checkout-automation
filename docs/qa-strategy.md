@@ -129,9 +129,8 @@ documented in §5 applies when *baking* the image (`bake.yml`), not when running
 All six improvements this section listed in v1 are complete (live Docker target, payment-failure
 activation, API-driven Background, published living documentation, ADR examples, style-guide
 worked example) — `docs/backlog.md` records each with its resolution and validation evidence.
+The last open item, **API-driven cart seeding**, closed on 2026-06-10: the
+`I have "..." in my cart` Background step now seeds through the REST guest-cart endpoints and
+binds the quote to the browser session via the `Portfolio_CartSeed` adopt endpoint (ADR-0006).
 
-Currently open, deliberately accepted and tracked:
-
-1. **API-driven cart seeding** — the `I have "..." in my cart` Background step seeds via the
-   `AddToCart` UI journey, not the guest-cart REST endpoints; resolution (implement, or re-scope
-   the ADR-0003 claim) is pending (see `docs/architecture.md` §6)
+Nothing is currently open in this section.

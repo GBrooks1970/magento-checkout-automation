@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- The adopt endpoint is OFF by default. The test-store bake (bake.yml) and the
+     local runbook switch it on with:
+       bin/magento config:set cartseed/general/active 1
+     Never enable it on a non-test store — it lets any visitor swap their session
+     quote for an arbitrary masked cart id. -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <cartseed>
+            <general>
+                <active>0</active>
+            </general>
+        </cartseed>
+    </default>
+</config>

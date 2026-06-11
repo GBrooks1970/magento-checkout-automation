@@ -151,17 +151,21 @@ docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
   php bin/magento module:disable Magento_TwoFactorAuth Magento_AdminAdobeImsTwoFactorAuth && \
   php bin/magento cache:flush'
 
-# 6d. Install the in-repo decline-payment test module (ADR-0005). REQUIRED for a
-#     full-suite run: the default cucumber profile includes payment-failure.feature,
-#     whose scenario needs the always-declining "declinepayment" method to exist.
-#     Without this step the suite times out waiting for label[for="declinepayment"].
+# 6d. Install the in-repo test-fixture modules. REQUIRED for a full-suite run:
+#     - Portfolio_DeclinePayment (ADR-0005): the always-declining payment method
+#       payment-failure.feature needs — without it the suite times out waiting
+#       for label[for="declinepayment"].
+#     - Portfolio_CartSeed (ADR-0006): the adopt endpoint the API-seeded cart
+#       Backgrounds need — without it the seeding step 404s at
+#       /cartseed/cart/adopt.
 #     (Mirrors the same step in .github/workflows/bake.yml.)
-docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code/Portfolio'
-docker compose cp app/code/Portfolio/DeclinePayment phpfpm:/var/www/html/app/code/Portfolio/DeclinePayment
+docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code'
+docker compose cp app/code/Portfolio phpfpm:/var/www/html/app/code/Portfolio
 docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
-  php bin/magento module:enable Portfolio_DeclinePayment && \
+  php bin/magento module:enable Portfolio_DeclinePayment Portfolio_CartSeed && \
   php bin/magento setup:upgrade --no-interaction && \
   php bin/magento config:set payment/declinepayment/active 1 && \
+  php bin/magento config:set cartseed/general/active 1 && \
   php bin/magento cache:flush'
 
 # 7. Sanity check, then run the suite

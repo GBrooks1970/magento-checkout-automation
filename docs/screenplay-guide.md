@@ -87,6 +87,13 @@ navigation. The admin bearer token is resolved once per run in `BeforeAll`
 (`MAGENTO_ADMIN_TOKEN` if set, otherwise minted from admin credentials — see
 `docs/admin-api-token-guide.md`).
 
+The cart-seeding Background step `Given I have "..." in my cart with quantity N` is also
+API-driven (ADR-0006): it creates a guest cart and adds the item by SKU through the anonymous
+`/rest/V1/guest-carts` endpoints, then binds the quote to the browser session by navigating to
+the `Portfolio_CartSeed` adopt endpoint (`AdoptSeededCart.withId(maskedId)`). The `When I add
+... to my cart` steps still drive the UI — there, adding to the cart is the behaviour under
+test, not setup.
+
 ---
 
 ## Interactions (Page Elements)
@@ -123,6 +130,7 @@ The `#actor` token in descriptions is replaced at runtime with the actor's name.
 | `PlaceTheOrder.attemptExpectingDecline()` | `src/tasks/PlaceTheOrder.ts` | Click Place Order; wait for the decline error message, not the success page |
 | `UpdateCartQuantity.of(name, qty)` | `src/tasks/UpdateCartQuantity.ts` | Navigate to cart; clear and set quantity; click Update |
 | `RemoveFromCart.product(name)` | `src/tasks/RemoveFromCart.ts` | Navigate to cart; click delete button; wait for empty-cart message |
+| `AdoptSeededCart.withId(maskedId)` | `src/tasks/AdoptSeededCart.ts` | Bind the API-seeded guest cart to the session via the `Portfolio_CartSeed` adopt endpoint; return to the storefront (ADR-0006) |
 
 ---
 

@@ -131,17 +131,21 @@ jobs:
           sleep 5
           docker compose exec -T app sh -c 'nginx -t && nginx -s reload'
 
-      - name: Install the Portfolio decline-payment test module
-        # Copy the in-repo test-fixture module into the installed Magento tree
-        # so the following setup:upgrade registers it. This is the deterministic,
-        # self-contained payment method that makes payment-failure.feature
-        # runnable in CI — no real PSP, network, or credentials. See ADR-0005.
+      - name: Install the Portfolio test-fixture modules
+        # Copy the in-repo test-fixture modules into the installed Magento tree
+        # so the following setup:upgrade registers them:
+        # - Portfolio_DeclinePayment — deterministic always-declining payment
+        #   method; makes payment-failure.feature runnable in CI with no real
+        #   PSP, network, or credentials. See ADR-0005.
+        # - Portfolio_CartSeed — frontend adopt endpoint that binds an
+        #   API-created guest quote to the browser session; completes the
+        #   API-driven cart seeding in the Backgrounds. See ADR-0006.
         run: |
-          docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code/Portfolio'
-          docker compose cp app/code/Portfolio/DeclinePayment \
-            phpfpm:/var/www/html/app/code/Portfolio/DeclinePayment
+          docker compose exec -T phpfpm sh -c 'mkdir -p /var/www/html/app/code'
+          docker compose cp app/code/Portfolio \
+            phpfpm:/var/www/html/app/code/Portfolio
           docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
-            php bin/magento module:enable Portfolio_DeclinePayment'
+            php bin/magento module:enable Portfolio_DeclinePayment Portfolio_CartSeed'
 
       - name: Deploy sample data, reindex, configure
         timeout-minutes: 30
@@ -159,11 +163,14 @@ jobs:
             php bin/magento config:set checkout/cart_link/use_qty 1 && \
             php bin/magento cache:flush'
 
-          # Step 6d: ensure the decline-payment test method is active in the
-          # store (its config.xml already defaults active=1; this writes it to
-          # core_config_data so it is captured in the DB dump too). See ADR-0005.
+          # Step 6d: activate the test-fixture modules in core_config_data so
+          # both flags are captured in the DB dump: the decline-payment method
+          # (ADR-0005) and the cart-seed adopt endpoint (ADR-0006 — its
+          # config.xml defaults to OFF precisely so only baked test stores
+          # ever serve it).
           docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
             php bin/magento config:set payment/declinepayment/active 1 && \
+            php bin/magento config:set cartseed/general/active 1 && \
             php bin/magento cache:flush'
 
           # Step 6c: disable mandatory admin 2FA so the REST admin-token
