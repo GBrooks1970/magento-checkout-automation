@@ -364,6 +364,14 @@ in `browser.hooks.ts`. A real Magento 2.4.x blocker was found and documented: ma
 blocks the token endpoint until disabled on the test target (runbook step 6c +
 `docs/admin-api-token-guide.md`). Verified green: smoke 7/7, `@placesOrder` 4/4, `tsc` clean.
 
+**Update (2026-06-11) — cart seeding is now API-driven too (review R-03, user decision).** The
+`I have "..." in my cart with quantity N` Background previously reused the `AddToCart` UI journey;
+it now creates a guest cart via `POST /V1/guest-carts`, adds the item by SKU, and binds the quote
+to the browser session through the new **`Portfolio_CartSeed`** test-fixture adopt endpoint (core
+Magento has no API for guest-quote-to-session binding — see **ADR-0006**). Required a store image
+re-bake (runs `27311621780` failed — `config:set` refuses paths undeclared in a `system.xml` —
+then `27311886905` green). Merged as PR #17; CI 12/12 green against the new images.
+
 ---
 
 #### Item #4: Publish living documentation — Score: 15
@@ -436,6 +444,23 @@ went public, two more rounds surfaced and were fixed:
 **Final green run `27141209665` (main, commit `4e8a738`):** preflight ✅, test ✅ (**11 scenarios /
 83 steps, all passed**), deploy-pages ✅. Badge green; report live at
 `https://gbrooks1970.github.io/magento-checkout-automation/` (`<title>Serenity Reports</title>`).
+
+**Update (2026-06-11) — ⚠️ the published report had been an EMPTY SHELL since go-live; fixed in
+two layers.** The page served HTTP 200 with the right title but contained **zero scenarios** — the
+go-live verification above checked only status + `<title>`, which an empty template satisfies.
+Two independent defects compounded:
+1. **Renderer read the wrong directory** — `serenity-bdd run` defaults `--source` to
+   `target/site/serenity` while `ArtifactArchiver` writes to `docs/reports/`; it aggregated an
+   empty directory every run. Fixed with `--source ./docs/reports` (**PR #18**, merged).
+2. **The Serenity Cucumber adapter never ran** — Cucumber allows one stdout formatter and silently
+   drops the rest; `format: ['@serenity-js/cucumber', 'progress-bar']` let the progress bar take
+   the stdout slot, so the adapter was never instantiated and **no Serenity JSON was ever written
+   anywhere** (the configured crew was starved of events). Proven by a minimal store-free probe;
+   fixed by making the adapter the sole formatter (**PR #19**) — ConsoleReporter now provides the
+   console narrative. PR #19's CI shows the 12 per-scenario Serenity blocks and a populated
+   aggregate. The page itself populates on the first `main` deploy after PR #19 merges.
+Lesson recorded: verify report **content** (scenario count on the page), never just HTTP 200 +
+title.
 
 ---
 
