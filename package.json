@@ -8,7 +8,7 @@
   "scripts": {
     "test": "cucumber-js --profile default",
     "test:smoke": "cucumber-js --profile smoke",
-    "test:report": "serenity-bdd run --features ./features"
+    "test:report": "serenity-bdd run --source ./docs/reports --features ./features"
   },
   "devDependencies": {
     "@cucumber/cucumber": "11.3.0",
