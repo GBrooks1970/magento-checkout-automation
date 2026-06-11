@@ -9,7 +9,6 @@ import { ProvideShippingDetails } from '../tasks/ProvideShippingDetails';
 import { SelectShippingMethod } from '../tasks/SelectShippingMethod';
 import { ProvidePaymentDetails } from '../tasks/ProvidePaymentDetails';
 import { PlaceTheOrder } from '../tasks/PlaceTheOrder';
-import { CompleteCheckout } from '../tasks/CompleteCheckout';
 import { OrderSummary } from '../questions/OrderSummary';
 import { CheckoutPage } from '../interactions/CheckoutPage';
 
@@ -52,13 +51,6 @@ When('I provide valid payment details', async () => {
 When('I place the order', async () => {
     await actorCalled('User').attemptsTo(
         PlaceTheOrder.now(),
-    );
-});
-
-When('I complete checkout with valid details', async () => {
-    await actorCalled('User').attemptsTo(
-        ProceedToCheckout.fromCart(),
-        CompleteCheckout.withValidDetails(),
     );
 });
 

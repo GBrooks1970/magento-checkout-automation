@@ -57,26 +57,41 @@ are not the concern of the scenario it belongs to.
 **Screenplay approach** — the same behaviour, as implemented in this project:
 
 ```typescript
-// src/tasks/CompleteCheckout.ts
-export const CompleteCheckout = {
-    withValidDetails: () =>
-        Task.where('#actor completes checkout with valid details',
-            ProvideShippingDetails.valid(),
-            SelectShippingMethod.flatRate(),
-            ProvidePaymentDetails.checkMoneyOrder(),
-            PlaceTheOrder.now(),
-        ),
+// src/tasks/ProvideShippingDetails.ts — one private Task, three public variants
+const fillForm = (details: ShippingDetails) =>
+    Task.where('#actor fills in the shipping address form',
+        Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
+        Enter.theValue(details.email).into(CheckoutPage.emailInput),
+        // ... remaining fields ...
+        Click.on(CheckoutPage.shippingNextButton),
+    );
+
+export const ProvideShippingDetails = {
+    valid: () =>
+        Task.where('#actor provides valid shipping details',
+            fillForm(defaults)),
+
+    withEmail: (email: string) =>
+        Task.where(`#actor provides shipping details with email "${email}"`,
+            fillForm({ ...defaults, email })),
+
+    incomplete: () => /* email only — triggers validation */,
 };
 
-// src/step-definitions/checkout.steps.ts
-When('I complete checkout with valid details', async () => {
+// src/step-definitions/checkout.steps.ts — thin glue, intent only
+When('I provide valid shipping details', async () => {
     await actorCalled('User').attemptsTo(
-        ProceedToCheckout.fromCart(),
-        CompleteCheckout.withValidDetails(),
+        ProvideShippingDetails.valid(),
     );
 });
 ```
 
-`CompleteCheckout` composes four Tasks. Each Task is independently testable and reusable. The step
-definition expresses intent, not mechanics. Adding a new checkout variant (e.g. a different
-shipping method) is a new Task — not an extension of an existing class.
+`ProvideShippingDetails` composes Tasks from Tasks: the three public variants — happy path,
+invalid-email, incomplete — all reuse the single `fillForm` Task rather than duplicating the
+form mechanics or extending a class. The step definition expresses intent, not mechanics. At the
+scenario level the same principle assembles the whole journey: `AddToCart` →
+`ProceedToCheckout` → `ProvideShippingDetails` → `SelectShippingMethod` →
+`ProvidePaymentDetails` → `PlaceTheOrder`, each Task independently testable and reusable (the
+payment-failure scenario reuses the entire chain, swapping in `ProvidePaymentDetails.declined()`
+and `PlaceTheOrder.attemptExpectingDecline()`). Adding a checkout variant is a new Task — not an
+extension of an existing class.
