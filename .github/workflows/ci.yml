@@ -177,6 +177,33 @@ jobs:
         # @placesOrder scenarios ARE included — CI runs against a clean,
         # disposable store so placing real orders is fine.
 
+      - name: Guard — Serenity JSON must exist before the report is rendered
+        # The published report was an empty shell from go-live (2026-06-08) to
+        # 2026-06-11: Cucumber permits exactly ONE stdout formatter and silently
+        # drops the rest, so a stray `progress-bar` entry displaced the
+        # @serenity-js/cucumber adapter — no events, no JSON in docs/reports/,
+        # and the renderer happily published a zero-scenario template while the
+        # suite stayed green (PRs #18/#19). This guard makes that defect class
+        # fail the run loudly instead of publishing an empty shell.
+        run: |
+          shopt -s nullglob
+          nonempty=0
+          for f in docs/reports/*.json; do
+            if [ -s "$f" ]; then
+              nonempty=$((nonempty + 1))
+            fi
+          done
+          if [ "$nonempty" -eq 0 ]; then
+            echo "::error::docs/reports/ contains no non-empty Serenity JSON." \
+                 "The @serenity-js/cucumber adapter has probably been displaced" \
+                 "from Cucumber's single stdout-formatter slot (the starved-" \
+                 "formatter lesson, PR #19) — check the 'format' array in" \
+                 "cucumber.js: the adapter must be the only stdout formatter." \
+                 "Rendering now would publish an empty-shell report."
+            exit 1
+          fi
+          echo "Guard OK: ${nonempty} non-empty Serenity JSON file(s) in docs/reports/."
+
       - name: Generate Serenity living documentation
         # Run even when tests fail so reviewers can inspect the failing run.
         # Java 11+ is pre-installed on ubuntu-latest; the serenity-bdd CLI
