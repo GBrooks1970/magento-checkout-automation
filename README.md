@@ -87,8 +87,11 @@ uses). The quickest bring-up pulls the pre-baked public GHCR images — no Magen
 install, no Marketplace keys, no secrets:
 
 ```bash
-# bring up the complete store (~5–10 min first start: pull + DB restore)
-docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
+# bring up the complete store (~5–10 min first start: pull + DB restore).
+# GHCR_OWNER names the (lowercase) GHCR namespace holding the baked images —
+# the overlay interpolates it so forks pull their own images; put it in a
+# .env file next to docker-compose.yml to stop typing it (compose auto-loads it)
+GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
 
 # run the full suite (12 scenarios — BASE_URL already defaults to this store)
 npm test
@@ -98,7 +101,7 @@ The pre-baked images carry everything the suite needs: Luma sample data, the
 `Portfolio_DeclinePayment` test module for the payment-failure scenario, admin
 2FA disabled for the API-driven Background, and the test admin credentials.
 Placing real orders is fine — the store is disposable; tear down with
-`docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v`.
+`GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v`.
 
 **Read-only subset.** The `smoke` profile (`npm run test:smoke`) runs only the 7
 scenarios that neither place orders nor depend on the decline module — filter by

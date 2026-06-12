@@ -97,11 +97,15 @@ What `.github/workflows/ci.yml` actually runs (no Magento secrets needed — the
 pre-baked images carry the installed store and test credentials):
 
 ```bash
+# Step 0: Derive GHCR_OWNER (lowercased github.repository_owner — R-06c); the
+# overlay interpolates it, so a fork's CI pulls the fork's own namespace
+export GHCR_OWNER=gbrooks1970
+
 # Step 1: Pull the pre-baked store images (built by bake.yml under a unique
 # :2.4.8-b<run_number> tag; docker-compose.ci.yml pins the tag in force, and
-# ci.yml reads the references from that overlay)
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
+# ci.yml resolves the references from that overlay via `compose config --images`)
+docker pull ghcr.io/${GHCR_OWNER}/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
+docker pull ghcr.io/${GHCR_OWNER}/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
 
 # Step 2: Start the stack — the CI overlay swaps in the pre-baked images;
 # --wait blocks on healthchecks (DB restores its dump; OpenSearch ~50s boot)

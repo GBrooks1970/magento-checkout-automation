@@ -2,12 +2,15 @@
 # data inside a full docker-compose stack, then packages the installed state
 # into two GHCR images:
 #
-#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
+#   ghcr.io/<owner>/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
 #     — markoshust/magento-php:8.4-fpm-2 + full /var/www/html tree (source,
 #       vendor, generated, env.php, 2FA disabled, qty-counter set)
 #
-#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
+#   ghcr.io/<owner>/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
 #     — mariadb:11.4 + magento-db.sql.gz in /docker-entrypoint-initdb.d/
+#
+# <owner> is the lowercased github.repository_owner (R-06c) — a fork bakes to
+# its own GHCR namespace with no workflow edits.
 #
 # ci.yml pulls these images instead of doing a fresh install on every push,
 # cutting CI time from ~40 min to ~15 min.
@@ -62,6 +65,17 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
+
+      - name: Derive the GHCR image namespace (R-06c)
+        # GHCR requires a LOWERCASE namespace, but github.repository_owner
+        # preserves the login's case (e.g. GBrooks1970) and Actions
+        # expressions have no lowercase function — derive it in shell once.
+        # Forks therefore push to their own namespace with no workflow edits.
+        # The repo path segment stays literal: it names what the images ARE
+        # and must match the path docker-compose.ci.yml interpolates.
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "IMAGE_NS=ghcr.io/${OWNER,,}/magento-checkout-automation" >> "$GITHUB_ENV"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -262,10 +276,10 @@ jobs:
         run: |
           cp Dockerfile.store-app /tmp/magento-appdata/Dockerfile
           docker build \
-            -t "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:${IMAGE_TAG}" \
+            -t "${IMAGE_NS}/magento-store-app:${IMAGE_TAG}" \
             /tmp/magento-appdata
           docker push \
-            "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:${IMAGE_TAG}"
+            "${IMAGE_NS}/magento-store-app:${IMAGE_TAG}"
 
       - name: Build and push store-db image
         # Dockerfile.store-db does:
@@ -276,10 +290,10 @@ jobs:
           cp /tmp/magento-db.sql.gz /tmp/magento-db-build/
           cp Dockerfile.store-db /tmp/magento-db-build/Dockerfile
           docker build \
-            -t "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:${IMAGE_TAG}" \
+            -t "${IMAGE_NS}/magento-store-db:${IMAGE_TAG}" \
             /tmp/magento-db-build
           docker push \
-            "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:${IMAGE_TAG}"
+            "${IMAGE_NS}/magento-store-db:${IMAGE_TAG}"
 
       - name: Record pushed image digests in the run summary
         # Provenance on record (R-06b): the registry digests of what this bake
@@ -296,7 +310,7 @@ jobs:
             echo "|---|---|"
           } >> "$GITHUB_STEP_SUMMARY"
           for image in magento-store-app magento-store-db; do
-            ref="ghcr.io/gbrooks1970/magento-checkout-automation/${image}:${IMAGE_TAG}"
+            ref="${IMAGE_NS}/${image}:${IMAGE_TAG}"
             digest=$(docker image inspect --format '{{join .RepoDigests "\n"}}' "$ref" \
                      | grep -m1 "/${image}@" | sed 's/.*@//')
             if [ -z "$digest" ]; then

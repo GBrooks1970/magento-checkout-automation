@@ -60,15 +60,23 @@ store — Luma sample data, qty-counter config, 2FA disabled, the decline-paymen
 module installed, test admin credentials baked in:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
+GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/   # expect 200
 BASE_URL=http://localhost:8080 npm test                           # full suite
 ```
 
+`GHCR_OWNER` is the lowercase GitHub owner whose GHCR namespace holds the baked
+images — the overlay interpolates it (R-06c) so a fork pulls its own namespace
+with no file edits. CI derives it from `github.repository_owner`. Locally,
+either prefix the command as above (PowerShell: `$env:GHCR_OWNER='gbrooks1970'`
+first), or write `GHCR_OWNER=gbrooks1970` into a `.env` file next to
+`docker-compose.yml` — it is gitignored and compose auto-loads it, after which
+every compose command works unprefixed.
+
 First start takes ~5–10 min (image pull + DB restore + OpenSearch boot); no
 secrets are required — both GHCR packages are public. Tear down with
-`docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v` for a
-clean slate, or leave the volumes in place to restart instantly.
+`GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v`
+for a clean slate, or leave the volumes in place to restart instantly.
 
 Use the install sequence below only when you need to *change* what is baked into
 the images (Magento version, sample data, a config step) — and then re-run
@@ -224,11 +232,13 @@ keeping the total pipeline under 25 minutes.
 
 | Image | Based on | Contains |
 |---|---|---|
-| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>` | `markoshust/magento-php:8.4-fpm-2` | Full `/var/www/html` tree: Magento source, vendor, generated classes, `env.php`, 2FA disabled (step 6c), qty-counter set (step 6b) |
-| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>` | `mariadb:11.4` | `magento-db.sql.gz` in `/docker-entrypoint-initdb.d/` — MariaDB auto-restores on first start |
+| `ghcr.io/<owner>/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>` | `markoshust/magento-php:8.4-fpm-2` | Full `/var/www/html` tree: Magento source, vendor, generated classes, `env.php`, 2FA disabled (step 6c), qty-counter set (step 6b) |
+| `ghcr.io/<owner>/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>` | `mariadb:11.4` | `magento-db.sql.gz` in `/docker-entrypoint-initdb.d/` — MariaDB auto-restores on first start |
 
-Each bake run tags both images uniquely with its workflow run number
-(`:2.4.8-b<run_number>`); the tag currently in force is whatever
+`<owner>` is the lowercased `github.repository_owner` (R-06c): `gbrooks1970`
+in this repo, the fork's own namespace in a fork — no workflow or overlay
+edits needed. Each bake run tags both images uniquely with its workflow run
+number (`:2.4.8-b<run_number>`); the tag currently in force is whatever
 `docker-compose.ci.yml` references.
 
 ### How seeding works in CI
@@ -281,7 +291,8 @@ now:
   single-maintainer registry).
 - **Adopting a new bake is a one-line-per-service PR** updating the two
   `image:` references in `docker-compose.ci.yml`. That overlay is the single
-  source of truth: `ci.yml`'s preflight and pull steps parse the image
-  references out of it, so nothing else needs editing.
+  source of truth: `ci.yml`'s preflight and pull steps resolve the image
+  references out of it (via `docker compose config --images`, which also
+  interpolates `${GHCR_OWNER}` — R-06c), so nothing else needs editing.
 - **The bare `:2.4.8` tag is no longer published.** The last images pushed
   under it remain in GHCR as a historical artefact; nothing references them.

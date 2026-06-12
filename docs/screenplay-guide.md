@@ -226,5 +226,5 @@ require adjustment depending on the Magento theme version. Verify against the li
 | Only the first scenario passes; rest fail with "browser has been closed" | Browser launched/closed per scenario (the backlog #8 defect) | Launch once in `BeforeAll`, close in `AfterAll`; never per scenario |
 | Cart counts accumulate across scenarios (e.g. expected 1, got 8) | Per-scenario state reset missing — guest cart keyed on session cookie leaks | Keep the `Before` hook's cookie + storage reset (backlog #10) |
 | Subtotal assertion fails | Currency symbol present in displayed price | Use `includes(expectedAmount)` — not `equals` — for all money assertions |
-| All scenarios fail with connection refused | The local Docker store is not running (`BASE_URL` defaults to `http://localhost:8080`) | `docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait` — see `docs/docker-magento-setup.md` |
+| All scenarios fail with connection refused | The local Docker store is not running (`BASE_URL` defaults to `http://localhost:8080`) | `GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait` — see `docs/docker-magento-setup.md` |
 | `Select.option(state)` throws not found | State name mismatch with Magento region data | Verify the exact state name shown in the dropdown on the live store |

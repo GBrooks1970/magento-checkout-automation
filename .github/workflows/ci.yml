@@ -54,11 +54,21 @@ jobs:
 
     steps:
       - name: Check out
-        # Needed only to read docker-compose.ci.yml — the single source of
-        # truth for WHICH baked image tag this pipeline tests (R-06b). Each
-        # bake pushes a unique :2.4.8-b<run_number> tag; adopting one is a PR
-        # that edits the overlay, and every reference here follows it.
+        # Needed only to read the compose files — docker-compose.ci.yml is the
+        # single source of truth for WHICH baked image tag this pipeline tests
+        # (R-06b). Each bake pushes a unique :2.4.8-b<run_number> tag; adopting
+        # one is a PR that edits the overlay, and every reference here follows it.
         uses: actions/checkout@v4
+
+      - name: Derive the GHCR namespace owner (R-06c)
+        # GHCR requires a LOWERCASE namespace, but github.repository_owner
+        # preserves the login's case (e.g. GBrooks1970) and Actions expressions
+        # have no lowercase function — so derive it in shell, once per job.
+        # docker-compose.ci.yml interpolates ${GHCR_OWNER}, which is what makes
+        # a fork pull its own namespace without editing any file.
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "GHCR_OWNER=${OWNER,,}" >> "$GITHUB_ENV"
 
       - name: Check whether pre-baked GHCR images exist
         id: check
@@ -70,8 +80,11 @@ jobs:
         # but the recorded empty-dump incident (backlog #4, bug 4) was exactly
         # a bake where store-app was good and store-db was a useless 4K image
         # — the proxy assumption does not hold.
+        # `docker compose config --images` (not a raw grep of the overlay)
+        # resolves the ${GHCR_OWNER} interpolation exactly as `compose up`
+        # will, so what preflight checks is what the test job runs (R-06c).
         run: |
-          mapfile -t images < <(awk '$1 == "image:" && $2 ~ /^ghcr\.io\// {print $2}' docker-compose.ci.yml)
+          mapfile -t images < <(docker compose -f docker-compose.yml -f docker-compose.ci.yml config --images | grep '^ghcr\.io/')
           if [ "${#images[@]}" -ne 2 ]; then
             echo "::error::Expected exactly 2 ghcr.io image references in" \
                  "docker-compose.ci.yml, found ${#images[@]} — the overlay and" \
@@ -110,6 +123,14 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
 
+      - name: Derive the GHCR namespace owner (R-06c)
+        # Same derivation as preflight (jobs do not share GITHUB_ENV). Needed
+        # by every step that touches the compose overlay: the pull below,
+        # compose up, and the teardown.
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "GHCR_OWNER=${OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
@@ -126,9 +147,11 @@ jobs:
         # Explicit pull so the layer-cache warm-up is a named step in the log.
         # The image references (including WHICH unique :2.4.8-b<run_number>
         # bake tag is in force) come from docker-compose.ci.yml — the single
-        # source of truth, updated only by PR (R-06b).
+        # source of truth, updated only by PR (R-06b) — resolved through
+        # `docker compose config --images` so the ${GHCR_OWNER} interpolation
+        # matches what `compose up` will use (R-06c).
         run: |
-          mapfile -t images < <(awk '$1 == "image:" && $2 ~ /^ghcr\.io\// {print $2}' docker-compose.ci.yml)
+          mapfile -t images < <(docker compose -f docker-compose.yml -f docker-compose.ci.yml config --images | grep '^ghcr\.io/')
           for ref in "${images[@]}"; do
             docker pull "$ref"
           done
