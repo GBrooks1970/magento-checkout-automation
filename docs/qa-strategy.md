@@ -97,9 +97,11 @@ What `.github/workflows/ci.yml` actually runs (no Magento secrets needed — the
 pre-baked images carry the installed store and test credentials):
 
 ```bash
-# Step 1: Pull the pre-baked store images (built once by bake.yml)
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+# Step 1: Pull the pre-baked store images (built by bake.yml under a unique
+# :2.4.8-b<run_number> tag; docker-compose.ci.yml pins the tag in force, and
+# ci.yml reads the references from that overlay)
+docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
+docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
 
 # Step 2: Start the stack — the CI overlay swaps in the pre-baked images;
 # --wait blocks on healthchecks (DB restores its dump; OpenSearch ~50s boot)

@@ -53,6 +53,13 @@ jobs:
       images-available: ${{ steps.check.outputs.available }}
 
     steps:
+      - name: Check out
+        # Needed only to read docker-compose.ci.yml — the single source of
+        # truth for WHICH baked image tag this pipeline tests (R-06b). Each
+        # bake pushes a unique :2.4.8-b<run_number> tag; adopting one is a PR
+        # that edits the overlay, and every reference here follows it.
+        uses: actions/checkout@v4
+
       - name: Check whether pre-baked GHCR images exist
         id: check
         # docker manifest inspect queries the registry without pulling the
@@ -64,17 +71,24 @@ jobs:
         # a bake where store-app was good and store-db was a useless 4K image
         # — the proxy assumption does not hold.
         run: |
+          mapfile -t images < <(awk '$1 == "image:" && $2 ~ /^ghcr\.io\// {print $2}' docker-compose.ci.yml)
+          if [ "${#images[@]}" -ne 2 ]; then
+            echo "::error::Expected exactly 2 ghcr.io image references in" \
+                 "docker-compose.ci.yml, found ${#images[@]} — the overlay and" \
+                 "this parse step have drifted apart."
+            exit 1
+          fi
           available=true
-          for image in magento-store-app magento-store-db; do
-            if docker manifest inspect \
-                "ghcr.io/gbrooks1970/magento-checkout-automation/${image}:2.4.8" \
-                > /dev/null 2>&1; then
-              echo "${image}: manifest found."
+          for ref in "${images[@]}"; do
+            if docker manifest inspect "$ref" > /dev/null 2>&1; then
+              echo "${ref}: manifest found."
             else
               available=false
-              echo "::warning::Pre-baked image ${image} not available." \
-                   "Run bake.yml (Actions → bake-store-images → Run workflow)" \
-                   "then set both GHCR packages to public before re-running."
+              echo "::warning::Pre-baked image ${ref} not available." \
+                   "Run bake.yml (Actions → bake-store-images → Run workflow)," \
+                   "set both GHCR packages to public, then point" \
+                   "docker-compose.ci.yml at the new :2.4.8-b<run_number> tag" \
+                   "(printed in the bake run summary) before re-running."
             fi
           done
           echo "available=${available}" >> "$GITHUB_OUTPUT"
@@ -110,10 +124,14 @@ jobs:
 
       - name: Pull pre-baked store images
         # Explicit pull so the layer-cache warm-up is a named step in the log.
-        # docker-compose.ci.yml references these image tags.
+        # The image references (including WHICH unique :2.4.8-b<run_number>
+        # bake tag is in force) come from docker-compose.ci.yml — the single
+        # source of truth, updated only by PR (R-06b).
         run: |
-          docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
-          docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+          mapfile -t images < <(awk '$1 == "image:" && $2 ~ /^ghcr\.io\// {print $2}' docker-compose.ci.yml)
+          for ref in "${images[@]}"; do
+            docker pull "$ref"
+          done
 
       - name: Start Magento store
         # Merges the CI overlay (pre-baked images) over the base compose.

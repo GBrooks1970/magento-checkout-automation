@@ -2,11 +2,11 @@
 # data inside a full docker-compose stack, then packages the installed state
 # into two GHCR images:
 #
-#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
 #     — markoshust/magento-php:8.4-fpm-2 + full /var/www/html tree (source,
 #       vendor, generated, env.php, 2FA disabled, qty-counter set)
 #
-#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+#   ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
 #     — mariadb:11.4 + magento-db.sql.gz in /docker-entrypoint-initdb.d/
 #
 # ci.yml pulls these images instead of doing a fresh install on every push,
@@ -16,7 +16,12 @@
 #   Trigger manually (workflow_dispatch) or push a tag matching 'bake/**'
 #   whenever the Magento version, sample data, or any runbook config step
 #   (config:set, module:disable) changes. The resulting images are immutable
-#   snapshots; ci.yml pins them by the :2.4.8 tag.
+#   snapshots: every bake pushes a UNIQUE tag (:2.4.8-b<run_number>) and never
+#   overwrites a published tag in place, so a re-bake cannot silently change
+#   what CI tests (review finding R-06b). Adopting a new bake is a
+#   one-line-per-service PR updating docker-compose.ci.yml — ci.yml reads its
+#   image references from that overlay. The pushed digests are printed in this
+#   workflow's run summary for provenance.
 #
 # REQUIRED SECRETS (repository or 'bake' environment secrets):
 #   MAGENTO_PUBLIC_KEY  — Adobe Commerce Marketplace public key (Composer username)
@@ -33,6 +38,9 @@ name: bake-store-images
 # and docker/login-action to fail on runners close to the cutoff date.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Unique per-bake tag (R-06b): no bake ever overwrites a published tag, so
+  # adopting new images is always an explicit, reviewable overlay change.
+  IMAGE_TAG: 2.4.8-b${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -248,13 +256,16 @@ jobs:
       - name: Build and push store-app image
         # Build context is the exported /var/www/html tree (not the repo root).
         # Dockerfile.store-app does: COPY --chown=app:app . /var/www/html/
+        # Pushed under the unique per-bake tag ONLY (R-06b) — the bare :2.4.8
+        # tag is deliberately no longer published; the last bare-tagged images
+        # remain in GHCR untouched as a historical artefact.
         run: |
           cp Dockerfile.store-app /tmp/magento-appdata/Dockerfile
           docker build \
-            -t ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8 \
+            -t "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:${IMAGE_TAG}" \
             /tmp/magento-appdata
           docker push \
-            ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+            "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:${IMAGE_TAG}"
 
       - name: Build and push store-db image
         # Dockerfile.store-db does:
@@ -265,10 +276,41 @@ jobs:
           cp /tmp/magento-db.sql.gz /tmp/magento-db-build/
           cp Dockerfile.store-db /tmp/magento-db-build/Dockerfile
           docker build \
-            -t ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8 \
+            -t "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:${IMAGE_TAG}" \
             /tmp/magento-db-build
           docker push \
-            ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+            "ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:${IMAGE_TAG}"
+
+      - name: Record pushed image digests in the run summary
+        # Provenance on record (R-06b): the registry digests of what this bake
+        # actually pushed, readable from the run's Summary tab. CI consumes the
+        # unique TAG (via docker-compose.ci.yml), never the hex — the digests
+        # are documentation, not a pinning mechanism (digest-pinned overlays
+        # were considered and rejected: opaque diffs for a single-maintainer
+        # registry threat model).
+        run: |
+          {
+            echo "## Baked images — tag \`${IMAGE_TAG}\`"
+            echo ""
+            echo "| Image | Digest |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for image in magento-store-app magento-store-db; do
+            ref="ghcr.io/gbrooks1970/magento-checkout-automation/${image}:${IMAGE_TAG}"
+            digest=$(docker image inspect --format '{{join .RepoDigests "\n"}}' "$ref" \
+                     | grep -m1 "/${image}@" | sed 's/.*@//')
+            if [ -z "$digest" ]; then
+              echo "::error::No registry digest recorded for ${ref} — was the push successful?"
+              exit 1
+            fi
+            echo "${image}:${IMAGE_TAG}  ${digest}"
+            echo "| \`${image}:${IMAGE_TAG}\` | \`${digest}\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          {
+            echo ""
+            echo "Adopt this bake in CI with a one-line-per-service PR pointing the"
+            echo "\`image:\` references in \`docker-compose.ci.yml\` at \`:${IMAGE_TAG}\`."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Tear down
         if: always()
