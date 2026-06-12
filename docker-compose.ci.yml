@@ -35,7 +35,7 @@
 
 services:
   phpfpm:
-    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b24
 
   db:
-    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b24
