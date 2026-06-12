@@ -25,10 +25,17 @@
 # Pre-baked images are built by .github/workflows/bake.yml (manual trigger).
 # Rebuild when: Magento version changes, sample data changes, or any
 # bin/magento config:set / module:disable step in the runbook changes.
+#
+# Tag policy (R-06b): this file is the single source of truth for WHICH bake
+# CI tests. Every bake pushes a unique, never-overwritten tag
+# (:2.4.8-b<run_number>) and prints the image digests in its run summary;
+# adopting a new bake is a one-line-per-service PR here. ci.yml (preflight
+# and the pull step) parses the image references out of this file, so nothing
+# else needs editing. The bare :2.4.8 tag is no longer published.
 
 services:
   phpfpm:
-    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b24
 
   db:
-    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8
+    image: ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b24

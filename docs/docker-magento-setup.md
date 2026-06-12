@@ -224,8 +224,12 @@ keeping the total pipeline under 25 minutes.
 
 | Image | Based on | Contains |
 |---|---|---|
-| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8` | `markoshust/magento-php:8.4-fpm-2` | Full `/var/www/html` tree: Magento source, vendor, generated classes, `env.php`, 2FA disabled (step 6c), qty-counter set (step 6b) |
-| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8` | `mariadb:11.4` | `magento-db.sql.gz` in `/docker-entrypoint-initdb.d/` — MariaDB auto-restores on first start |
+| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>` | `markoshust/magento-php:8.4-fpm-2` | Full `/var/www/html` tree: Magento source, vendor, generated classes, `env.php`, 2FA disabled (step 6c), qty-counter set (step 6b) |
+| `ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>` | `mariadb:11.4` | `magento-db.sql.gz` in `/docker-entrypoint-initdb.d/` — MariaDB auto-restores on first start |
+
+Each bake run tags both images uniquely with its workflow run number
+(`:2.4.8-b<run_number>`); the tag currently in force is whatever
+`docker-compose.ci.yml` references.
 
 ### How seeding works in CI
 
@@ -245,7 +249,8 @@ Images are built by `.github/workflows/bake.yml` (manual trigger). It:
 2. Executes the full install sequence above (steps 2–6c) — ~40 min
 3. Tars `/var/www/html` from the running `phpfpm` container; builds `store-app`
 4. Dumps the database; builds `store-db`
-5. Pushes both to GHCR
+5. Pushes both to GHCR under the unique `:2.4.8-b<run_number>` tag and prints
+   their digests in the run summary (see "Tag policy" below)
 
 Required secrets on the `bake` GitHub environment:
 `MAGENTO_PUBLIC_KEY` / `MAGENTO_PRIVATE_KEY` (Adobe Commerce Marketplace keys).
@@ -261,5 +266,22 @@ authentication.
 - A `bin/magento config:set` or `module:disable` step is added or changed
 - The `sampledata:deploy` content changes (e.g. you add a custom fixture)
 
-The `:2.4.8` tag is intentionally static. Update `docker-compose.ci.yml` and
-the Dockerfiles when you cut a new image.
+### Tag policy — unique tags, promotion by PR (R-06b, 2026-06-12)
+
+Bakes used to overwrite a single static `:2.4.8` tag in place, which meant a
+re-bake silently changed what every subsequent CI run tested. The policy is
+now:
+
+- **Every bake pushes a unique tag**: `:2.4.8-b<run_number>` (the bake
+  workflow's run number). No bake ever overwrites a published tag.
+- **`bake.yml` prints the pushed images' digests in its run summary** —
+  provenance on record. CI consumes the tag, never the digest hex
+  (digest-pinning the overlay was considered and rejected: opaque diffs, and
+  it defends against a tag-reuse threat that does not exist in a
+  single-maintainer registry).
+- **Adopting a new bake is a one-line-per-service PR** updating the two
+  `image:` references in `docker-compose.ci.yml`. That overlay is the single
+  source of truth: `ci.yml`'s preflight and pull steps parse the image
+  references out of it, so nothing else needs editing.
+- **The bare `:2.4.8` tag is no longer published.** The last images pushed
+  under it remain in GHCR as a historical artefact; nothing references them.
