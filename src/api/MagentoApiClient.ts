@@ -13,6 +13,10 @@ import { BASE_URL } from '../serenity.config';
  * Auth: catalogue endpoints are admin-scoped, so an admin bearer token is
  * required. {@link authenticate} resolves one once per run — preferring an
  * explicit MAGENTO_ADMIN_TOKEN, otherwise minting one from admin credentials.
+ * The well-known `admin`/`Password123!` defaults are used ONLY when BASE_URL
+ * resolves to localhost (the Docker test target); against any other host,
+ * missing credentials fail fast rather than probing a real store with guessable
+ * defaults (review R-09).
  * NOTE: Magento 2.4.x blocks token issuance until admin 2FA is disabled on the
  * test target — see docs/admin-api-token-guide.md.
  */
@@ -29,6 +33,21 @@ interface ProductSearchResult {
 }
 
 let cachedToken: string | undefined;
+
+/**
+ * True when BASE_URL points at the local Docker test target. Only there is it
+ * safe to fall back to the well-known `admin`/`Password123!` credentials; any
+ * other host is treated as a real store the caller must authenticate explicitly
+ * (review R-09).
+ */
+const targetIsLocalhost = (): boolean => {
+    try {
+        const host = new URL(BASE_URL).hostname.toLowerCase();
+        return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+    } catch {
+        return false;
+    }
+};
 
 export const MagentoApi = {
     restBaseUrl: (): string => `${BASE_URL}/rest/V1`,
@@ -48,8 +67,23 @@ export const MagentoApi = {
             return cachedToken;
         }
 
-        const username = process.env.MAGENTO_ADMIN_USERNAME ?? 'admin';
-        const password = process.env.MAGENTO_ADMIN_PASSWORD ?? 'Password123!';
+        const usernameEnv = process.env.MAGENTO_ADMIN_USERNAME;
+        const passwordEnv = process.env.MAGENTO_ADMIN_PASSWORD;
+
+        // Fall back to the well-known Docker test-target credentials only for a
+        // localhost target. Against any other host, require explicit env vars
+        // rather than probing a real store with guessable defaults (R-09).
+        if (!targetIsLocalhost() && (!usernameEnv || !passwordEnv)) {
+            throw new Error(
+                `Refusing to authenticate against a non-localhost target (${BASE_URL}) ` +
+                `with default credentials. Set MAGENTO_ADMIN_TOKEN, or both ` +
+                `MAGENTO_ADMIN_USERNAME and MAGENTO_ADMIN_PASSWORD, for this store. ` +
+                `The admin/Password123! defaults apply only to the local Docker test target.`,
+            );
+        }
+
+        const username = usernameEnv ?? 'admin';
+        const password = passwordEnv ?? 'Password123!';
 
         const response = await fetch(`${MagentoApi.restBaseUrl()}/integration/admin/token`, {
             method: 'POST',
