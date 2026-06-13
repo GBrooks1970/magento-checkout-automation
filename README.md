@@ -124,8 +124,8 @@ Marketplace auth keys) and the image-baking strategy CI uses.
 | `BASE_URL` | `http://localhost:8080` | Target store base URL — the default matches the local Docker store. Point it elsewhere only at a store you own (the Background mints an admin token there). |
 | `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
 | `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
-| `MAGENTO_ADMIN_USERNAME` | `admin` | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. |
-| `MAGENTO_ADMIN_PASSWORD` | `Password123!` | Password for token minting (the Docker test-target admin password). |
+| `MAGENTO_ADMIN_USERNAME` | `admin` *(localhost only)* | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. The default applies only when `BASE_URL` resolves to localhost; against any other host this must be set explicitly. |
+| `MAGENTO_ADMIN_PASSWORD` | `Password123!` *(localhost only)* | Password for token minting (the Docker test-target admin password). Same localhost-only default as the username — required explicitly for any non-localhost target. |
 
 The Background step verifies product preconditions through the Magento REST API, so it needs an
 admin token. The suite resolves one once per run (`MagentoApi.authenticate()` in the `BeforeAll`
@@ -133,6 +133,10 @@ hook): it uses `MAGENTO_ADMIN_TOKEN` if provided, otherwise mints one from the a
 username/password. **Magento 2.4.x blocks admin-token issuance until admin 2FA is disabled** on the
 test target — see `docs/admin-api-token-guide.md` and `docs/docker-magento-setup.md` (step 6c).
 Never commit a real token; the defaults above are local Docker test-target credentials only.
+For that reason the `admin`/`Password123!` fallback applies **only when `BASE_URL` resolves to
+localhost**: against any other host, `authenticate()` fails fast unless you supply
+`MAGENTO_ADMIN_TOKEN` or both `MAGENTO_ADMIN_USERNAME` and `MAGENTO_ADMIN_PASSWORD`, rather than
+probing a real store with guessable defaults (review R-09).
 
 ## Continuous integration
 
