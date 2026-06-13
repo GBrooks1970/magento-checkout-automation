@@ -65,6 +65,18 @@ to `main` and on every pull request, running the full suite against the pre-bake
 | Low | Store/website scope | Product prices and configuration scope to store view; cross-scope leakage can cause price assertion failures | Use dedicated test products scoped to the test store view |
 | Low | EAV data model | UI-based product creation is slow and brittle | API-driven setup only — no UI product creation in the test suite |
 
+### Settled-state count assertions
+
+Cart count assertions are **settled-state assertions by design** (review R-08): the
+header counter is refreshed by an asynchronous customer-data fetch that intermittently
+serves a stale value after a cart mutation, so the `my cart should contain {int} item(s)`
+step reloads the page (forcing the section to re-sync from the server) and then polls —
+it asserts what the cart *settles to*, not whatever transient value the counter shows
+first. The trade-off is conscious: a counter that is genuinely broken *until* a reload
+would not fail the suite. To keep that product-side bug class visible, the step logs the
+pre-reload counter as a **soft signal** (a stderr warning on mismatch, never a failure)
+before reloading — see `src/step-definitions/cart.steps.ts`.
+
 ---
 
 ## 6. Execution Recipes
@@ -97,11 +109,15 @@ What `.github/workflows/ci.yml` actually runs (no Magento secrets needed — the
 pre-baked images carry the installed store and test credentials):
 
 ```bash
+# Step 0: Derive GHCR_OWNER (lowercased github.repository_owner — R-06c); the
+# overlay interpolates it, so a fork's CI pulls the fork's own namespace
+export GHCR_OWNER=gbrooks1970
+
 # Step 1: Pull the pre-baked store images (built by bake.yml under a unique
 # :2.4.8-b<run_number> tag; docker-compose.ci.yml pins the tag in force, and
-# ci.yml reads the references from that overlay)
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
-docker pull ghcr.io/gbrooks1970/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
+# ci.yml resolves the references from that overlay via `compose config --images`)
+docker pull ghcr.io/${GHCR_OWNER}/magento-checkout-automation/magento-store-app:2.4.8-b<run_number>
+docker pull ghcr.io/${GHCR_OWNER}/magento-checkout-automation/magento-store-db:2.4.8-b<run_number>
 
 # Step 2: Start the stack — the CI overlay swaps in the pre-baked images;
 # --wait blocks on healthchecks (DB restores its dump; OpenSearch ~50s boot)
