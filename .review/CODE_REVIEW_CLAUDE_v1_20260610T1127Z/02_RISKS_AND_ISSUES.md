@@ -6,9 +6,21 @@
 
 Findings are numbered high to low priority. Severity reflects impact on the repo's stated purpose (a reviewable portfolio proving senior automation judgement), not production risk.
 
+> **CLOSURE STATUS (annotated 2026-06-13, TIDY-01).** All ten findings are resolved; each carries a
+> dated status note under its heading recording the closing PR/commit. Summary: R-01 (PR #7),
+> R-02 (#8), R-03 (#17), R-04 (#9), R-05 (#10), R-06 = a (#11) + b (#21) + c (#23), R-07 = bulk (#12)
+> + R-07b (#16), R-08 (#23), R-09 (#24 — CI-verified, awaiting merge at annotation time), R-10 (#13).
+> Two MEDIUM findings (R-03, R-07b) were resolved by an explicit user decision; the rest as
+> recommended. The post-review empty-report defect (not a finding here) was closed by PRs #18/#19 +
+> GUARD-01 (#21).
+
 ---
 
 ## R-01 (HIGH): Documentation set contradicts the canonical project state across at least seven files
+
+> **STATUS — CLOSED 2026-06-10** (commit `0405a47`, PR #7, merged as `ebc0dbf`). Eight docs
+> reconciled (the seven named plus the gherkin-style-guide composite-step paragraph); re-grep clean;
+> all touched links resolve.
 
 **Risk description:** [backlog.md](docs/backlog.md) is the accurate, current record (all 11 items done, payment-failure active, 12/12 green). Almost every other narrative document still describes the 2026-06-02 state, including superseded architecture and one actively defective pattern. A reviewer cross-reading docs against code will find contradictions within minutes.
 
@@ -30,6 +42,10 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-02 (HIGH): A fresh clone cannot run green by following the documentation
 
+> **STATUS — CLOSED 2026-06-10** (commit `309fd57`, PR #8). `BASE_URL` now defaults to
+> `http://localhost:8080`; runbook step 6d installs `Portfolio_DeclinePayment`; pull-based bring-up
+> documented; the broken Magebit smoke path removed.
+
 **Risk description:** Two compounding gaps mean the documented local paths fail. (a) The default `BASE_URL` targets a public sandbox known dead since 2026-06-02. (b) The local Docker runbook installs a store *without* the Portfolio_DeclinePayment module, while the default profile now includes `payment-failure.feature`, which requires it.
 
 **Evidence outline:**
@@ -46,6 +62,11 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 ---
 
 ## R-03 (MEDIUM): "API setup, UI assertion" is overclaimed - cart seeding is UI-driven
+
+> **STATUS — CLOSED 2026-06-11** (user chose: implement API seeding; commits `1afdb57` + `1b3a0e7`,
+> PR #17, CI-verified 12/12 after a re-bake). New `Portfolio_CartSeed` fixture module binds the
+> API-created masked quote to the browser session; Background seeds via REST + `AdoptSeededCart`;
+> ADR-0006 added and ADR-0003/style guide amended.
 
 **Risk description:** The pattern ADR-0003 calls "the highest-value pattern the portfolio demonstrates" is implemented only for product verification. The Background step `I have {string} in my cart with quantity {int}` seeds the cart by navigating the product page and clicking Add to Cart.
 
@@ -64,6 +85,11 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-04 (MEDIUM): Dependency declarations contradict the ADRs and hide a phantom dependency
 
+> **STATUS — CLOSED 2026-06-10** (commit `0cba531`, PR #9). `@serenity-js/*`, `@cucumber/cucumber`,
+> `@playwright/test` exact-pinned to lockfile-resolved versions; `playwright 1.60.0` declared
+> explicitly; ADR-0002/0004 reconciled. (The optional `Before` isolation guard was pursued
+> separately as FLAKE-01, PR #14.)
+
 **Risk description:** ADRs claim pinned versions; the manifest uses wide caret ranges; and the suite imports a package it never declares.
 
 **Evidence outline:**
@@ -81,6 +107,11 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-05 (MEDIUM): The decline-message selector is page-global and the gateway command is decorative
 
+> **STATUS — CLOSED 2026-06-10** (commits `d479278` + `d3ecd27`, PR #10, CI-green). Selector scoped
+> to `#checkout .message-error` (the first attempt `.page.messages` was falsified by CI run
+> 27295475559 — the OPC errors component renders inside `#checkout`); di.xml/DeclineCommand/Observer
+> comments now document the observer as the real decline mechanism.
+
 **Risk description:** Two related sharp edges in the payment-failure path. (a) `paymentErrorMessage` is bare `.message-error`, which matches *any* error banner anywhere on the page, not specifically the decline. (b) The module wires `DeclineCommand` into the gateway command pool, but the recorded behaviour is that placement never invokes it - the observer does all the work - so the command is live-looking dead code.
 
 **Evidence outline:**
@@ -95,6 +126,20 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 ---
 
 ## R-06 (MEDIUM): CI supply-chain and reproducibility edges - mutable image tag, single-image preflight, hardcoded owner
+
+> **STATUS — CLOSED 2026-06-13**, in three parts (the finding bundles three independent edges):
+> - **R-06a — preflight both images + fail-fast warm-up:** CLOSED 2026-06-10 (commit `c466826`,
+>   PR #11). Preflight manifest-inspects `magento-store-app` AND `magento-store-db`; the warm-up
+>   curl loop fails on non-200.
+> - **R-06b — mutable `:2.4.8` tag:** CLOSED 2026-06-12 (commits `2115104` + `d422ead`, PR #21).
+>   User chose **Option A**: bake pushes unique `:2.4.8-b<run_number>` tags only (bare `:2.4.8`
+>   dropped), prints digests in the run summary, and the CI overlay references the validated tag,
+>   updated only by PR. Proven end-to-end by bake `27425108072` (first `:2.4.8-b24` images) + PR CI
+>   `27425631704`.
+> - **R-06c — hardcoded GHCR owner:** CLOSED 2026-06-13 (commit `fe7363f`, PR #23). Owner derived
+>   from `github.repository_owner` (lowercased in shell) across `ci.yml`, `bake.yml`, and an
+>   env-substituted `docker-compose.ci.yml`; a fork pulls/pushes its own namespace without edits.
+>   CI-verified run `27449960098`.
 
 **Risk description:** The bake-once/pull-many design is sound, but three details weaken it: the `:2.4.8` tag is overwritten in place by any re-bake; preflight checks only the app image; and the GHCR namespace is hardcoded, making forks and the repo's own portability brittle.
 
@@ -113,6 +158,13 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-07 (LOW): Dead code and stale internal references dilute an otherwise tight codebase
 
+> **STATUS — CLOSED 2026-06-10**, in two parts:
+> - **R-07 (bulk prune):** commit `7c75272`, PR #12. Unused Questions/PageElements removed
+>   (grep-verified first); the stale 30 s `AddToCart` comment fixed; doc inventories updated.
+> - **R-07b (`CompleteCheckout` fate):** commit `d48b8d1`, PR #16, CI-green. User chose **delete**;
+>   ADR-0001's flagship example re-pointed at `ProvideShippingDetails`, the gherkin-style-guide
+>   composite paragraph re-worded as deliberate pruning.
+
 **Risk description:** Several Screenplay artifacts are unused, and two documents reference them as if live.
 
 **Evidence outline:**
@@ -130,6 +182,12 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-08 (LOW): Assertion-side mutations and step duplication in cart steps
 
+> **STATUS — CLOSED 2026-06-13** (commit `615397a`, PR #23, CI-verified run `27450282161`). The twin
+> `item`/`items` step defs merged into one `my cart should contain {int} item(s)` Cucumber
+> expression; a new `NotePreReloadCounter` interaction `console.warn`s pre-reload mismatches as a
+> soft signal (never asserts); `docs/qa-strategy.md` §5 documents count assertions as settled-state
+> by design.
+
 **Risk description:** Then-steps that mutate state, and twin step definitions, are small pattern wobbles in otherwise clean glue.
 
 **Evidence outline:**
@@ -145,6 +203,12 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 
 ## R-09 (LOW): Hard-coded test credentials are pervasive but consistently flagged - accepted risk, one improvement
 
+> **STATUS — CLOSED 2026-06-13** (commit `7f4e40e`, PR #24, CI-verified run `27473439672`; PR open
+> at the time of this annotation, awaiting the maintainer's merge). The recommended `if` is in
+> place: `MagentoApi.authenticate()` falls back to `admin`/`Password123!` only when `BASE_URL`
+> resolves to localhost; any other host fails fast unless `MAGENTO_ADMIN_TOKEN` or both
+> `MAGENTO_ADMIN_USERNAME`/`PASSWORD` are set. README env-var section documents the conditional.
+
 **Risk description:** `admin` / `Password123!` appear as code defaults, CI env values, and bake install args. For a disposable test target this is reasonable and every occurrence carries a test-target-only warning; the residual risk is the *code default* silently probing a non-test target.
 
 **Evidence outline:**
@@ -159,6 +223,11 @@ Findings are numbered high to low priority. Severity reflects impact on the repo
 ---
 
 ## R-10 (LOW): Serenity report path and artifact lifecycle quirks
+
+> **STATUS — CLOSED 2026-06-10** (commit `4a45407`, PR #13). User chose the documentation option:
+> the README CI section now explains both the two-stage report-artifact relay and the
+> publish-on-failure Pages policy. (The separate empty-report defect surfaced later was fixed under
+> PRs #18/#19 and the GUARD-01 CI hardening, PR #21.)
 
 **Risk description:** Run artifacts write into `docs/reports/` (a gitignored docs subfolder) while the HTML renders to `target/site/serenity` - a two-location pipeline that works but is easy to misread, and the Pages deploy publishes even for failed runs by design.
 
