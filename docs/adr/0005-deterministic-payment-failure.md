@@ -55,7 +55,11 @@ The decisions that stuck:
   adapter (so it is a valid, available payment method), but offline-style order placement never invoked
   its `authorize` command — the order *succeeded*. The reliable trigger is the
   `sales_model_service_quote_submit_before` observer (`Observer/DeclineOrder.php`), which throws for
-  `declinepayment` during quote submission and aborts the order every time.
+  `declinepayment` during quote submission and aborts the order every time. The gateway
+  `DeclineCommand` (wired into the command pool in `etc/di.xml`) is therefore **inert at runtime** and
+  is retained only for **gateway-contract completeness** — so any future code path that *does* invoke
+  `authorize`/`sale` declines consistently rather than silently succeeding. It is kept deliberately,
+  not dropped (see the `DeclineCommand.php` and `di.xml` docblocks).
 - **Renderer: clone checkmo's.** The frontend method-renderer extends
   `Magento_OfflinePayments/js/view/payment/method-renderer/checkmo-method` and reuses its template.
   A bare default renderer rendered the method but left the Place Order button disabled (no billing
