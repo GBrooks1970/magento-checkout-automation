@@ -1,8 +1,8 @@
 # Magento Checkout Automation — Backlog
 
-**Version:** 1 — Initial backlog from phases 1–3
-**Last Updated:** 2026-06-02
-**Based on:** Session notes v2 (2026-06-02), Phase 1–3 implementation
+**Version:** 2 — Reconciled through the 2026-06-11 closure (all items #1–#11 resolved)
+**Last Updated:** 2026-06-11
+**Based on:** Session notes v13 (2026-06-11), code-review closure R-01…R-10
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -546,12 +546,15 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 
 ## Summary
 
+Items are banded by their own priority score (the body heading an item sits under is
+historical; the score governs the band — e.g. #2 scores 21 = HIGH).
+
 | Priority | Count | Status |
 |---|---|---|
-| HIGH (20–30) | 4 | #1 ✅ done; #2 ✅ DONE (decline module, 12/12 green); #8 ✅ done; #9 ✅ done |
-| MEDIUM (10–19) | 4 | #3 ✅ done; #4 ✅ DONE (badge green, Pages live); #5 ✅ done; #10 ✅ done |
-| LOW (0–9) | 2 | #6 ✅ done; #7 ✅ done |
-| **Outstanding** | **none** | All backlog items complete 🎉 |
+| HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
+| MEDIUM (10–19) | 5 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done |
+| LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
+| **Outstanding** | **none** | All 11 items complete 🎉 |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

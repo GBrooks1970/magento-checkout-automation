@@ -5,6 +5,7 @@
 # handling. See docs/adr/0005-deterministic-payment-failure.md. The former
 # @deferred quarantine tag has been removed; this now runs in the default profile.
 
+@usesDeclineModule
 Feature: Payment failure handling
   As a guest shopper
   I want to be informed when my payment is declined
