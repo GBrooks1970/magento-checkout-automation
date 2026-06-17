@@ -38,6 +38,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 6
+      # phpfpm has no healthcheck, so depends_on:service_started treats it ready
+      # the instant its container starts — before php-fpm has finished warming up
+      # (and php-fpm itself waits on db/redis/opensearch/rabbitmq becoming healthy,
+      # opensearch alone taking ~50s). Without a start_period the app's 6x5s=30s
+      # retry budget can expire during that warm-up and the cold `compose up --wait`
+      # aborts with "app is unhealthy". A start_period that outlasts php-fpm's
+      # warm-up means early curl failures don't count against the retry budget, so
+      # a single cold bring-up succeeds. 60s matches the opensearch start_period
+      # (php-fpm's slowest dependency) with headroom.
+      start_period: 60s
     depends_on:
       phpfpm:
         condition: service_started
