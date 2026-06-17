@@ -28,13 +28,16 @@ module.exports = {
     ...common,
     paths: ['features/**/*.feature']
   },
-  // Read-only subset: excludes scenarios that place an order, so it is safe to
-  // run against a shared or non-resettable storefront (e.g. a public demo).
-  // Tag-based filtering is used because CLI path/line arguments do not reliably
-  // override the default profile's path glob. See backlog #9.
+  // Read-only subset: excludes scenarios that place an order (@placesOrder) and
+  // scenarios that depend on the deterministic decline module (@usesDeclineModule
+  // — payment-failure submits a checkout and so is not read-only / not
+  // shared-store-safe), so it is safe to run against a shared or non-resettable
+  // storefront (e.g. a public demo). Tag-based filtering is used because CLI
+  // path/line arguments do not reliably override the default profile's path glob.
+  // See backlog #9.
   smoke: {
     ...common,
     paths: ['features/**/*.feature'],
-    tags: 'not @deferred and not @placesOrder'
+    tags: 'not @deferred and not @placesOrder and not @usesDeclineModule'
   }
 };

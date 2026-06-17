@@ -25,8 +25,8 @@
 
 **Total active scenarios:** 12 (94 steps — the figure CI runs green: 12/12, 94/94)
 **Deferred scenarios:** 0
-**Smoke subset:** the `smoke` profile (`not @deferred and not @placesOrder`) runs the 7 read-only
-scenarios — safe against shared, non-resettable stores.
+**Smoke subset:** the `smoke` profile (`not @deferred and not @placesOrder and not @usesDeclineModule`)
+runs the 7 read-only scenarios — safe against shared, non-resettable stores.
 
 ---
 

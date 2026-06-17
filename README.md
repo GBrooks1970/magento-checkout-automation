@@ -105,7 +105,7 @@ Placing real orders is fine — the store is disposable; tear down with
 
 **Read-only subset.** The `smoke` profile (`npm run test:smoke`) runs only the 7
 scenarios that neither place orders nor depend on the decline module — filter by
-this profile (tags `not @deferred and not @placesOrder`), **not** by CLI path or
+this profile (tags `not @deferred and not @placesOrder and not @usesDeclineModule`), **not** by CLI path or
 `feature:line` arguments, which the default profile's path glob overrides.
 
 > An earlier README recommended running the smoke subset against a public Luma
