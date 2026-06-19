@@ -1,14 +1,17 @@
 # Magento Checkout Automation — Backlog
 
-> **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12.** The project was formally
-> closed (terminal handover **v16 FINAL**: all of #1–#11 done, both code-review cycles closed
-> — first R-01…R-10 + extensions, second MAG-C01…C04) and then reopened on user decision to
-> deliver **Item #12 (screenshots in the report)**, promoted from planning item 0001 (ADR-0007).
-> With #12 done, all 12 items are again complete; a v17 handover should narrate the reopen.
+> **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12 — and a new cycle opened.** The
+> project was formally closed (terminal handover **v16 FINAL**: all of #1–#11 done, both code-review
+> cycles closed — first R-01…R-10 + extensions, second MAG-C01…C04) and then reopened on user
+> decision to deliver **Item #12 (screenshots in the report)**, promoted from planning item 0001
+> (ADR-0007). With #12 done, items #1–#12 are complete. **On 2026-06-19 two further planning
+> proposals were promoted into the backlog as committed work — Item #13 (trace/video on failure,
+> from planning 0002) and Item #14 (cross-browser matrix, from planning 0003) — so the project is
+> active again with two outstanding items.**
 
-**Version:** 3 — Reopened 2026-06-19 to deliver Item #12 (screenshots in reports); all items resolved
+**Version:** 4 — Promoted planning proposals 0002 (trace/video) + 0003 (cross-browser) into the backlog as Items #13–#14 (both outstanding)
 **Last Updated:** 2026-06-19
-**Based on:** Session notes v13 (2026-06-11), code-review closure R-01…R-10, planning item 0001 (ADR-0007)
+**Based on:** Session notes v17 (2026-06-19), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -579,6 +582,75 @@ report is the point) and lean in CI (which publishes the report on every green `
 
 ---
 
+#### Item #13: Trace + video capture on failure — Score: 11 — READY TO START
+
+**Priority Score:** Breakage Probability (2) + Portfolio Impact (5) + Maintenance Burden (4) = **11 points**
+**Impact:** When a CI scenario fails, the only forensic evidence today is the Serenity narrative and
+(since Item #12) a failure screenshot. A single still frame often does not explain a Knockout.js
+timing failure — what the page was doing *before* the assertion matters. Trace + video give a
+maintainer the missing context.
+**Effort:** 2–4 hours
+**Status:** READY TO START — promoted from planning proposal **0002** (user decision 2026-06-19)
+**Area:** Test infrastructure / CI
+**Provenance:** `docs/planning/README.md` proposal 0002 (sketch-level; promoted, not yet designed in detail).
+
+**Problem:**
+Failure diagnosis relies on a static screenshot plus the step narrative; neither captures the
+asynchronous KO.js render sequence that most checkout flakes turn on.
+
+**Resolution Strategy (sketch — refine on implementation):**
+1. Enable Playwright tracing and video on the browser context for failed scenarios — start tracing
+   in the relevant hook, discard on pass, archive on fail.
+2. Attach the `.zip` trace + `.webm` video as Serenity artifacts alongside the failure screenshot.
+3. Gate it exactly as Item #12 gated screenshots — **off by default**, opt-in via an env var (e.g.
+   `TRACE=on-failure`), and on locally only when explicitly asked (traces are large).
+
+**Success Criteria:**
+- [ ] A deliberately-failed scenario produces a trace + video attached to the Serenity report.
+- [ ] Default run (no env var, and CI default) captures nothing and is byte-for-byte unchanged — zero overhead when off.
+- [ ] Per-scenario isolation (Item #10) re-verified green after the context-path change (see dependency).
+- [ ] `npx tsc --noEmit` clean; smoke 7/7 and default 12/12 unaffected.
+
+**Dependency / risk:** tracing changes the context-creation path that the per-scenario isolation
+reset (`src/hooks/browser.hooks.ts`, the cart-leak fix — Item #10) is carefully tuned around. Any
+trace work **must** re-verify isolation; recreating the context per scenario is exactly what that
+code deliberately avoids. This coupling is why it was held as a separate item, not a rider on #12.
+
+---
+
+#### Item #14: Cross-browser run matrix (Firefox / WebKit) — Score: 15 — READY TO START
+
+**Priority Score:** Breakage Probability (3) + Portfolio Impact (6) + Maintenance Burden (6) = **15 points**
+**Impact:** The suite only ever runs on Chromium. "Works in Chromium" is not "works in the
+storefront" — Luma's Knockout.js checkout can behave differently across engines. Cross-engine
+coverage materially strengthens the portfolio claim.
+**Effort:** 4–6 hours
+**Status:** READY TO START — promoted from planning proposal **0003** (user decision 2026-06-19)
+**Area:** Test infrastructure / CI
+**Provenance:** `docs/planning/README.md` proposal 0003 (sketch-level; promoted, not yet designed in detail).
+
+**Problem:**
+Engine-specific selector/timing drift is invisible while only Chromium runs; a real storefront is
+exercised by Firefox and WebKit users too.
+
+**Resolution Strategy (sketch — refine on implementation):**
+1. Parameterise the browser launch in `src/hooks/browser.hooks.ts` by a `BROWSER` env var
+   (`chromium` | `firefox` | `webkit`, default `chromium`).
+2. Add a CI matrix dimension over the three engines.
+3. Keep Chromium the **required** gate; run Firefox / WebKit as **non-blocking** matrix legs first,
+   promoting them to required only once green and stable.
+
+**Success Criteria:**
+- [ ] The suite runs under `BROWSER=firefox` and `BROWSER=webkit` locally (Playwright browsers installed).
+- [ ] CI runs a matrix over the three engines; Chromium remains the required gate, the other two non-blocking initially.
+- [ ] Any engine-specific selector/timing drift surfaced is triaged and either fixed or documented.
+- [ ] `npx tsc --noEmit` clean.
+
+**Dependency / risk:** roughly triples CI minutes on the slowest part of the pipeline, and will
+surface real engine-specific drift that needs triage — budget for the findings, not just the wiring.
+
+---
+
 ## Resolved Items
 
 #### Phase 1–3 implementation ✅ Resolved 2026-06-02
@@ -596,9 +668,9 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
-| MEDIUM (10–19) | 6 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007) |
+| MEDIUM (10–19) | 8 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) 🟡 READY (trace/video, from 0002); #14 (15) 🟡 READY (cross-browser, from 0003) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **none** | All 12 items complete 🎉 |
+| **Outstanding** | **2** | #13 (trace/video on failure) + #14 (cross-browser matrix) — promoted from planning 0002/0003 2026-06-19 |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
