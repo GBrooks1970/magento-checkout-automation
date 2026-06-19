@@ -556,8 +556,8 @@ portfolio artefact and give a maintainer real forensic evidence on a failure.
 **Status:** ✅ DONE & type-clean 2026-06-19 — implemented + gating verified; full-suite render
 verified in CI on the PR (the local Docker store is the only render target; CI is the verification path).
 **Area:** Reporting / CI
-**Provenance:** Promoted from `docs/planning/0001-screenshots-in-test-reports.md` (designed as future
-work, then promoted on user decision). Decision recorded in **ADR-0007**.
+**Provenance:** Promoted from `docs/planning/proposals/0001-screenshots-in-test-reports.md` (designed
+as future work, then promoted on user decision). Decision recorded in **ADR-0007**.
 
 **Problem:**
 Serenity/JS can embed browser screenshots via the `Photographer` crew member, but it was never
@@ -592,7 +592,7 @@ maintainer the missing context.
 **Effort:** 2–4 hours
 **Status:** READY TO START — promoted from planning proposal **0002** (user decision 2026-06-19)
 **Area:** Test infrastructure / CI
-**Provenance:** `docs/planning/README.md` proposal 0002 (sketch-level; promoted, not yet designed in detail).
+**Provenance:** `docs/planning/proposals/0002-trace-video-capture-on-failure.md` (sketch-level; promoted, not yet designed in detail).
 
 **Problem:**
 Failure diagnosis relies on a static screenshot plus the step narrative; neither captures the
@@ -627,7 +627,7 @@ coverage materially strengthens the portfolio claim.
 **Effort:** 4–6 hours
 **Status:** READY TO START — promoted from planning proposal **0003** (user decision 2026-06-19)
 **Area:** Test infrastructure / CI
-**Provenance:** `docs/planning/README.md` proposal 0003 (sketch-level; promoted, not yet designed in detail).
+**Provenance:** `docs/planning/proposals/0003-cross-browser-run-matrix.md` (sketch-level; promoted, not yet designed in detail).
 
 **Problem:**
 Engine-specific selector/timing drift is invisible while only Chromium runs; a real storefront is
