@@ -50,6 +50,24 @@ to `main` and on every pull request, running the full suite against the pre-bake
 - **Flake monitoring:** The `@deferred` tag quarantines scenarios that cannot yet run reliably; it was used to hold `payment-failure.feature` out of every run until the deterministic decline module existed (removed 2026-06-09 — the quarantine demonstration in full). Any scenario that begins flaking under normal conditions should be tagged `@pending` with a comment explaining the instability trigger
 - **Baseline:** All 12 active scenarios must pass on every run against the Dockerised target; zero tolerance for intermittent failures
 
+### Screenshots in the report
+
+The Serenity report can embed browser screenshots, captured by the `Photographer` crew member
+(`src/config/screenshots.ts`, wired in `src/serenity.config.ts`). They are **configurable by
+environment** via `SCREENSHOTS` (`off` | `failures` | `all`):
+
+- **Local default: on (every interaction)** — local runs are exploratory and the illustrated report
+  is the point; no env var needed.
+- **CI default: off** — CI publishes the report on every green `main` push, so capturing every
+  interaction would bloat the published Pages artifact and slow the cold store. CI's signal is the
+  badge; screenshots there are a deliberate debugging aid. Recommended CI opt-in: `SCREENSHOTS=failures`
+  on the PR leg, leaving the every-push published report lean.
+
+Screenshots are **artifacts, not assertions** — a capture failure is logged and never fails a step,
+so the non-flaky guarantee is preserved. The `Photographer` is a crew member, not a Cucumber
+formatter, so it does not compete for the single stdout formatter slot (see §3 and ADR-0002). See
+`docs/adr/0007-screenshots-in-reports.md` and `docs/planning/0001-screenshots-in-test-reports.md`.
+
 ---
 
 ## 5. Risk-Based Focus
