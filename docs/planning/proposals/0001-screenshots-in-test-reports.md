@@ -4,7 +4,7 @@
             BDD test reports, configurable by environment (CI vs local).
   STATUS:   DELIVERED 2026-06-19 (backlog #12, ADR-0007). Retained as the design
             record. See docs/planning/README.md.
-  LOCATION: docs/planning/0001-screenshots-in-test-reports.md
+  LOCATION: docs/planning/proposals/0001-screenshots-in-test-reports.md
 -->
 
 # 0001 — Screenshots in the test reports (CI/local configurable)
