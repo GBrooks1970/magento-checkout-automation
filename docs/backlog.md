@@ -1,5 +1,13 @@
 # Magento Checkout Automation — Backlog
 
+> **🏁 PROJECT CLOSED — 2026-06-19.** This project is archived as a finished portfolio
+> piece. All backlog items (#1–#11) are complete and **both** code-review cycles are closed
+> (first cycle R-01…R-10 + extensions; second cycle MAG-C01…C04, tracked in the now-retired
+> `WORKLIST_magento-checkout-automation.md`). Closure is narrated by the terminal handover
+> **`magento-checkout-automation_session-notes_v16` (FINAL, 2026-06-19)**. No successor session is
+> expected. Verification at close: live report populated (12/12, 4 features); CI green on `main`
+> at `87a869b` (run `27714811077`); working tree clean; no open PRs.
+
 **Version:** 2 — Reconciled through the 2026-06-11 closure (all items #1–#11 resolved)
 **Last Updated:** 2026-06-11
 **Based on:** Session notes v13 (2026-06-11), code-review closure R-01…R-10
