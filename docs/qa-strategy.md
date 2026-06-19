@@ -66,7 +66,7 @@ environment** via `SCREENSHOTS` (`off` | `failures` | `all`):
 Screenshots are **artifacts, not assertions** — a capture failure is logged and never fails a step,
 so the non-flaky guarantee is preserved. The `Photographer` is a crew member, not a Cucumber
 formatter, so it does not compete for the single stdout formatter slot (see §3 and ADR-0002). See
-`docs/adr/0007-screenshots-in-reports.md` and `docs/planning/0001-screenshots-in-test-reports.md`.
+`docs/adr/0007-screenshots-in-reports.md` and `docs/planning/proposals/0001-screenshots-in-test-reports.md`.
 
 ---
 

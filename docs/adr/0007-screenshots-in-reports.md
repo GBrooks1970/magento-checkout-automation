@@ -20,7 +20,7 @@ it*. Two contexts pull in opposite directions:
   after every interaction there would bloat the published artifact and add capture latency on the
   cold pre-baked store (which the CI warm-up step already nurses).
 
-This was designed as proposed future work in `docs/planning/0001-screenshots-in-test-reports.md`
+This was designed as proposed future work in `docs/planning/proposals/0001-screenshots-in-test-reports.md`
 and promoted to backlog Item #12 for delivery.
 
 ## Decision
