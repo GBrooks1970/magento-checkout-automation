@@ -1,19 +1,20 @@
 <!--
   AUDIENCE: Engineers and AI agents working in this repository.
-  PURPOSE:  Register of PROPOSED future work — ideas not yet committed to scope.
+  PURPOSE:  Register of future-work proposals + a record of which have been delivered.
   LOCATION: docs/planning/
-  NOTE:     This project is formally CLOSED (2026-06-19, terminal handover v16).
-            Nothing here is committed work. These are candidates a future session
-            would triage IF the project is reopened. The source of truth for
-            delivered work remains docs/backlog.md.
+  NOTE:     The project was closed on 2026-06-19 (terminal handover v16) and then
+            reopened the same day to deliver item 0001. Items 0002-0007 remain
+            proposals, not committed work. The source of truth for delivered work
+            is docs/backlog.md.
 -->
 
-# Proposed Future Work
+# Future Work — proposals and delivery record
 
-This folder holds **proposals**, not commitments. The project shipped its bounded scope
-(one guest-checkout journey, 12 scenarios / 94 steps green, living documentation published)
-and was closed on 2026-06-19. The items below are improvements a future maintainer could pick
-up if the project is reopened — each is recorded here so the thinking is not lost.
+This folder holds **proposals**, plus a record of which have since been delivered. The project
+shipped its bounded scope (one guest-checkout journey, 12 scenarios / 94 steps green, living
+documentation published) and was closed on 2026-06-19, then reopened the same day to deliver
+**0001 (screenshots in the report)** — now committed as backlog Item #12. Items 0002–0007 remain
+improvements a future maintainer could pick up — each is recorded here so the thinking is not lost.
 
 **Status vocabulary:** `Proposed` (idea captured) → `Designed` (a design + implementation plan
 exists in this folder) → `Accepted` (moved into `docs/backlog.md` as committed work) →
@@ -23,7 +24,7 @@ exists in this folder) → `Accepted` (moved into `docs/backlog.md` as committed
 
 | # | Proposal | Status | Design doc | Rough effort |
 |---|---|---|---|---|
-| 0001 | Screenshots in the test reports (CI/local configurable) | **Designed** | [0001-screenshots-in-test-reports.md](0001-screenshots-in-test-reports.md) | 3–5 h |
+| 0001 | Screenshots in the test reports (CI/local configurable) | ✅ **Done** (backlog #12, ADR-0007) | [0001-screenshots-in-test-reports.md](0001-screenshots-in-test-reports.md) | 3–5 h |
 | 0002 | Trace + video capture on failure (CI debugging) | Proposed | — | 2–4 h |
 | 0003 | Cross-browser run matrix (Firefox / WebKit) | Proposed | — | 4–6 h |
 | 0004 | Accessibility smoke checks on key pages | Proposed | — | 4–8 h |

@@ -2,14 +2,17 @@
   AUDIENCE: Engineers and AI agents working in this repository.
   PURPOSE:  Design + implementation plan for adding screenshots to the Serenity
             BDD test reports, configurable by environment (CI vs local).
-  STATUS:   Proposed future work — NOT yet implemented. See docs/planning/README.md.
+  STATUS:   DELIVERED 2026-06-19 (backlog #12, ADR-0007). Retained as the design
+            record. See docs/planning/README.md.
   LOCATION: docs/planning/0001-screenshots-in-test-reports.md
 -->
 
 # 0001 — Screenshots in the test reports (CI/local configurable)
 
-**Status:** Designed (proposed — not implemented)
-**Owner:** unassigned
+**Status:** ✅ Delivered 2026-06-19 — implemented in `src/config/screenshots.ts` +
+`src/serenity.config.ts`, recorded as ADR-0007 and backlog Item #12. Retained as the design record;
+the plan below was followed as written.
+**Owner:** delivered
 **Rough effort:** 3–5 hours (implementation + validation + docs)
 **Touches:** `src/serenity.config.ts`, a new `src/config/screenshots.ts`, `README.md`,
 `docs/qa-strategy.md`, a new `docs/adr/0007-*.md` (on acceptance), `.github/workflows/ci.yml`

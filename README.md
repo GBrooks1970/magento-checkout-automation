@@ -123,6 +123,7 @@ Marketplace auth keys) and the image-baking strategy CI uses.
 |---|---|---|
 | `BASE_URL` | `http://localhost:8080` | Target store base URL — the default matches the local Docker store. Point it elsewhere only at a store you own (the Background mints an admin token there). |
 | `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
+| `SCREENSHOTS` | `all` locally, `off` in CI | Screenshots in the Serenity report: `off` \| `failures` \| `all`. Unset → **on (every interaction) locally, off in CI** (CI detected via `CI=true`). An explicit value overrides the environment default. Recommended CI opt-in for debugging: `SCREENSHOTS=failures`. See `docs/adr/0007-screenshots-in-reports.md`. |
 | `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
 | `MAGENTO_ADMIN_USERNAME` | `admin` *(localhost only)* | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. The default applies only when `BASE_URL` resolves to localhost; against any other host this must be set explicitly. |
 | `MAGENTO_ADMIN_PASSWORD` | `Password123!` *(localhost only)* | Password for token minting (the Docker test-target admin password). Same localhost-only default as the username — required explicitly for any non-localhost target. |
