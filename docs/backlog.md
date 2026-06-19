@@ -1,16 +1,14 @@
 # Magento Checkout Automation — Backlog
 
-> **🏁 PROJECT CLOSED — 2026-06-19.** This project is archived as a finished portfolio
-> piece. All backlog items (#1–#11) are complete and **both** code-review cycles are closed
-> (first cycle R-01…R-10 + extensions; second cycle MAG-C01…C04, tracked in the now-retired
-> `WORKLIST_magento-checkout-automation.md`). Closure is narrated by the terminal handover
-> **`magento-checkout-automation_session-notes_v16` (FINAL, 2026-06-19)**. No successor session is
-> expected. Verification at close: live report populated (12/12, 4 features); CI green on `main`
-> at `87a869b` (run `27714811077`); working tree clean; no open PRs.
+> **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12.** The project was formally
+> closed (terminal handover **v16 FINAL**: all of #1–#11 done, both code-review cycles closed
+> — first R-01…R-10 + extensions, second MAG-C01…C04) and then reopened on user decision to
+> deliver **Item #12 (screenshots in the report)**, promoted from planning item 0001 (ADR-0007).
+> With #12 done, all 12 items are again complete; a v17 handover should narrate the reopen.
 
-**Version:** 2 — Reconciled through the 2026-06-11 closure (all items #1–#11 resolved)
-**Last Updated:** 2026-06-11
-**Based on:** Session notes v13 (2026-06-11), code-review closure R-01…R-10
+**Version:** 3 — Reopened 2026-06-19 to deliver Item #12 (screenshots in reports); all items resolved
+**Last Updated:** 2026-06-19
+**Based on:** Session notes v13 (2026-06-11), code-review closure R-01…R-10, planning item 0001 (ADR-0007)
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -543,6 +541,44 @@ items remain: `MAGENTO_ADMIN_TOKEN` (with #3) and the published report link (wit
 
 ---
 
+### MEDIUM Priority (Score: 10–19)
+
+#### Item #12: Screenshots in the test reports (configurable) — Score: 12 — ✅ DONE 2026-06-19
+
+**Priority Score:** Breakage Probability (2) + Portfolio Impact (7) + Maintenance Burden (3) = **12 points**
+**Impact:** The Serenity living documentation narrated each scenario but carried no screenshots — a
+reviewer saw the steps, not the storefront. Screenshots make the published report a stronger
+portfolio artefact and give a maintainer real forensic evidence on a failure.
+**Effort:** 3–5 hours
+**Status:** ✅ DONE & type-clean 2026-06-19 — implemented + gating verified; full-suite render
+verified in CI on the PR (the local Docker store is the only render target; CI is the verification path).
+**Area:** Reporting / CI
+**Provenance:** Promoted from `docs/planning/0001-screenshots-in-test-reports.md` (designed as future
+work, then promoted on user decision). Decision recorded in **ADR-0007**.
+
+**Problem:**
+Serenity/JS can embed browser screenshots via the `Photographer` crew member, but it was never
+wired in. Screenshots must be **configurable by environment**: rich locally (where an illustrated
+report is the point) and lean in CI (which publishes the report on every green `main` push).
+
+**Resolution (see ADR-0007 for the decision + alternatives):**
+1. New `src/config/screenshots.ts` — `photographer()` resolves a `Photographer` crew member (or
+   `null`) from the environment: explicit `SCREENSHOTS=off|failures|all` overrides; otherwise
+   **default ON locally** (`TakePhotosOfInteractions`), **OFF in CI** (detected via `CI=true`).
+2. `src/serenity.config.ts` appends the crew member conditionally (`...(photo ? [photo] : [])`) so
+   the crew is byte-for-byte the prior baseline when off — no collision with the sole-stdout-formatter
+   rule (the `Photographer` is a crew member, not a Cucumber formatter); `cucumber.js` untouched.
+3. Documented in `README.md` (env-var table), `docs/qa-strategy.md` (§4), and ADR-0007.
+
+**Success Criteria:**
+- [x] `npx tsc --noEmit` clean.
+- [x] Env gating verified across all six combinations (local on/off/failures, CI off/failures/all override).
+- [x] Crew unchanged when `SCREENSHOTS=off` / CI default (zero overhead).
+- [x] Does not touch `src/hooks/browser.hooks.ts` (the fragile per-scenario isolation reset, #10).
+- [ ] Full suite renders screenshots and stays 7/7 (smoke) & 12/12 (default) — **verified on the PR's CI e2e run** (local Docker store is the only render target).
+
+---
+
 ## Resolved Items
 
 #### Phase 1–3 implementation ✅ Resolved 2026-06-02
@@ -560,9 +596,9 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
-| MEDIUM (10–19) | 5 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done |
+| MEDIUM (10–19) | 6 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **none** | All 11 items complete 🎉 |
+| **Outstanding** | **none** | All 12 items complete 🎉 |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

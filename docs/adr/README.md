@@ -23,3 +23,4 @@ decision gets a new ADR that supersedes the old one, rather than an edit.
 | [0004](0004-playwright-over-cypress.md) | Use Playwright as the UI driver, over Cypress | Accepted |
 | [0005](0005-deterministic-payment-failure.md) | Deterministic payment failure via a custom always-decline module | Accepted |
 | [0006](0006-api-guest-cart-seeding.md) | Seed guest carts through the REST API, bound to the session by a test-fixture endpoint | Accepted |
+| [0007](0007-screenshots-in-reports.md) | Screenshots in the report, configurable by environment (on locally, off in CI) | Accepted |
