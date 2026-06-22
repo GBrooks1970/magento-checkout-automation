@@ -10,8 +10,16 @@
 > active again with two outstanding items.**
 
 **Version:** 4 — Promoted planning proposals 0002 (trace/video) + 0003 (cross-browser) into the backlog as Items #13–#14 (both outstanding)
-**Last Updated:** 2026-06-19
+**Last Updated:** 2026-06-22 (verification only — no status change; see note below)
 **Based on:** Session notes v17 (2026-06-19), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
+
+> **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
+> CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
+> #14 (cross-browser matrix) remain the only outstanding items, both **READY TO START**. The
+> planning proposals were surfaced into `docs/planning/proposals/` (one file per proposal,
+> PR #33), and the #13/#14 provenance links here already point at those files. Handover **v18**
+> written this session supersedes the stale **v17** (whose §7 predated the #13/#14 promotion and
+> still read "all 12 items complete").
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
