@@ -185,3 +185,11 @@ REST guest-cart endpoints, bound to the browser session via the in-repo
 green badge above reflects the current `main` state, and the
 Serenity living documentation publishes to GitHub Pages on every `main` run. All
 backlog items are closed — `docs/backlog.md` records each with its evidence.
+
+## Licence
+
+[MIT](LICENSE) — © 2026 Gary Brooks.
+
+The MIT licence covers the original automation code, test fixtures, and documentation in this
+repository. Magento Open Source, container images, and third-party dependencies remain subject to
+their own licence terms.

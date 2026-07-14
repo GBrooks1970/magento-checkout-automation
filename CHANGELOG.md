@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the owner-approved MIT licence (`LICENSE`), matching package/lock metadata, a bounded README
+  licence statement, and an implementation record under portfolio backlog P-04 / decision D-03.
 - Added `docs/templates/` containing seven amended project-specific document templates:
   `decision-record`, `qa-strategy`, `screenplay-guide`, `stack-architecture`, `backlog`,
   `implementation-log`, and `changelog`
