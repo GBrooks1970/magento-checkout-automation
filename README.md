@@ -74,6 +74,8 @@ The reasoning behind each choice is recorded in `docs/adr/`.
 
 ## Running the suite
 
+**Requires Node.js 20+** (matches CI's `actions/setup-node` pin; see `engines.node` in `package.json`).
+
 ```bash
 # install dependencies
 npm install

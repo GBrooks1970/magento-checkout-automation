@@ -4,7 +4,7 @@
   "description": "Serenity/JS + Playwright + Cucumber BDD checkout automation — Screenplay pattern, SDD, living documentation",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "test": "cucumber-js --profile default",
