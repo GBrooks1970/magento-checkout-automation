@@ -21,6 +21,19 @@
 > written this session supersedes the stale **v17** (whose §7 predated the #13/#14 promotion and
 > still read "all 12 items complete").
 
+> **Update (2026-07-17) — accepted risk: 5 moderate `npm audit` findings pending MAG-C11.**
+> `npm audit fix` was run (worklist item MAG-C05) and cleared the one HIGH finding (`form-data`
+> CRLF injection, GHSA-hmw2-7cc7-3qxx, fixed non-breaking by bumping `form-data` 4.0.5 → 4.0.6 in
+> `package-lock.json` only). Five MODERATE findings remain, all rooted in `@cucumber/cucumber`
+> 11.3.0's bundled `uuid` dependency (GHSA-w5hq-g745-h8pq) via `@cucumber/gherkin`,
+> `@cucumber/gherkin-utils` and `@cucumber/messages`; the only fix `npm audit` offers is
+> `@cucumber/cucumber@12.9.0`, a semver-major bump. This is accepted as a known, tracked risk
+> (devDependency only, no production/runtime exposure) rather than actioned now — the major bump
+> is scheduled as **MAG-C11**, deliberately ordered last in the worklist so it lands on a stable
+> base with the strengthened CI Serenity-JSON guard (MAG-C09) already in place to catch any
+> formatter/profile regression. `npm audit` on this branch: 0 high/critical, 5 moderate (documented
+> here).
+
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
 
