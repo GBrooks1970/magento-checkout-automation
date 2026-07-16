@@ -11,7 +11,7 @@ import { Photographer, TakePhotosOfFailures, TakePhotosOfInteractions } from '@s
 //     slowed by a capture after every interaction.
 //
 // A single SCREENSHOTS override beats the environment default in both directions.
-// See docs/planning/0001-screenshots-in-test-reports.md for the full design.
+// See docs/planning/proposals/0001-screenshots-in-test-reports.md for the full design.
 
 type Mode = 'off' | 'failures' | 'all';
 
