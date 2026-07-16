@@ -34,6 +34,27 @@
 > formatter/profile regression. `npm audit` on this branch: 0 high/critical, 5 moderate (documented
 > here).
 
+> **Resolution (2026-07-17) — MAG-C11 closes the accepted risk above.** `@cucumber/cucumber` bumped
+> 11.3.0 → **12.9.0** (the same version `npm audit fix --force` proposed). `npm audit` on this
+> branch now reports **0 vulnerabilities** (high/critical/moderate all clear) — the 5 moderate
+> `uuid`-via-`@cucumber/gherkin*` findings recorded above are fully resolved, not merely
+> re-accepted. `@serenity-js/cucumber@3.43.2`'s `peerDependencies` already list
+> `"@cucumber/cucumber": "^7.3.2 || ^8.5.0 || ^9.1.0 || ^10.0.0 || ^11.0.0 || ^12.0.0"`, so no
+> Serenity package bump was required. The `@cucumber/cucumber` CHANGELOG (11.3.0 → 12.9.0) was
+> reviewed for formatter/profile API changes: 12.0.0 removed Node 18/23 support (already covered by
+> MAG-C08's `>=20` floor) and redesigned the *built-in* HTML formatter header (not used by this
+> project); no entry in that range changes the custom-formatter/stdout-formatter-selection
+> mechanism this project's single-stdout-formatter constraint (PR #19) depends on. `cucumber.js`'s
+> `format: ['@serenity-js/cucumber']` array is unchanged. Local evidence (no live Magento store
+> available — see session-notes v18 durable lessons): `npx tsc --noEmit` clean;
+> `--profile default --dry-run` (12/12) and `--profile smoke --dry-run` (7/7) both resolve step
+> bindings cleanly under v12; a real (non-dry) `npx cucumber-js --profile smoke` run confirms the
+> v12 runtime, the `BeforeAll` hook chain and the `@serenity-js/cucumber` formatter all load and
+> execute correctly — it fails only at `MagentoApi.authenticate()` with `ECONNREFUSED` (no store
+> running), with no formatter/plugin-loading error anywhere in the stack trace. Live-store
+> confirmation of smoke 7/7 and default 12/12 green with the MAG-C09 scenario-count guard reporting
+> 12 is CI-only; see worklist item MAG-C11 / PR #37 for that result.
+
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
 
