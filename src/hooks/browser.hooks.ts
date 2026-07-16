@@ -2,10 +2,35 @@ import { BeforeAll, Before, AfterAll, setDefaultTimeout } from '@cucumber/cucumb
 import { Cast, engage } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { CallAnApi } from '@serenity-js/rest';
-import { chromium } from 'playwright';
-import type { Browser } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
+import type { Browser, BrowserType } from 'playwright';
 import { BASE_URL } from '../serenity.config';
 import { MagentoApi } from '../api/MagentoApiClient';
+
+// Cross-browser run matrix (backlog #14 / planning proposal 0003). BROWSER
+// selects the Playwright engine: unset defaults to chromium (the required CI
+// gate); an unrecognised value fails loudly at BeforeAll rather than
+// silently falling back. Firefox and WebKit are additive, non-blocking CI
+// matrix legs (see .github/workflows/ci.yml) and can also be run locally,
+// e.g. `BROWSER=firefox npm run test:smoke`.
+type EngineName = 'chromium' | 'firefox' | 'webkit';
+
+function resolveBrowserType(): BrowserType {
+    const requested = (process.env.BROWSER ?? 'chromium').toLowerCase();
+    switch (requested as EngineName) {
+        case 'chromium':
+            return chromium;
+        case 'firefox':
+            return firefox;
+        case 'webkit':
+            return webkit;
+        default:
+            throw new Error(
+                `Unsupported BROWSER "${process.env.BROWSER}" — expected one of ` +
+                `chromium | firefox | webkit (case-insensitive), or unset for the chromium default.`
+            );
+    }
+}
 
 // Cucumber's default per-step timeout is 5 s. A real Magento checkout step combines
 // network latency with several Knockout.js re-renders, which can legitimately exceed
@@ -26,7 +51,7 @@ setDefaultTimeout(60 * 1000);
 let browser: Browser;
 
 BeforeAll(async () => {
-    browser = await chromium.launch({
+    browser = await resolveBrowserType().launch({
         headless: (process.env.HEADLESS ?? 'true') === 'true',
     });
 

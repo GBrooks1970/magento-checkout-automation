@@ -128,6 +128,20 @@ jobs:
     permissions:
       contents: read
 
+    # Cross-browser run matrix (backlog #14 / planning proposal 0003). Each
+    # engine gets its own full store bring-up + suite run (roughly triples CI
+    # minutes — the documented, accepted trade-off). Chromium is the
+    # REQUIRED gate: it runs with continue-on-error unset (false), so a
+    # Chromium failure fails the job/workflow as before. Firefox and WebKit
+    # are NON-BLOCKING matrix legs (continue-on-error: true) — real
+    # engine-specific drift surfaces there without gating merges until
+    # they've been triaged and are stable enough to promote to required.
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    continue-on-error: ${{ matrix.browser != 'chromium' }}
+
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -150,7 +164,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Pull pre-baked store images
         # Explicit pull so the layer-cache warm-up is a named step in the log.
@@ -222,6 +236,10 @@ jobs:
           # API-driven Background step (backlog #3 / ADR-0003).
           MAGENTO_ADMIN_USERNAME: admin
           MAGENTO_ADMIN_PASSWORD: Password123!
+          # Selects the Playwright engine in src/hooks/browser.hooks.ts
+          # (backlog #14). Chromium is the required leg; firefox/webkit are
+          # non-blocking (see the job-level continue-on-error above).
+          BROWSER: ${{ matrix.browser }}
         run: npm test
         # 'default' profile already excludes @deferred (see cucumber.js);
         # @placesOrder scenarios ARE included — CI runs against a clean,
@@ -282,7 +300,11 @@ jobs:
         run: npm run test:report
 
       - name: Upload Pages artifact
-        if: always()
+        # Restricted to the chromium leg (backlog #14): a GitHub Pages
+        # deployment publishes exactly ONE artifact per workflow run, and
+        # Chromium is the canonical/required engine — Firefox and WebKit are
+        # exploratory, non-blocking legs whose reports are not published.
+        if: always() && matrix.browser == 'chromium'
         uses: actions/upload-pages-artifact@v3
         with:
           # serenity-bdd run writes HTML to target/site/serenity/ by default.
