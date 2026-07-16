@@ -31,8 +31,17 @@ name: e2e
 # migration. Suppresses the deprecation warning that causes actions/checkout,
 # actions/setup-node, and upload-pages-artifact to fail on runners close to
 # the cutoff date.
+#
+# SERENITY_EXPECTED_SCENARIOS (MAG-C09): the number of scenario JSON documents
+# the 'default' Cucumber profile must produce (features/**/*.feature, tag
+# 'not @deferred' — 9 Scenarios + the 3-row 'Order multiple quantities of a
+# single product' Outline = 12 today). Defined once here so the guard step
+# below and any future consumer read the same value instead of a duplicated
+# literal. Update this alongside any change to the feature set that alters
+# the scenario count.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  SERENITY_EXPECTED_SCENARIOS: 12
 
 on:
   push:
@@ -218,14 +227,22 @@ jobs:
         # @placesOrder scenarios ARE included — CI runs against a clean,
         # disposable store so placing real orders is fine.
 
-      - name: Guard — Serenity JSON must exist before the report is rendered
+      - name: Guard — Serenity JSON must evidence the expected scenario count (MAG-C09)
         # The published report was an empty shell from go-live (2026-06-08) to
         # 2026-06-11: Cucumber permits exactly ONE stdout formatter and silently
         # drops the rest, so a stray `progress-bar` entry displaced the
         # @serenity-js/cucumber adapter — no events, no JSON in docs/reports/,
         # and the renderer happily published a zero-scenario template while the
-        # suite stayed green (PRs #18/#19). This guard makes that defect class
-        # fail the run loudly instead of publishing an empty shell.
+        # suite stayed green (PRs #18/#19). The original guard only checked
+        # "at least one non-empty file", which would miss a narrower defect —
+        # e.g. an accidental tag-expression change that silently drops
+        # scenarios while still producing SOME non-empty JSON. Strengthened
+        # (review Risk 5) to assert the exact expected scenario-document
+        # count, sourced from the single SERENITY_EXPECTED_SCENARIOS env var
+        # defined at the top of this workflow, so both defect classes —
+        # zero JSON (starved formatter) and fewer-than-expected JSON (a
+        # narrowing regression) — fail the run loudly instead of publishing
+        # an incomplete report.
         run: |
           shopt -s nullglob
           nonempty=0
@@ -243,7 +260,19 @@ jobs:
                  "Rendering now would publish an empty-shell report."
             exit 1
           fi
-          echo "Guard OK: ${nonempty} non-empty Serenity JSON file(s) in docs/reports/."
+          if [ "$nonempty" -ne "$SERENITY_EXPECTED_SCENARIOS" ]; then
+            echo "::error::docs/reports/ contains ${nonempty} non-empty Serenity" \
+                 "JSON file(s), expected exactly ${SERENITY_EXPECTED_SCENARIOS}" \
+                 "(SERENITY_EXPECTED_SCENARIOS, set at the top of ci.yml)." \
+                 "This usually means a tag expression or feature/scenario" \
+                 "selection has narrowed (or widened) what actually ran —" \
+                 "check the 'tags' field in cucumber.js's default profile" \
+                 "against features/**/*.feature, or update" \
+                 "SERENITY_EXPECTED_SCENARIOS if the scenario count changed" \
+                 "deliberately."
+            exit 1
+          fi
+          echo "Guard OK: ${nonempty} non-empty Serenity JSON file(s) in docs/reports/, matching the expected ${SERENITY_EXPECTED_SCENARIOS}."
 
       - name: Generate Serenity living documentation
         # Run even when tests fail so reviewers can inspect the failing run.
