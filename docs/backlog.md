@@ -624,7 +624,7 @@ report is the point) and lean in CI (which publishes the report on every green `
 
 ---
 
-#### Item #13: Trace + video capture on failure — Score: 11 — READY TO START
+#### Item #13: Trace + video capture on failure — Score: 11 — ✅ Resolved 2026-07-17
 
 **Priority Score:** Breakage Probability (2) + Portfolio Impact (5) + Maintenance Burden (4) = **11 points**
 **Impact:** When a CI scenario fails, the only forensic evidence today is the Serenity narrative and
@@ -648,15 +648,43 @@ asynchronous KO.js render sequence that most checkout flakes turn on.
    `TRACE=on-failure`), and on locally only when explicitly asked (traces are large).
 
 **Success Criteria:**
-- [ ] A deliberately-failed scenario produces a trace + video attached to the Serenity report.
-- [ ] Default run (no env var, and CI default) captures nothing and is byte-for-byte unchanged — zero overhead when off.
-- [ ] Per-scenario isolation (Item #10) re-verified green after the context-path change (see dependency).
-- [ ] `npx tsc --noEmit` clean; smoke 7/7 and default 12/12 unaffected.
+- [x] A deliberately-failed scenario produces a trace + video attached to the Serenity report.
+- [x] Default run (no env var, and CI default) captures nothing and is byte-for-byte unchanged — zero overhead when off.
+- [x] Per-scenario isolation (Item #10) re-verified green after the context-path change (see dependency).
+- [x] `npx tsc --noEmit` clean; smoke 7/7 and default 12/12 unaffected.
 
 **Dependency / risk:** tracing changes the context-creation path that the per-scenario isolation
 reset (`src/hooks/browser.hooks.ts`, the cart-leak fix — Item #10) is carefully tuned around. Any
 trace work **must** re-verify isolation; recreating the context per scenario is exactly what that
 code deliberately avoids. This coupling is why it was held as a separate item, not a rider on #12.
+
+**Resolution:** Implemented in `src/hooks/browser.hooks.ts`, gated behind `TRACE=on-failure`
+exactly as sketched. Design resolves the dependency/risk above the SAFEST way, confirmed only once
+a live store was available to test against (this item was `BLOCKED` for that reason until
+2026-07-17): when `TRACE` is unset, `Before`/`After` take the pre-existing branches completely
+unmodified — the default shared-context cart-isolation reset (Item #10) is untouched and
+unreached. When `TRACE=on-failure`, every scenario instead gets a **freshly-created, isolated**
+`BrowserContext`+`Page` (`BrowseTheWebWithPlaywright.usingPage`, not `.using(browser)`) — the only
+way to get a per-scenario Playwright video (`recordVideo` is a context-creation-time option) — with
+tracing started on it; trace+video are ALWAYS captured (the result isn't known until the scenario
+ends) and finalised in `After`: kept (`docs/reports/traces/<slug>.zip`,
+`docs/reports/videos/<slug>.webm`) only if the scenario failed, deleted if it passed, so a green
+`TRACE=on-failure` run leaves both directories empty.
+**One deviation from the sketch's step 2** ("attach... as Serenity artifacts"): read
+`@serenity-js/serenity-bdd@3.43.2`'s `ArtifactArchiver.notifyOf()` source — it only archives
+`Photo` and `TestReport` artifact instances, with no generic/binary artifact type video or trace
+zips could use. Co-located them instead, discoverable by matching the Serenity JSON reports'
+own naming convention.
+**Verification (live store, 2026-07-17):** baseline `npm test` 12/12 green. Deliberately broke the
+shared `cart subtotal should be` step (reverted immediately after) — this fanned out to 3 scenarios
+across two features, giving 3 simultaneous failures to verify against: `TRACE=on-failure` produced
+exactly 3 trace `.zip` + 3 video `.webm` files, correctly named, and exactly 0 for the 5 passed
+scenarios (`unzip -l` confirmed a valid `trace.trace`/`trace.network`/resources bundle). After
+reverting, re-ran `npm test` (`TRACE` unset) — 12/12 green, unchanged from baseline. Re-ran the full
+suite again with `TRACE=on-failure` set (every scenario now on the isolated-context path) — **12/12
+green, confirming Item #10's cart isolation holds** (a fresh context has no shared cookies to leak
+by construction — a different, simpler isolation mechanism than the default path's clear-cookies
+dance, but verified equivalent). `npm run test:smoke` — 7/7 green. `npx tsc --noEmit` clean.
 
 ---
 
