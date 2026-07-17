@@ -660,7 +660,7 @@ code deliberately avoids. This coupling is why it was held as a separate item, n
 
 ---
 
-#### Item #14: Cross-browser run matrix (Firefox / WebKit) — Score: 15 — READY TO START
+#### Item #14: Cross-browser run matrix (Firefox / WebKit) — Score: 15 — ✅ Resolved 2026-07-17 (drift documented, not fixed)
 
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (6) + Maintenance Burden (6) = **15 points**
 **Impact:** The suite only ever runs on Chromium. "Works in Chromium" is not "works in the
@@ -683,13 +683,25 @@ exercised by Firefox and WebKit users too.
    promoting them to required only once green and stable.
 
 **Success Criteria:**
-- [ ] The suite runs under `BROWSER=firefox` and `BROWSER=webkit` locally (Playwright browsers installed).
-- [ ] CI runs a matrix over the three engines; Chromium remains the required gate, the other two non-blocking initially.
-- [ ] Any engine-specific selector/timing drift surfaced is triaged and either fixed or documented.
-- [ ] `npx tsc --noEmit` clean.
+- [x] The suite runs under `BROWSER=firefox` and `BROWSER=webkit` locally (Playwright browsers installed).
+- [x] CI runs a matrix over the three engines; Chromium remains the required gate, the other two non-blocking initially.
+- [x] Any engine-specific selector/timing drift surfaced is triaged and either fixed or documented.
+- [x] `npx tsc --noEmit` clean.
 
 **Dependency / risk:** roughly triples CI minutes on the slowest part of the pipeline, and will
 surface real engine-specific drift that needs triage — budget for the findings, not just the wiring.
+
+**Resolution:** `BROWSER` env var wired into `src/hooks/browser.hooks.ts`; CI matrix added
+(chromium required, firefox/webkit `continue-on-error: true`). Real drift surfaced on PR #37's CI
+(`run 29579215648`, 2026-07-17): **Firefox** — 1 scenario timed out waiting for the add-to-cart
+success message (16s 928ms of a 15s wait). **WebKit** — pervasive: 9+ scenarios timed out across
+add-to-cart, quantity-input, delete-button, and checkout-navigation waits (15–20s waits routinely
+exceeded), suggesting WebKit genuinely renders/settles slower against this storefront than the
+tuned Chromium timeouts assume, not isolated flakes. **Documented, not fixed** (per this item's own
+"triaged and either fixed or documented" criterion) — diagnosing/tuning engine-specific wait
+strategies needs a live interactive session against the Magento store, which this environment
+doesn't have. **Follow-up:** a future item should either raise WebKit-specific timeouts or
+investigate why WebKit settles slower, before promoting it out of non-blocking.
 
 ---
 
