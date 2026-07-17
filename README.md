@@ -74,6 +74,8 @@ The reasoning behind each choice is recorded in `docs/adr/`.
 
 ## Running the suite
 
+**Requires Node.js 20+** (matches CI's `actions/setup-node` pin; see `engines.node` in `package.json`).
+
 ```bash
 # install dependencies
 npm install
@@ -123,6 +125,7 @@ Marketplace auth keys) and the image-baking strategy CI uses.
 |---|---|---|
 | `BASE_URL` | `http://localhost:8080` | Target store base URL — the default matches the local Docker store. Point it elsewhere only at a store you own (the Background mints an admin token there). |
 | `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
+| `BROWSER` | `chromium` | Playwright engine: `chromium` \| `firefox` \| `webkit` (case-insensitive). CI runs all three as a matrix — Chromium is the required gate, Firefox/WebKit are non-blocking legs. An unrecognised value fails fast at `BeforeAll`. |
 | `SCREENSHOTS` | `all` locally, `off` in CI | Screenshots in the Serenity report: `off` \| `failures` \| `all`. Unset → **on (every interaction) locally, off in CI** (CI detected via `CI=true`). An explicit value overrides the environment default. Recommended CI opt-in for debugging: `SCREENSHOTS=failures`. See `docs/adr/0007-screenshots-in-reports.md`. |
 | `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
 | `MAGENTO_ADMIN_USERNAME` | `admin` *(localhost only)* | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. The default applies only when `BASE_URL` resolves to localhost; against any other host this must be set explicitly. |
@@ -173,8 +176,8 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-Complete. The full suite — **12 scenarios, 94 steps** — runs green in CI against
-the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
+Backlog items #1–#12 delivered and green. The full suite — **12 scenarios, 94 steps** — runs
+green in CI against the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
 scenario, which declines deterministically via the in-repo
 `Portfolio_DeclinePayment` test-fixture module (no gateway sandbox, secrets, or
 network dependency — see `docs/adr/0005-deterministic-payment-failure.md`).
@@ -183,8 +186,9 @@ Magento REST API on every scenario, and cart preconditions are seeded through th
 REST guest-cart endpoints, bound to the browser session via the in-repo
 `Portfolio_CartSeed` endpoint (`docs/adr/0006-api-guest-cart-seeding.md`). The
 green badge above reflects the current `main` state, and the
-Serenity living documentation publishes to GitHub Pages on every `main` run. All
-backlog items are closed — `docs/backlog.md` records each with its evidence.
+Serenity living documentation publishes to GitHub Pages on every `main` run. Items **#13**
+(trace + video capture on failure) and **#14** (cross-browser run matrix) remain outstanding —
+see `docs/backlog.md` for status and evidence on every item.
 
 ## Licence
 

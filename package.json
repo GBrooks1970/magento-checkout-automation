@@ -4,7 +4,7 @@
   "description": "Serenity/JS + Playwright + Cucumber BDD checkout automation — Screenplay pattern, SDD, living documentation",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "test": "cucumber-js --profile default",
@@ -12,7 +12,7 @@
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "11.3.0",
+    "@cucumber/cucumber": "12.9.0",
     "@serenity-js/core": "3.43.2",
     "@serenity-js/cucumber": "3.43.2",
     "@serenity-js/playwright": "3.43.2",

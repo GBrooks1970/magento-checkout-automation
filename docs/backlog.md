@@ -21,6 +21,40 @@
 > written this session supersedes the stale **v17** (whose §7 predated the #13/#14 promotion and
 > still read "all 12 items complete").
 
+> **Update (2026-07-17) — accepted risk: 5 moderate `npm audit` findings pending MAG-C11.**
+> `npm audit fix` was run (worklist item MAG-C05) and cleared the one HIGH finding (`form-data`
+> CRLF injection, GHSA-hmw2-7cc7-3qxx, fixed non-breaking by bumping `form-data` 4.0.5 → 4.0.6 in
+> `package-lock.json` only). Five MODERATE findings remain, all rooted in `@cucumber/cucumber`
+> 11.3.0's bundled `uuid` dependency (GHSA-w5hq-g745-h8pq) via `@cucumber/gherkin`,
+> `@cucumber/gherkin-utils` and `@cucumber/messages`; the only fix `npm audit` offers is
+> `@cucumber/cucumber@12.9.0`, a semver-major bump. This is accepted as a known, tracked risk
+> (devDependency only, no production/runtime exposure) rather than actioned now — the major bump
+> is scheduled as **MAG-C11**, deliberately ordered last in the worklist so it lands on a stable
+> base with the strengthened CI Serenity-JSON guard (MAG-C09) already in place to catch any
+> formatter/profile regression. `npm audit` on this branch: 0 high/critical, 5 moderate (documented
+> here).
+
+> **Resolution (2026-07-17) — MAG-C11 closes the accepted risk above.** `@cucumber/cucumber` bumped
+> 11.3.0 → **12.9.0** (the same version `npm audit fix --force` proposed). `npm audit` on this
+> branch now reports **0 vulnerabilities** (high/critical/moderate all clear) — the 5 moderate
+> `uuid`-via-`@cucumber/gherkin*` findings recorded above are fully resolved, not merely
+> re-accepted. `@serenity-js/cucumber@3.43.2`'s `peerDependencies` already list
+> `"@cucumber/cucumber": "^7.3.2 || ^8.5.0 || ^9.1.0 || ^10.0.0 || ^11.0.0 || ^12.0.0"`, so no
+> Serenity package bump was required. The `@cucumber/cucumber` CHANGELOG (11.3.0 → 12.9.0) was
+> reviewed for formatter/profile API changes: 12.0.0 removed Node 18/23 support (already covered by
+> MAG-C08's `>=20` floor) and redesigned the *built-in* HTML formatter header (not used by this
+> project); no entry in that range changes the custom-formatter/stdout-formatter-selection
+> mechanism this project's single-stdout-formatter constraint (PR #19) depends on. `cucumber.js`'s
+> `format: ['@serenity-js/cucumber']` array is unchanged. Local evidence (no live Magento store
+> available — see session-notes v18 durable lessons): `npx tsc --noEmit` clean;
+> `--profile default --dry-run` (12/12) and `--profile smoke --dry-run` (7/7) both resolve step
+> bindings cleanly under v12; a real (non-dry) `npx cucumber-js --profile smoke` run confirms the
+> v12 runtime, the `BeforeAll` hook chain and the `@serenity-js/cucumber` formatter all load and
+> execute correctly — it fails only at `MagentoApi.authenticate()` with `ECONNREFUSED` (no store
+> running), with no formatter/plugin-loading error anywhere in the stack trace. Live-store
+> confirmation of smoke 7/7 and default 12/12 green with the MAG-C09 scenario-count guard reporting
+> 12 is CI-only; see worklist item MAG-C11 / PR #37 for that result.
+
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
 
@@ -590,7 +624,7 @@ report is the point) and lean in CI (which publishes the report on every green `
 
 ---
 
-#### Item #13: Trace + video capture on failure — Score: 11 — READY TO START
+#### Item #13: Trace + video capture on failure — Score: 11 — ✅ Resolved 2026-07-17
 
 **Priority Score:** Breakage Probability (2) + Portfolio Impact (5) + Maintenance Burden (4) = **11 points**
 **Impact:** When a CI scenario fails, the only forensic evidence today is the Serenity narrative and
@@ -614,19 +648,47 @@ asynchronous KO.js render sequence that most checkout flakes turn on.
    `TRACE=on-failure`), and on locally only when explicitly asked (traces are large).
 
 **Success Criteria:**
-- [ ] A deliberately-failed scenario produces a trace + video attached to the Serenity report.
-- [ ] Default run (no env var, and CI default) captures nothing and is byte-for-byte unchanged — zero overhead when off.
-- [ ] Per-scenario isolation (Item #10) re-verified green after the context-path change (see dependency).
-- [ ] `npx tsc --noEmit` clean; smoke 7/7 and default 12/12 unaffected.
+- [x] A deliberately-failed scenario produces a trace + video attached to the Serenity report.
+- [x] Default run (no env var, and CI default) captures nothing and is byte-for-byte unchanged — zero overhead when off.
+- [x] Per-scenario isolation (Item #10) re-verified green after the context-path change (see dependency).
+- [x] `npx tsc --noEmit` clean; smoke 7/7 and default 12/12 unaffected.
 
 **Dependency / risk:** tracing changes the context-creation path that the per-scenario isolation
 reset (`src/hooks/browser.hooks.ts`, the cart-leak fix — Item #10) is carefully tuned around. Any
 trace work **must** re-verify isolation; recreating the context per scenario is exactly what that
 code deliberately avoids. This coupling is why it was held as a separate item, not a rider on #12.
 
+**Resolution:** Implemented in `src/hooks/browser.hooks.ts`, gated behind `TRACE=on-failure`
+exactly as sketched. Design resolves the dependency/risk above the SAFEST way, confirmed only once
+a live store was available to test against (this item was `BLOCKED` for that reason until
+2026-07-17): when `TRACE` is unset, `Before`/`After` take the pre-existing branches completely
+unmodified — the default shared-context cart-isolation reset (Item #10) is untouched and
+unreached. When `TRACE=on-failure`, every scenario instead gets a **freshly-created, isolated**
+`BrowserContext`+`Page` (`BrowseTheWebWithPlaywright.usingPage`, not `.using(browser)`) — the only
+way to get a per-scenario Playwright video (`recordVideo` is a context-creation-time option) — with
+tracing started on it; trace+video are ALWAYS captured (the result isn't known until the scenario
+ends) and finalised in `After`: kept (`docs/reports/traces/<slug>.zip`,
+`docs/reports/videos/<slug>.webm`) only if the scenario failed, deleted if it passed, so a green
+`TRACE=on-failure` run leaves both directories empty.
+**One deviation from the sketch's step 2** ("attach... as Serenity artifacts"): read
+`@serenity-js/serenity-bdd@3.43.2`'s `ArtifactArchiver.notifyOf()` source — it only archives
+`Photo` and `TestReport` artifact instances, with no generic/binary artifact type video or trace
+zips could use. Co-located them instead, discoverable by matching the Serenity JSON reports'
+own naming convention.
+**Verification (live store, 2026-07-17):** baseline `npm test` 12/12 green. Deliberately broke the
+shared `cart subtotal should be` step (reverted immediately after) — this fanned out to 3 scenarios
+across two features, giving 3 simultaneous failures to verify against: `TRACE=on-failure` produced
+exactly 3 trace `.zip` + 3 video `.webm` files, correctly named, and exactly 0 for the 5 passed
+scenarios (`unzip -l` confirmed a valid `trace.trace`/`trace.network`/resources bundle). After
+reverting, re-ran `npm test` (`TRACE` unset) — 12/12 green, unchanged from baseline. Re-ran the full
+suite again with `TRACE=on-failure` set (every scenario now on the isolated-context path) — **12/12
+green, confirming Item #10's cart isolation holds** (a fresh context has no shared cookies to leak
+by construction — a different, simpler isolation mechanism than the default path's clear-cookies
+dance, but verified equivalent). `npm run test:smoke` — 7/7 green. `npx tsc --noEmit` clean.
+
 ---
 
-#### Item #14: Cross-browser run matrix (Firefox / WebKit) — Score: 15 — READY TO START
+#### Item #14: Cross-browser run matrix (Firefox / WebKit) — Score: 15 — ✅ Resolved 2026-07-17 (drift documented, not fixed)
 
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (6) + Maintenance Burden (6) = **15 points**
 **Impact:** The suite only ever runs on Chromium. "Works in Chromium" is not "works in the
@@ -649,13 +711,25 @@ exercised by Firefox and WebKit users too.
    promoting them to required only once green and stable.
 
 **Success Criteria:**
-- [ ] The suite runs under `BROWSER=firefox` and `BROWSER=webkit` locally (Playwright browsers installed).
-- [ ] CI runs a matrix over the three engines; Chromium remains the required gate, the other two non-blocking initially.
-- [ ] Any engine-specific selector/timing drift surfaced is triaged and either fixed or documented.
-- [ ] `npx tsc --noEmit` clean.
+- [x] The suite runs under `BROWSER=firefox` and `BROWSER=webkit` locally (Playwright browsers installed).
+- [x] CI runs a matrix over the three engines; Chromium remains the required gate, the other two non-blocking initially.
+- [x] Any engine-specific selector/timing drift surfaced is triaged and either fixed or documented.
+- [x] `npx tsc --noEmit` clean.
 
 **Dependency / risk:** roughly triples CI minutes on the slowest part of the pipeline, and will
 surface real engine-specific drift that needs triage — budget for the findings, not just the wiring.
+
+**Resolution:** `BROWSER` env var wired into `src/hooks/browser.hooks.ts`; CI matrix added
+(chromium required, firefox/webkit `continue-on-error: true`). Real drift surfaced on PR #37's CI
+(`run 29579215648`, 2026-07-17): **Firefox** — 1 scenario timed out waiting for the add-to-cart
+success message (16s 928ms of a 15s wait). **WebKit** — pervasive: 9+ scenarios timed out across
+add-to-cart, quantity-input, delete-button, and checkout-navigation waits (15–20s waits routinely
+exceeded), suggesting WebKit genuinely renders/settles slower against this storefront than the
+tuned Chromium timeouts assume, not isolated flakes. **Documented, not fixed** (per this item's own
+"triaged and either fixed or documented" criterion) — diagnosing/tuning engine-specific wait
+strategies needs a live interactive session against the Magento store, which this environment
+doesn't have. **Follow-up:** a future item should either raise WebKit-specific timeouts or
+investigate why WebKit settles slower, before promoting it out of non-blocking.
 
 ---
 
