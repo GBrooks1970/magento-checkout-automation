@@ -32,16 +32,24 @@ name: e2e
 # actions/setup-node, and upload-pages-artifact to fail on runners close to
 # the cutoff date.
 #
-# SERENITY_EXPECTED_SCENARIOS (MAG-C09): the number of scenario JSON documents
-# the 'default' Cucumber profile must produce (features/**/*.feature, tag
-# 'not @deferred' — 9 Scenarios + the 3-row 'Order multiple quantities of a
-# single product' Outline = 12 today). Defined once here so the guard step
-# below and any future consumer read the same value instead of a duplicated
-# literal. Update this alongside any change to the feature set that alters
-# the scenario count.
+# SERENITY_EXPECTED_SCENARIOS (MAG-C09): the number of scenario JSON
+# documents the 'default' Cucumber profile must produce in docs/reports/
+# (features/**/*.feature, tag 'not @deferred'). This is NOT the raw Gherkin
+# scenario/example count (12: 9 Scenarios + the 3-row 'Order multiple
+# quantities of a single product' Outline) — @serenity-js/serenity-bdd
+# deliberately aggregates every example row of a Scenario Outline into a
+# SINGLE JSON report (DomainEventQueues.queueIdFor() matches each row's
+# SceneSequenceDetected event by its *Outline's* ScenarioDetails, which is
+# identical across all rows, so they share one report queue regardless of
+# row count). So: 9 single Scenarios + 1 aggregated Outline report = 10.
+# Defined once here so the guard step below and any future consumer read the
+# same value instead of a duplicated literal. Update this alongside any
+# change to the feature set that adds/removes a Scenario or a Scenario
+# Outline (adding/removing example rows within an existing Outline does NOT
+# change this count).
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  SERENITY_EXPECTED_SCENARIOS: 12
+  SERENITY_EXPECTED_SCENARIOS: 10
 
 on:
   push:
