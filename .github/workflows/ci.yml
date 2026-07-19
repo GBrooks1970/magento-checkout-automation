@@ -128,19 +128,39 @@ jobs:
           done
           echo "available=${available}" >> "$GITHUB_OUTPUT"
 
+  # ── Compute the browser matrix ───────────────────────────────────────────
+  # GitHub Actions does not allow the `matrix` context inside a job-level
+  # `if:` (only `steps.*.if` can see it), so per-matrix-combination skipping
+  # cannot be expressed directly on the `test` job below. Instead, compute
+  # the matrix LIST itself here, before the job that consumes it (TRIAGE-03,
+  # review v2 Risk 3): schedule runs and pushes to `main` get all three
+  # engines; everything else (PRs) gets Chromium only. `test` reads this via
+  # `fromJson(needs.compute-browsers.outputs.browsers)`.
+  compute-browsers:
+    needs: preflight
+    if: needs.preflight.outputs.images-available == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    outputs:
+      browsers: ${{ steps.set.outputs.browsers }}
+    steps:
+      - name: Decide which engines run this event
+        id: set
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo 'browsers=["chromium","firefox","webkit"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'browsers=["chromium"]' >> "$GITHUB_OUTPUT"
+          fi
+
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
-    needs: preflight
-    # Skip entirely if the images haven't been baked yet (neutral ⊘, not ❌).
-    # Also skip the non-Chromium matrix legs outside schedule/main (TRIAGE-03,
-    # review v2 Risk 3): `if:` is evaluated per matrix combination, so this
-    # still runs Chromium on every push/PR while Firefox/WebKit only run on
-    # the weekly schedule or a push to main — cutting the routine per-PR cost
-    # from three store bring-ups to one, without losing periodic drift
-    # visibility. See backlog #15 for the promotion-to-required criteria.
-    if: |
-      needs.preflight.outputs.images-available == 'true' &&
-      (matrix.browser == 'chromium' || github.event_name == 'schedule' || github.ref == 'refs/heads/main')
+    needs: [preflight, compute-browsers]
+    # Skip entirely if the images haven't been baked yet. A skipped job
+    # produces a neutral (⊘) check status rather than a failure (❌).
+    if: needs.preflight.outputs.images-available == 'true'
 
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -151,8 +171,8 @@ jobs:
     # Cross-browser run matrix (backlog #14 / planning proposal 0003). Each
     # engine gets its own full store bring-up + suite run (roughly triples CI
     # minutes on the schedule/main runs where all three execute — the
-    # documented, accepted trade-off; see the job-level `if:` above for why
-    # PRs only pay for one). Chromium is the REQUIRED gate: it runs with
+    # documented, accepted trade-off; see the compute-browsers job above for
+    # why PRs only pay for one). Chromium is the REQUIRED gate: it runs with
     # continue-on-error unset (false), so a Chromium failure fails the
     # job/workflow as before. Firefox and WebKit are NON-BLOCKING matrix legs
     # (continue-on-error: true) — real engine-specific drift surfaces there
@@ -161,7 +181,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        browser: ${{ fromJson(needs.compute-browsers.outputs.browsers) }}
     continue-on-error: ${{ matrix.browser != 'chromium' }}
 
     steps:
