@@ -187,8 +187,11 @@ REST guest-cart endpoints, bound to the browser session via the in-repo
 `Portfolio_CartSeed` endpoint (`docs/adr/0006-api-guest-cart-seeding.md`). The
 green badge above reflects the current `main` state, and the
 Serenity living documentation publishes to GitHub Pages on every `main` run. Items **#13**
-(trace + video capture on failure) and **#14** (cross-browser run matrix) remain outstanding —
-see `docs/backlog.md` for status and evidence on every item.
+(trace + video capture on failure, gated off by default behind `TRACE=on-failure`) and **#14**
+(cross-browser run matrix) are also delivered: CI runs Chromium (required), Firefox, and WebKit,
+with Firefox/WebKit non-blocking while real, documented engine-specific timing drift on those two
+engines is triaged. All 14 backlog items are now resolved — see `docs/backlog.md` for full status
+and evidence on every item.
 
 ## Licence
 
