@@ -269,6 +269,21 @@ jobs:
         # zero JSON (starved formatter) and fewer-than-expected JSON (a
         # narrowing regression) — fail the run loudly instead of publishing
         # an incomplete report.
+        #
+        # `if: always()` + `id: serenity-guard` (review v2 Risk 2): without these,
+        # a test-step failure BEFORE any JSON is written (e.g. MagentoApi.authenticate()
+        # throwing in BeforeAll, or a recurrence of the starved-formatter defect
+        # itself) skips this guard under GitHub Actions' default behaviour — while
+        # the render/upload/deploy steps below still run under `always()`, so a
+        # zero-JSON run would republish an EMPTY report over the live one. That is
+        # a different failure mode to a *scenario* failing with complete JSON (the
+        # documented, intentional publish-on-failure policy — see the render step's
+        # comment): this guard's outcome is what tells the two apart. The render and
+        # upload steps below gate on `steps.serenity-guard.outcome == 'success'` so
+        # missing/partial JSON can never publish, while a failing-scenarios-but-
+        # complete-JSON run still does.
+        id: serenity-guard
+        if: always()
         run: |
           shopt -s nullglob
           nonempty=0
@@ -301,10 +316,15 @@ jobs:
           echo "Guard OK: ${nonempty} non-empty Serenity JSON file(s) in docs/reports/, matching the expected ${SERENITY_EXPECTED_SCENARIOS}."
 
       - name: Generate Serenity living documentation
-        # Run even when tests fail so reviewers can inspect the failing run.
+        # Run even when tests fail so reviewers can inspect the failing run —
+        # but only when the guard above confirms complete JSON exists (review v2
+        # Risk 2). A scenario failure with a full set of JSON reports still
+        # renders (the documented publish-on-failure policy); a run that never
+        # produced the expected JSON does not reach this step at all, so it can
+        # never render (and later publish) an empty or partial shell.
         # Java 11+ is pre-installed on ubuntu-latest; the serenity-bdd CLI
         # uses it to render the HTML report from the JSON in docs/reports/.
-        if: always()
+        if: always() && steps.serenity-guard.outcome == 'success'
         run: npm run test:report
 
       - name: Upload Pages artifact
@@ -312,7 +332,10 @@ jobs:
         # deployment publishes exactly ONE artifact per workflow run, and
         # Chromium is the canonical/required engine — Firefox and WebKit are
         # exploratory, non-blocking legs whose reports are not published.
-        if: always() && matrix.browser == 'chromium'
+        # Also gated on the guard's outcome (review v2 Risk 2), matching the
+        # render step above — no point uploading an artifact that was never
+        # rendered.
+        if: always() && steps.serenity-guard.outcome == 'success' && matrix.browser == 'chromium'
         uses: actions/upload-pages-artifact@v3
         with:
           # serenity-bdd run writes HTML to target/site/serenity/ by default.
