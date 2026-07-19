@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-06-19
+
+Cuts the `[Unreleased]` content accumulated since `[0.3.0]`: the original 12-item close-out
+(Items #1, #3, #5–#11) plus the MIT licence (P-04) and the MAG-C05..C11/Items #13–#14 wave
+(PR #37, 2026-07-17) — `package.json`'s version has read `1.0.0` since before this cut; this
+section is the first CHANGELOG release to match it. Some entries below postdate 2026-06-19 (the
+original close-out date, retained as the cut's anchor point) — Keep a Changelog does not require
+every entry's own date to match the release date, only that the release date itself is accurate
+for when the cut was made.
+
 ### Added
 
 - Added the owner-approved MIT licence (`LICENSE`), matching package/lock metadata, a bounded README
