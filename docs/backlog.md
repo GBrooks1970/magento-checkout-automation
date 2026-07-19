@@ -9,9 +9,9 @@
 > from planning 0002) and Item #14 (cross-browser matrix, from planning 0003) — so the project is
 > active again with two outstanding items.**
 
-**Version:** 6 — Raised Item #15 (engine-aware wait tuning for Firefox/WebKit, review v2 Risk 3); recorded the CI-cost policy decision (schedule/main-only, not accepted-red-every-push) alongside it
+**Version:** 7 — Fixed Item #1's stale `Status:` field (still "READY TO START" despite being validated since 2026-06-03) and unchecked Success Criteria, found during TRIAGE-01's verification pass, not part of any review
 **Last Updated:** 2026-07-19
-**Based on:** `main` at `572526b` (PRs #36/#37/#38/#39/#40 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts, TRIAGE-01/02), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
+**Based on:** `main` at `e7482d6` (PRs #36/#37/#38/#39/#40/#41/#42/#43 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts, TRIAGE-01..05), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
 
 > **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
 > CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
@@ -99,7 +99,7 @@ priority score. The portfolio credibility checklist at the bottom tracks headlin
 **Priority Score:** Breakage Probability (10) + Portfolio Impact (10) + Maintenance Burden (7) = **27 points**
 **Impact:** No scenario can run. The entire suite is untested against a real Magento instance.
 **Effort:** 4–8 hours (Docker route) or 1–2 hours (public sandbox, if one becomes available)
-**Status:** READY TO START
+**Status:** ✅ DONE 2026-06-09 (store green 2026-06-03; full-suite CI confirmation via Item #2, 2026-06-09) — see the dated Update notes below and Success Criteria evidence
 **Area:** Infrastructure / CI
 
 **Problem:**
@@ -123,9 +123,14 @@ and TypeScript-clean but has never executed against a live Magento store.
 3. Set `BASE_URL` to the confirmed URL
 
 **Success Criteria:**
-- [ ] `npm test` completes with all active scenarios passing
-- [ ] CI run produces a green badge on the GitHub repo
-- [ ] `BASE_URL` documented in README run-instructions
+- [x] `npm test` completes with all active scenarios passing — full suite 12/12 scenarios, 94/94
+  steps green in CI, 2026-06-09 (Item #2's resolution); the read-only subset was already green
+  7/7, 43/43 steps against the Docker store on 2026-06-03 (Item #10's resolution)
+- [x] CI run produces a green badge on the GitHub repo — live since 2026-06-08 (Item #4's
+  resolution: "green badge on `main`; Serenity report published to GitHub Pages")
+- [x] `BASE_URL` documented in README run-instructions — Item #7's resolution (2026-06-02) records
+  the README "Running the suite" section replaced with the confirmed `BASE_URL` values and run
+  commands for both the live-smoke and Docker full-suite paths
 
 **Update (2026-06-02, Session v4 follow-up) — Docker route researched, scaffolding authored:**
 The "pin a known-good image and go" framing was **wrong**. There is no official pull-and-run Magento
