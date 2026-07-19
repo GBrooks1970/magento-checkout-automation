@@ -68,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `src/interactions/CheckoutPage.ts` — fixed `orderNumber` to `.checkout-success p span` (Luma renders the id as `Your order # is: <span>…</span>`; there is no `.order-number` element) and replaced the unsatisfiable success-page `orderSubtotal` with `orderSummarySubtotal` reading the checkout Order Summary (the success page carries no totals) (backlog Item #11)
 - Changed `features/guest-checkout.feature` — rewrote the "Order multiple quantities" outline into explicit checkout steps that assert the subtotal on the Order Summary at the payment step before placing the order (backlog Item #11)
 
+- Added trace + video capture on scenario failure, gated off by default behind `TRACE=on-failure` (backlog Item #13, PR #37): a failed scenario gets a freshly-created, isolated Playwright context/page with tracing and video recording; artefacts are co-located with the Serenity JSON reports (`docs/reports/traces/`, `docs/reports/videos/`) and deleted on pass, so a default (or CI) run is byte-for-byte unchanged.
+- Added a cross-browser CI matrix over Chromium (required), Firefox, and WebKit (non-blocking), parameterised by a `BROWSER` env var in `src/hooks/browser.hooks.ts` (backlog Item #14, PR #37). Real, documented engine-specific timing drift surfaced on Firefox (one scenario) and WebKit (pervasive) — see `docs/backlog.md` Item #14 for the triage record; not blind-fixed.
+- Added a `SERENITY_EXPECTED_SCENARIOS` workflow-level env var strengthening the CI Serenity-JSON guard from "at least one non-empty file" to an exact expected scenario-document count (MAG-C09, PR #37), guarding against a recurrence of the empty-shell report defect (PRs #18/#19).
+- Changed `package.json` `engines.node` from `>=18` (EOL) to `>=20`, matching CI, and documented the Node 20+ floor in the README run instructions (MAG-C08, PR #37).
+- Changed `@cucumber/cucumber` from `11.3.0` to `12.9.0`, clearing 5 moderate `npm audit` advisories (`uuid` via `@cucumber/gherkin*`/`@cucumber/messages`); `@serenity-js/cucumber@3.43.2`'s peer range already covered `^12.0.0`, no Serenity package bump needed (MAG-C11, PR #37).
+- Fixed the one HIGH `npm audit` advisory (`form-data` CRLF injection, GHSA-hmw2-7cc7-3qxx) via a non-breaking lockfile-only bump to `form-data@4.0.6` (MAG-C05, PR #37).
+
 ---
 
 ## [0.3.0] — 2026-06-02

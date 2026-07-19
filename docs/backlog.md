@@ -9,9 +9,9 @@
 > from planning 0002) and Item #14 (cross-browser matrix, from planning 0003) — so the project is
 > active again with two outstanding items.**
 
-**Version:** 4 — Promoted planning proposals 0002 (trace/video) + 0003 (cross-browser) into the backlog as Items #13–#14 (both outstanding)
-**Last Updated:** 2026-06-22 (verification only — no status change; see note below)
-**Based on:** Session notes v17 (2026-06-19), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
+**Version:** 5 — Items #13/#14 flipped to DONE (delivered 2026-07-17, PR #37); Summary table now reads 0 outstanding, matching their own resolution text
+**Last Updated:** 2026-07-19
+**Based on:** `main` at `68bd3d1` (PRs #36/#37/#38 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
 
 > **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
 > CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
@@ -54,6 +54,19 @@
 > running), with no formatter/plugin-loading error anywhere in the stack trace. Live-store
 > confirmation of smoke 7/7 and default 12/12 green with the MAG-C09 scenario-count guard reporting
 > 12 is CI-only; see worklist item MAG-C11 / PR #37 for that result.
+
+> **Update (2026-07-19) — post-PR #37 documentation drift reconciled (TRIAGE-01, code review v2
+> Risk 1).** PR #37 (merged 2026-07-17, `167be92`) delivered Items #13 and #14 plus the
+> MAG-C05..C11 worklist, but this file's own Status fields and Summary table were never flipped to
+> match — both items' headings already read "✅ Resolved 2026-07-17" while their `Status:` fields
+> still said "READY TO START" and the Summary table still counted 2 outstanding. Bumped to v5:
+> both items' `Status:` fields now read DONE, the Summary table reads 0 outstanding, `README.md`'s
+> Status section is refreshed to match (see the README diff in this same PR), `CHANGELOG.md` gains
+> entries for the 2026-07-17 wave (Cucumber 11→12, engines floor, scenario-count guard, trace/video
+> capture, cross-browser matrix), and the missing PR #37 implementation log now exists at
+> `docs/implementation-logs/2026-07-17_mag-c-fixes-and-items-13-14.md`. Cross-repo follow-on (not
+> actioned here): `portfolio-prompts/registry.yml`'s row notes still describe #13/#14 as open —
+> flagged for a portfolio-prompts-side update, outside this repo's worklist.
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -632,7 +645,7 @@ report is the point) and lean in CI (which publishes the report on every green `
 timing failure — what the page was doing *before* the assertion matters. Trace + video give a
 maintainer the missing context.
 **Effort:** 2–4 hours
-**Status:** READY TO START — promoted from planning proposal **0002** (user decision 2026-06-19)
+**Status:** ✅ DONE 2026-07-17 — promoted from planning proposal **0002** (user decision 2026-06-19)
 **Area:** Test infrastructure / CI
 **Provenance:** `docs/planning/proposals/0002-trace-video-capture-on-failure.md` (sketch-level; promoted, not yet designed in detail).
 
@@ -695,7 +708,7 @@ dance, but verified equivalent). `npm run test:smoke` — 7/7 green. `npx tsc --
 storefront" — Luma's Knockout.js checkout can behave differently across engines. Cross-engine
 coverage materially strengthens the portfolio claim.
 **Effort:** 4–6 hours
-**Status:** READY TO START — promoted from planning proposal **0003** (user decision 2026-06-19)
+**Status:** ✅ DONE 2026-07-17 (drift documented, not fixed — see Resolution) — promoted from planning proposal **0003** (user decision 2026-06-19)
 **Area:** Test infrastructure / CI
 **Provenance:** `docs/planning/proposals/0003-cross-browser-run-matrix.md` (sketch-level; promoted, not yet designed in detail).
 
@@ -750,9 +763,9 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
-| MEDIUM (10–19) | 8 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) 🟡 READY (trace/video, from 0002); #14 (15) 🟡 READY (cross-browser, from 0003) |
+| MEDIUM (10–19) | 8 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **2** | #13 (trace/video on failure) + #14 (cross-browser matrix) — promoted from planning 0002/0003 2026-06-19 |
+| **Outstanding** | **0** | All items #1–#14 resolved. Review-derived TRIAGE-01..05 (code review v2) tracked in `WORKLIST_magento-checkout-automation.md` at the portfolio root, not renumbered into this backlog's item series. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
