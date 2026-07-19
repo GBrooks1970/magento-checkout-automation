@@ -9,9 +9,9 @@
 > from planning 0002) and Item #14 (cross-browser matrix, from planning 0003) — so the project is
 > active again with two outstanding items.**
 
-**Version:** 5 — Items #13/#14 flipped to DONE (delivered 2026-07-17, PR #37); Summary table now reads 0 outstanding, matching their own resolution text
+**Version:** 6 — Raised Item #15 (engine-aware wait tuning for Firefox/WebKit, review v2 Risk 3); recorded the CI-cost policy decision (schedule/main-only, not accepted-red-every-push) alongside it
 **Last Updated:** 2026-07-19
-**Based on:** `main` at `68bd3d1` (PRs #36/#37/#38 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
+**Based on:** `main` at `572526b` (PRs #36/#37/#38/#39/#40 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts, TRIAGE-01/02), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
 
 > **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
 > CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
@@ -67,6 +67,17 @@
 > `docs/implementation-logs/2026-07-17_mag-c-fixes-and-items-13-14.md`. Cross-repo follow-on (not
 > actioned here): `portfolio-prompts/registry.yml`'s row notes still describe #13/#14 as open —
 > flagged for a portfolio-prompts-side update, outside this repo's worklist.
+
+> **Update (2026-07-19) — CI-cost policy decided; Firefox/WebKit moved to schedule/main-only
+> (TRIAGE-03, review v2 Risk 3 + Risk 6 item 2).** Item #14's matrix ran all three engines on every
+> push, tripling CI minutes on every PR for two legs already known to be red (documented drift,
+> see Item #14's Resolution). **Decision (owner, 2026-07-19): schedule-only/main-only, not
+> accepted-red-on-every-push.** `.github/workflows/ci.yml` gained a weekly `schedule` trigger
+> (Monday 06:00 UTC); the `test` job's `if:` now runs Firefox/WebKit only when
+> `github.event_name == 'schedule'` or `github.ref == 'refs/heads/main'` — Chromium is unaffected
+> and still runs (and is still required) on every push and PR. Raised **Item #15** to track the
+> actual engine-aware wait tuning this decision does not itself deliver, with explicit
+> promotion-to-required criteria (see Item #15).
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -746,6 +757,52 @@ investigate why WebKit settles slower, before promoting it out of non-blocking.
 
 ---
 
+#### Item #15: Engine-aware wait tuning for Firefox/WebKit — Score: 11 — 🟡 READY TO START
+
+**Priority Score:** Breakage Probability (3) + Portfolio Impact (4) + Maintenance Burden (4) = **11 points**
+**Impact:** Item #14 documented, not fixed, real Firefox/WebKit timing drift (Firefox: one
+add-to-cart timeout; WebKit: pervasive timeouts across add-to-cart, quantity-input, delete-button,
+and checkout-navigation waits). Every wait ceiling in the suite is a Chromium-tuned literal
+(15–20 s), so the drift is a portability gap, not a WebKit bug — and it is the reason those two
+legs cannot yet be promoted to required.
+**Effort:** Unestimated — needs a live interactive session against the Magento store to diagnose
+before any fix effort can be scoped (see Dependency / risk).
+**Status:** 🟡 READY TO START — raised from review v2 Risk 3 (TRIAGE-03, 2026-07-19); folds in
+review v2 Risk 6 item 2 (the same Chromium-tuned-ceilings observation)
+**Area:** Test infrastructure / CI
+**Provenance:** `.review/CODE_REVIEW_CLAUDE_Fable_5_v2_20260718T0033Z/` Risk 3 and Risk 6 item 2.
+
+**Problem:**
+Item #14's CI matrix runs Firefox/WebKit as non-blocking legs, but with no tracked path to ever
+promote them to required — the follow-up existed only inside Item #14's own resolution prose, not
+as its own item. Separately, every explicit wait ceiling in `src/tasks/*.ts` encodes
+Chromium-against-this-store timing (e.g. `AddToCart.ts` 15 s, `ProvideShippingDetails.ts` 20 s),
+which Item #14's findings show is not engine-portable.
+
+**Resolution Strategy (sketch — refine on implementation):**
+1. Either raise WebKit/Firefox-specific wait ceilings (e.g. an engine-aware duration helper reading
+   `BROWSER` and applying a per-engine multiplier, replacing the scattered literals — this would
+   also resolve the review's Risk 6 wait-ceiling-portability note structurally), or diagnose why
+   WebKit genuinely renders/settles slower against this storefront and fix the root cause.
+2. Needs a live interactive session against the Magento store (Docker bring-up) — not scriptable
+   from evidence alone, since tuning requires observing actual render timing per engine.
+3. Define explicit **promotion-to-required criteria** once tuned: e.g. N consecutive green CI runs
+   per engine on the weekly schedule (TRIAGE-03), then flip `continue-on-error` off for that engine
+   in `.github/workflows/ci.yml`.
+
+**Success Criteria:**
+- [ ] Either engine-aware wait ceilings are implemented and verified against a live store, or a
+  documented root-cause investigation explains the WebKit/Firefox slowdown.
+- [ ] Explicit promotion-to-required criteria are recorded (not just "someday").
+- [ ] Firefox and/or WebKit show consecutive green runs on the weekly schedule before promotion is
+  considered.
+
+**Dependency / risk:** blocked on live-store interactive access (same constraint that held Item #13
+`BLOCKED` until 2026-07-17); do not guess at wait values without observing real render timing —
+the whole point of Item #14's "documented, not fixed" resolution was avoiding exactly that.
+
+---
+
 ## Resolved Items
 
 #### Phase 1–3 implementation ✅ Resolved 2026-06-02
@@ -763,9 +820,9 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
-| MEDIUM (10–19) | 8 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003) |
+| MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) 🟡 READY (engine-aware wait tuning, from review v2 Risk 3) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **0** | All items #1–#14 resolved. Review-derived TRIAGE-01..05 (code review v2) tracked in `WORKLIST_magento-checkout-automation.md` at the portfolio root, not renumbered into this backlog's item series. |
+| **Outstanding** | **1** | #15 (engine-aware wait tuning for Firefox/WebKit) — raised 2026-07-19 from review v2 Risk 3. Remaining review-derived TRIAGE-01..05 (code review v2) tracked in `WORKLIST_magento-checkout-automation.md` at the portfolio root, not renumbered into this backlog's item series. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

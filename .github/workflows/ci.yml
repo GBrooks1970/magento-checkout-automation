@@ -56,6 +56,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Firefox/WebKit legs run schedule- and main-only (TRIAGE-03, review v2
+  # Risk 3): weekly is enough to catch drift changing, without paying the
+  # ~3x CI-minutes cost of a full store bring-up per engine on every PR push.
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
 
 jobs:
   # ── Preflight: check images exist ─────────────────────────────────────────
@@ -126,9 +131,16 @@ jobs:
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
     needs: preflight
-    # Skip entirely if the images haven't been baked yet. A skipped job
-    # produces a neutral (⊘) check status rather than a failure (❌).
-    if: needs.preflight.outputs.images-available == 'true'
+    # Skip entirely if the images haven't been baked yet (neutral ⊘, not ❌).
+    # Also skip the non-Chromium matrix legs outside schedule/main (TRIAGE-03,
+    # review v2 Risk 3): `if:` is evaluated per matrix combination, so this
+    # still runs Chromium on every push/PR while Firefox/WebKit only run on
+    # the weekly schedule or a push to main — cutting the routine per-PR cost
+    # from three store bring-ups to one, without losing periodic drift
+    # visibility. See backlog #15 for the promotion-to-required criteria.
+    if: |
+      needs.preflight.outputs.images-available == 'true' &&
+      (matrix.browser == 'chromium' || github.event_name == 'schedule' || github.ref == 'refs/heads/main')
 
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -138,12 +150,14 @@ jobs:
 
     # Cross-browser run matrix (backlog #14 / planning proposal 0003). Each
     # engine gets its own full store bring-up + suite run (roughly triples CI
-    # minutes — the documented, accepted trade-off). Chromium is the
-    # REQUIRED gate: it runs with continue-on-error unset (false), so a
-    # Chromium failure fails the job/workflow as before. Firefox and WebKit
-    # are NON-BLOCKING matrix legs (continue-on-error: true) — real
-    # engine-specific drift surfaces there without gating merges until
-    # they've been triaged and are stable enough to promote to required.
+    # minutes on the schedule/main runs where all three execute — the
+    # documented, accepted trade-off; see the job-level `if:` above for why
+    # PRs only pay for one). Chromium is the REQUIRED gate: it runs with
+    # continue-on-error unset (false), so a Chromium failure fails the
+    # job/workflow as before. Firefox and WebKit are NON-BLOCKING matrix legs
+    # (continue-on-error: true) — real engine-specific drift surfaces there
+    # without gating merges until they've been triaged and are stable enough
+    # to promote to required.
     strategy:
       fail-fast: false
       matrix:
