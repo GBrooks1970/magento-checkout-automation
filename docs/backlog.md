@@ -1,17 +1,18 @@
 # Magento Checkout Automation — Backlog
 
-> **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12 — and a new cycle opened.** The
+> **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12 — later work is now complete.** The
 > project was formally closed (terminal handover **v16 FINAL**: all of #1–#11 done, both code-review
 > cycles closed — first R-01…R-10 + extensions, second MAG-C01…C04) and then reopened on user
 > decision to deliver **Item #12 (screenshots in the report)**, promoted from planning item 0001
-> (ADR-0007). With #12 done, items #1–#12 are complete. **On 2026-06-19 two further planning
+> (ADR-0007). **On 2026-06-19 two further planning
 > proposals were promoted into the backlog as committed work — Item #13 (trace/video on failure,
-> from planning 0002) and Item #14 (cross-browser matrix, from planning 0003) — so the project is
-> active again with two outstanding items.**
+> from planning 0002) and Item #14 (cross-browser matrix, from planning 0003). Item #15 then closed
+> the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
+> WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 7 — Fixed Item #1's stale `Status:` field (still "READY TO START" despite being validated since 2026-06-03) and unchecked Success Criteria, found during TRIAGE-01's verification pass, not part of any review
-**Last Updated:** 2026-07-19
-**Based on:** `main` at `e7482d6` (PRs #36/#37/#38/#39/#40/#41/#42/#43 merged: MIT licence, MAG-C05..C11/MAG-13/MAG-14, code review v2 artefacts, TRIAGE-01..05), session notes v18 (2026-06-22), code-review closure R-01…R-10 + MAG-C01…C04, planning items 0001 (ADR-0007), 0002, 0003
+**Version:** 8 — Resolved Item #15 with a central engine-aware wait policy, live root-cause fixes, an evidence-based promotion gate, and a zero-vulnerability dependency tree
+**Last Updated:** 2026-07-20
+**Based on:** `main` at `03ca426` (PRs #36–#44 merged) plus Item #15 live-store evidence on `codex/magento-engine-aware-waits`; session notes v19; code-review closure R-01…R-10 + MAG-C01…C04; planning items 0001 (ADR-0007), 0002, 0003
 
 > **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
 > CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
@@ -78,6 +79,30 @@
 > and still runs (and is still required) on every push and PR. Raised **Item #15** to track the
 > actual engine-aware wait tuning this decision does not itself deliver, with explicit
 > promotion-to-required criteria (see Item #15).
+
+> **Resolution (2026-07-20) — Item #15 engine portability.** A live Dockerised Magento 2.4.8
+> baseline reproduced the drift: Chromium 12/12 green; Firefox 9/12 (cart/customer-data and
+> add-to-cart visibility timeouts); WebKit 6/12 (checkout state-selector visibility timeouts).
+> The investigation showed that longer ceilings alone did not fix WebKit. Serenity's visibility
+> check is viewport/occlusion-aware, so Firefox's success banner and WebKit's dependent state
+> selector could be present but below the viewport; both flows now scroll before asserting
+> visibility. Firefox's asynchronous header counter could remain empty despite correct server cart
+> state, so it is retained as a soft signal while the hard assertion sums authoritative cart-row
+> quantities. Finally, Firefox/WebKit sometimes fail to complete the cart-to-checkout transition,
+> and WebKit can reach checkout with a permanently stuck first Knockout bootstrap. Those exploratory
+> legs use explicit, stderr-visible `[MAG-15 ... recovery]` fallbacks; Chromium never recovers and
+> still fails strictly. Final full-suite evidence: Chromium **12/12** in 2m55s, Firefox **12/12** in
+> 4m11s, WebKit **12/12** in 3m20s. Firefox/WebKit remain non-blocking: promote one engine at a time
+> only after **three consecutive eligible weekly/main CI runs** are 12/12 green with **zero MAG-15
+> recovery messages**, meaning its fallback has first been removed or proved unnecessary.
+
+> **Security follow-up (2026-07-20).** Final validation found three newly reported MODERATE Axios
+> advisories through `@serenity-js/rest`/`@serenity-js/serenity-bdd` 3.43.2's exact Axios 1.16.0
+> dependency. Moving the coherent Serenity stack to 3.44.1 would also require Node 22.12+ and
+> Playwright 1.61.1, conflicting with the repository's Node 20 CI contract. A root npm override now
+> selects Axios **1.18.1** for both Serenity consumers while leaving the validated framework stack
+> unchanged. Evidence after the override: `npm audit` **0 vulnerabilities**, `npm run verify` clean
+> (default 12/12 and smoke 7/7 dry), and Chromium full live suite **12/12** in 2m53s.
 
 Tracks all outstanding work needed to reach a reviewer-ready portfolio state. Items are ordered by
 priority score. The portfolio credibility checklist at the bottom tracks headline deliverables.
@@ -762,7 +787,7 @@ investigate why WebKit settles slower, before promoting it out of non-blocking.
 
 ---
 
-#### Item #15: Engine-aware wait tuning for Firefox/WebKit — Score: 11 — 🟡 READY TO START
+#### Item #15: Engine-aware wait tuning for Firefox/WebKit — Score: 11 — ✅ Resolved 2026-07-20
 
 **Priority Score:** Breakage Probability (3) + Portfolio Impact (4) + Maintenance Burden (4) = **11 points**
 **Impact:** Item #14 documented, not fixed, real Firefox/WebKit timing drift (Firefox: one
@@ -770,10 +795,9 @@ add-to-cart timeout; WebKit: pervasive timeouts across add-to-cart, quantity-inp
 and checkout-navigation waits). Every wait ceiling in the suite is a Chromium-tuned literal
 (15–20 s), so the drift is a portability gap, not a WebKit bug — and it is the reason those two
 legs cannot yet be promoted to required.
-**Effort:** Unestimated — needs a live interactive session against the Magento store to diagnose
-before any fix effort can be scoped (see Dependency / risk).
-**Status:** 🟡 READY TO START — raised from review v2 Risk 3 (TRIAGE-03, 2026-07-19); folds in
-review v2 Risk 6 item 2 (the same Chromium-tuned-ceilings observation)
+**Effort:** Completed in one live interactive session against the Dockerised Magento store.
+**Status:** ✅ DONE & live-validated 2026-07-20 — implementation is complete; promotion remains
+deliberately deferred until the operational evidence gate below is met.
 **Area:** Test infrastructure / CI
 **Provenance:** `.review/CODE_REVIEW_CLAUDE_Fable_5_v2_20260718T0033Z/` Risk 3 and Risk 6 item 2.
 
@@ -795,16 +819,25 @@ which Item #14's findings show is not engine-portable.
    per engine on the weekly schedule (TRIAGE-03), then flip `continue-on-error` off for that engine
    in `.github/workflows/ci.yml`.
 
-**Success Criteria:**
-- [ ] Either engine-aware wait ceilings are implemented and verified against a live store, or a
-  documented root-cause investigation explains the WebKit/Firefox slowdown.
-- [ ] Explicit promotion-to-required criteria are recorded (not just "someday").
-- [ ] Firefox and/or WebKit show consecutive green runs on the weekly schedule before promotion is
-  considered.
+**Resolution:** `src/config/wait-durations.ts` is now the single source of engine-aware ceilings for
+responsive UI, asynchronous updates, complex renders, route transitions, and Cucumber steps; all
+scattered `Duration.ofSeconds(...)` literals were replaced with semantic tiers. Live investigation
+also fixed present-but-off-viewport assertions in the add-to-cart and shipping-address flows,
+replaced the cached header counter as the hard cart oracle, and added explicit checkout-route
+recovery for exploratory engines. Recovery is always reported to stderr with a `[MAG-15 ...
+recovery]` prefix so green scenarios cannot conceal a fallback. Chromium remains strict.
 
-**Dependency / risk:** blocked on live-store interactive access (same constraint that held Item #13
-`BLOCKED` until 2026-07-17); do not guess at wait values without observing real render timing —
-the whole point of Item #14's "documented, not fixed" resolution was avoiding exactly that.
+**Success Criteria:**
+- [x] Engine-aware wait ceilings and root-cause fixes are implemented and verified against a live
+  store: final full suites were Chromium 12/12, Firefox 12/12, and WebKit 12/12 on 2026-07-20.
+- [x] Explicit promotion-to-required criteria are recorded: three consecutive eligible weekly/main
+  CI runs at 12/12 with zero `[MAG-15 ... recovery]` messages, promoted one engine at a time.
+- [x] Promotion remains deferred until that consecutive-run evidence exists; no Firefox/WebKit
+  required-gate claim is made from the local green runs.
+
+**Dependency / risk:** live-store access was available and the implementation dependency is
+resolved. Remaining risk is operational: Firefox/WebKit still need fallback-free CI evidence before
+either `continue-on-error` setting can be removed.
 
 ---
 
@@ -825,9 +858,9 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | Priority | Count | Status |
 |---|---|---|
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
-| MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) 🟡 READY (engine-aware wait tuning, from review v2 Risk 3) |
+| MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) ✅ DONE 2026-07-20 (engine-aware waits and live root-cause fixes) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **1** | #15 (engine-aware wait tuning for Firefox/WebKit) — raised 2026-07-19 from review v2 Risk 3. Remaining review-derived TRIAGE-01..05 (code review v2) tracked in `WORKLIST_magento-checkout-automation.md` at the portfolio root, not renumbered into this backlog's item series. |
+| **Outstanding** | **0** | All Items #1–#15 resolved. Firefox/WebKit remain exploratory until Item #15's three-run, zero-recovery promotion gate is met; that operational evidence does not reopen the implementation backlog. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

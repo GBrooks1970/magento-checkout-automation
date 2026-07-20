@@ -1,6 +1,7 @@
-import { Duration, Task, Wait } from '@serenity-js/core';
+import { Task, Wait } from '@serenity-js/core';
 import { Click, isVisible } from '@serenity-js/web';
 import { CheckoutPage } from '../interactions/CheckoutPage';
+import { waitFor } from '../config/wait-durations';
 
 export const PlaceTheOrder = {
     now: () =>
@@ -8,9 +9,9 @@ export const PlaceTheOrder = {
         // on a cold run this runs past Serenity's 5 s default, so wait up to 20 s for the
         // confirmation to land (backlog #11).
         Task.where('#actor places the order',
-            Wait.upTo(Duration.ofSeconds(15)).until(CheckoutPage.placeOrderButton, isVisible()),
+            Wait.upTo(waitFor.asynchronousUpdate).until(CheckoutPage.placeOrderButton, isVisible()),
             Click.on(CheckoutPage.placeOrderButton),
-            Wait.upTo(Duration.ofSeconds(20)).until(CheckoutPage.confirmationContainer, isVisible()),
+            Wait.upTo(waitFor.complexRender).until(CheckoutPage.confirmationContainer, isVisible()),
         ),
 
     // The decline path: the gateway throws, so no success page ever appears. Click
@@ -20,8 +21,8 @@ export const PlaceTheOrder = {
     // the Then steps assert that. See backlog #2 / ADR-0005.
     attemptExpectingDecline: () =>
         Task.where('#actor attempts to place the order, expecting a decline',
-            Wait.upTo(Duration.ofSeconds(15)).until(CheckoutPage.placeOrderButton, isVisible()),
+            Wait.upTo(waitFor.asynchronousUpdate).until(CheckoutPage.placeOrderButton, isVisible()),
             Click.on(CheckoutPage.placeOrderButton),
-            Wait.upTo(Duration.ofSeconds(20)).until(CheckoutPage.paymentErrorMessage, isVisible()),
+            Wait.upTo(waitFor.complexRender).until(CheckoutPage.paymentErrorMessage, isVisible()),
         ),
 };

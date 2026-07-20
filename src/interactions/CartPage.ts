@@ -1,4 +1,4 @@
-import { By, PageElement } from '@serenity-js/web';
+import { By, PageElement, PageElements } from '@serenity-js/web';
 import { BASE_URL } from '../serenity.config';
 
 export const CartPage = {
@@ -11,6 +11,11 @@ export const CartPage = {
 
     itemCounter: PageElement.located(By.css('span.counter-number'))
         .describedAs('cart item counter'),
+
+    items: PageElements.located(By.css('tbody.cart.item'))
+        .describedAs('cart line items'),
+    itemQuantity: PageElement.located(By.css('input.qty'))
+        .describedAs('line item quantity'),
 
     // Use the cart-page button specifically. The bare `button.action.primary.checkout`
     // selector also matches the header mini-cart button (#top-cart-btn-checkout), which

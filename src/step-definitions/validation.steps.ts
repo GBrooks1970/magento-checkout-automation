@@ -1,9 +1,10 @@
 import { When, Then } from '@cucumber/cucumber';
-import { actorCalled, Duration, Wait } from '@serenity-js/core';
+import { actorCalled, Wait } from '@serenity-js/core';
 import { Ensure, equals, not } from '@serenity-js/assertions';
 import { Attribute, isVisible } from '@serenity-js/web';
 import { ProvideShippingDetails } from '../tasks/ProvideShippingDetails';
 import { CheckoutPage } from '../interactions/CheckoutPage';
+import { waitFor } from '../config/wait-durations';
 
 When('I provide incomplete shipping details', async () => {
     await actorCalled('User').attemptsTo(
@@ -33,7 +34,7 @@ Then('the email field should be flagged as invalid', async () => {
     // occlusion-aware, so it reports the (genuinely rendered) field as not visible. The
     // attribute value is unaffected by the overlay. See backlog #10.
     await actorCalled('User').attemptsTo(
-        Wait.upTo(Duration.ofSeconds(10)).until(
+        Wait.upTo(waitFor.responsiveUi).until(
             Attribute.called('aria-invalid').of(CheckoutPage.emailInput),
             equals('true'),
         ),

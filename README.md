@@ -80,8 +80,8 @@ The reasoning behind each choice is recorded in `docs/adr/`.
 # install dependencies
 npm install
 
-# install the Playwright browser (once per machine)
-npx playwright install chromium
+# install the Playwright browsers (once per machine)
+npx playwright install chromium firefox webkit
 ```
 
 The suite runs against the local Dockerised Magento store (the same store CI
@@ -125,7 +125,7 @@ Marketplace auth keys) and the image-baking strategy CI uses.
 |---|---|---|
 | `BASE_URL` | `http://localhost:8080` | Target store base URL — the default matches the local Docker store. Point it elsewhere only at a store you own (the Background mints an admin token there). |
 | `HEADLESS` | `true` | Set `false` to watch the browser during a run. |
-| `BROWSER` | `chromium` | Playwright engine: `chromium` \| `firefox` \| `webkit` (case-insensitive). CI runs all three as a matrix — Chromium is the required gate, Firefox/WebKit are non-blocking legs. An unrecognised value fails fast at `BeforeAll`. |
+| `BROWSER` | `chromium` | Playwright engine: `chromium` \| `firefox` \| `webkit` (case-insensitive). Explicit waits and the Cucumber step ceiling follow the selected engine's central policy in `src/config/wait-durations.ts`. Chromium is the required CI gate; Firefox/WebKit are non-blocking weekly/main legs pending Item #15's three-run, zero-recovery promotion gate. An unrecognised value fails fast at `BeforeAll`. |
 | `SCREENSHOTS` | `all` locally, `off` in CI | Screenshots in the Serenity report: `off` \| `failures` \| `all`. Unset → **on (every interaction) locally, off in CI** (CI detected via `CI=true`). An explicit value overrides the environment default. Recommended CI opt-in for debugging: `SCREENSHOTS=failures`. See `docs/adr/0007-screenshots-in-reports.md`. |
 | `MAGENTO_ADMIN_TOKEN` | *(unset)* | Admin bearer token for the API-driven Background (ADR-0003). If set, used directly. |
 | `MAGENTO_ADMIN_USERNAME` | `admin` *(localhost only)* | Used to **mint** an admin token when `MAGENTO_ADMIN_TOKEN` is unset. The default applies only when `BASE_URL` resolves to localhost; against any other host this must be set explicitly. |
@@ -176,7 +176,7 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-Backlog items #1–#12 delivered and green. The full suite — **12 scenarios, 94 steps** — runs
+Backlog items #1–#15 are delivered. The full suite — **12 scenarios, 94 steps** — runs
 green in CI against the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
 scenario, which declines deterministically via the in-repo
 `Portfolio_DeclinePayment` test-fixture module (no gateway sandbox, secrets, or
@@ -189,10 +189,12 @@ green badge above reflects the current `main` state, and the
 Serenity living documentation publishes to GitHub Pages on every `main` run. Items **#13**
 (trace + video capture on failure, gated off by default behind `TRACE=on-failure`) and **#14**
 (cross-browser run matrix) are also delivered: CI runs Chromium (required) on every push and PR,
-with Firefox and WebKit running non-blocking on a weekly schedule and on `main` while real,
-documented engine-specific timing drift on those two engines is triaged (Item #15). All 14
-originally-scoped backlog items are resolved — see `docs/backlog.md` for full status and evidence
-on every item, including Item #15.
+with Firefox and WebKit running non-blocking on a weekly schedule and on `main`. Item **#15**
+centralised engine-aware wait ceilings and resolved the live, engine-specific viewport and cart
+state failure modes; local Docker validation on 2026-07-20 finished 12/12 on each engine. Those two
+exploratory legs are intentionally not promoted yet: each must produce three consecutive eligible
+weekly/main CI runs at 12/12 with no `[MAG-15 ... recovery]` telemetry before its
+`continue-on-error` setting is removed. See `docs/backlog.md` for full status and evidence.
 
 ## Licence
 

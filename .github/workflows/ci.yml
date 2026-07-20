@@ -175,9 +175,10 @@ jobs:
     # why PRs only pay for one). Chromium is the REQUIRED gate: it runs with
     # continue-on-error unset (false), so a Chromium failure fails the
     # job/workflow as before. Firefox and WebKit are NON-BLOCKING matrix legs
-    # (continue-on-error: true) — real engine-specific drift surfaces there
-    # without gating merges until they've been triaged and are stable enough
-    # to promote to required.
+    # (continue-on-error: true). Item #15's promotion gate is explicit: promote
+    # one engine at a time only after three consecutive eligible weekly/main
+    # runs finish 12/12 with zero [MAG-15 ... recovery] messages. This requires
+    # removing or proving unnecessary that engine's observable fallback first.
     strategy:
       fail-fast: false
       matrix:

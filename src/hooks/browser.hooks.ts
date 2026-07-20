@@ -8,6 +8,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { BASE_URL } from '../serenity.config';
 import { MagentoApi } from '../api/MagentoApiClient';
+import { browserEngine, cucumberStepTimeoutMilliseconds } from '../config/wait-durations';
 
 // Cross-browser run matrix (backlog #14 / planning proposal 0003). BROWSER
 // selects the Playwright engine: unset defaults to chromium (the required CI
@@ -15,22 +16,14 @@ import { MagentoApi } from '../api/MagentoApiClient';
 // silently falling back. Firefox and WebKit are additive, non-blocking CI
 // matrix legs (see .github/workflows/ci.yml) and can also be run locally,
 // e.g. `BROWSER=firefox npm run test:smoke`.
-type EngineName = 'chromium' | 'firefox' | 'webkit';
-
 function resolveBrowserType(): BrowserType {
-    const requested = (process.env.BROWSER ?? 'chromium').toLowerCase();
-    switch (requested as EngineName) {
+    switch (browserEngine()) {
         case 'chromium':
             return chromium;
         case 'firefox':
             return firefox;
         case 'webkit':
             return webkit;
-        default:
-            throw new Error(
-                `Unsupported BROWSER "${process.env.BROWSER}" — expected one of ` +
-                `chromium | firefox | webkit (case-insensitive), or unset for the chromium default.`
-            );
     }
 }
 
@@ -73,13 +66,11 @@ function slugFor(pickleName: string, testCaseStartedId: string): string {
 let tracedContext: BrowserContext | undefined;
 let tracedPage: Page | undefined;
 
-// Cucumber's default per-step timeout is 5 s. A real Magento checkout step combines
-// network latency with several Knockout.js re-renders, which can legitimately exceed
-// that against a live store, producing spurious "function timed out" failures. Some
-// steps now chain multiple 20 s Serenity Wait ceilings (e.g. the shipping form waits
-// on both the email input and the dependent state dropdown), so the step ceiling must
-// sit comfortably above their sum on a cold CI store. See backlog #10.
-setDefaultTimeout(60 * 1000);
+// Cucumber's step timeout must sit above chained Serenity waits. The selected
+// ceiling follows the same engine-aware policy as those waits (backlog #15),
+// preserving headroom for WebKit's slower checkout re-renders without imposing
+// a fixed delay on successful steps.
+setDefaultTimeout(cucumberStepTimeoutMilliseconds);
 
 // The browser is launched once for the whole run and kept open, and each
 // scenario gets its own fresh browser context (see Before).

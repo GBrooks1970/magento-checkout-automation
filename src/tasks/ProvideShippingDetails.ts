@@ -1,11 +1,10 @@
-import { Duration, Task, Wait } from '@serenity-js/core';
-import { Click, Enter, Select, isVisible } from '@serenity-js/web';
+import { Task, Wait } from '@serenity-js/core';
+import { Click, Enter, Scroll, Select, isVisible } from '@serenity-js/web';
 import { CheckoutPage } from '../interactions/CheckoutPage';
+import { waitFor } from '../config/wait-durations';
 
 // The checkout form and its dependent state dropdown are Knockout.js-rendered
 // and can exceed Serenity's 5 s default Wait ceiling on a cold CI store.
-const CHECKOUT_RENDER = Duration.ofSeconds(20);
-
 export interface ShippingDetails {
     email: string;
     firstName: string;
@@ -32,14 +31,19 @@ const defaults: ShippingDetails = {
 
 const fillForm = (details: ShippingDetails) =>
     Task.where('#actor fills in the shipping address form',
-        Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
+        Wait.upTo(waitFor.complexRender).until(CheckoutPage.emailInput, isVisible()),
         Enter.theValue(details.email).into(CheckoutPage.emailInput),
         Enter.theValue(details.firstName).into(CheckoutPage.firstNameInput),
         Enter.theValue(details.lastName).into(CheckoutPage.lastNameInput),
         Enter.theValue(details.street).into(CheckoutPage.streetAddressInput),
         Enter.theValue(details.city).into(CheckoutPage.cityInput),
         Select.option(details.country).from(CheckoutPage.countrySelect),
-        Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.stateSelect, isVisible()),
+        // WebKit's selectOption does not scroll the dependent region control
+        // into the viewport. Serenity's visibility check is occlusion-aware and
+        // uses elementFromPoint, so an otherwise rendered control below the fold
+        // reports false forever unless we scroll explicitly (backlog #15).
+        Scroll.to(CheckoutPage.stateSelect),
+        Wait.upTo(waitFor.complexRender).until(CheckoutPage.stateSelect, isVisible()),
         Select.option(details.state).from(CheckoutPage.stateSelect),
         Enter.theValue(details.postcode).into(CheckoutPage.postcodeInput),
         Enter.theValue(details.phone).into(CheckoutPage.phoneInput),
@@ -59,7 +63,7 @@ export const ProvideShippingDetails = {
 
     incomplete: () =>
         Task.where('#actor provides incomplete shipping details',
-            Wait.upTo(CHECKOUT_RENDER).until(CheckoutPage.emailInput, isVisible()),
+            Wait.upTo(waitFor.complexRender).until(CheckoutPage.emailInput, isVisible()),
             Enter.theValue('incomplete@example.com').into(CheckoutPage.emailInput),
             Click.on(CheckoutPage.shippingNextButton),
         ),

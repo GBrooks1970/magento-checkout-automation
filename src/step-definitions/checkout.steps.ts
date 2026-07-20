@@ -1,5 +1,5 @@
 import { When, Then } from '@cucumber/cucumber';
-import { actorCalled, Duration, Wait } from '@serenity-js/core';
+import { actorCalled, Wait } from '@serenity-js/core';
 import { Ensure, includes, isPresent, not } from '@serenity-js/assertions';
 import { isVisible } from '@serenity-js/web';
 import { PaymentError } from '../questions/PaymentError';
@@ -11,6 +11,7 @@ import { ProvidePaymentDetails } from '../tasks/ProvidePaymentDetails';
 import { PlaceTheOrder } from '../tasks/PlaceTheOrder';
 import { OrderSummary } from '../questions/OrderSummary';
 import { CheckoutPage } from '../interactions/CheckoutPage';
+import { waitFor } from '../config/wait-durations';
 
 When('I add {string} to my cart', async (productName: string) => {
     await actorCalled('User').attemptsTo(
@@ -72,7 +73,7 @@ Then('the order summary subtotal should be {string}', async (expectedSubtotal: s
     // expected value rather than reading it once (it can be empty/stale on a cold
     // CI render — backlog #10/#11).
     await actorCalled('User').attemptsTo(
-        Wait.upTo(Duration.ofSeconds(20)).until(OrderSummary.subtotal(), includes(expectedSubtotal)),
+        Wait.upTo(waitFor.complexRender).until(OrderSummary.subtotal(), includes(expectedSubtotal)),
     );
 });
 
@@ -108,7 +109,7 @@ Then('I should remain on the checkout page with my cart intact', async () => {
     // Summary block still shows the cart — i.e. the quote was not consumed into an
     // order. Wait briefly to ride out the KO re-render after the decline error.
     await actorCalled('User').attemptsTo(
-        Wait.upTo(Duration.ofSeconds(10)).until(CheckoutPage.paymentSection, isVisible()),
+        Wait.upTo(waitFor.responsiveUi).until(CheckoutPage.paymentSection, isVisible()),
         Ensure.that(CheckoutPage.orderSummaryBlock, isVisible()),
     );
 });
