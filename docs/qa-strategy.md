@@ -74,7 +74,7 @@ formatter, so it does not compete for the single stdout formatter slot (see §3 
 
 | Tier | Area | Risk | Mitigation |
 |---|---|---|---|
-| High | Knockout.js checkout async | Steps fire before KO.js has re-rendered, causing element-not-found or stale-element errors | `Wait.until(element, isVisible())` on every step transition; zero hard waits — see `docs/screenplay-guide.md` |
+| High | Knockout.js checkout async | Steps fire before KO.js has re-rendered, causing element-not-found or stale-element errors | Semantic, engine-aware `Wait.until(...)` ceilings; scroll present-but-off-viewport controls before visibility assertions; zero fixed delays — see `src/config/wait-durations.ts` and `docs/screenplay-guide.md` |
 | High | Magento indexer / cache | Products created or modified via API are not visible on the storefront until `indexer:reindex` and `cache:flush` run | CI startup sequence must include both commands before any test run |
 | High | Live test target availability | The original public sandbox died (SSL 526); shared demos are nondeterministic | Resolved: Dockerised Magento 2.4.8 store, pre-baked as GHCR images for CI — see `docs/docker-magento-setup.md` |
 | Medium | Async order processing | Order state (e.g. "Pending") may not be set immediately after placement on Commerce edition | Poll or wait on order state; avoid immediate state assertions |
@@ -83,17 +83,36 @@ formatter, so it does not compete for the single stdout formatter slot (see §3 
 | Low | Store/website scope | Product prices and configuration scope to store view; cross-scope leakage can cause price assertion failures | Use dedicated test products scoped to the test store view |
 | Low | EAV data model | UI-based product creation is slow and brittle | API-driven setup only — no UI product creation in the test suite |
 
+### Engine-aware wait policy
+
+All explicit wait ceilings come from `src/config/wait-durations.ts`; tasks and step definitions
+select a semantic tier rather than embedding an engine-specific number. These are maximum polling
+ceilings, never fixed sleeps: a satisfied condition returns immediately.
+
+| Engine | Responsive UI | Async update | Complex render | Route transition | Cucumber step |
+|---|---:|---:|---:|---:|---:|
+| Chromium | 15 s | 25 s | 30 s | 15 s | 90 s |
+| Firefox | 20 s | 30 s | 45 s | 10 s | 120 s |
+| WebKit | 25 s | 45 s | 60 s | 10 s | 180 s |
+
+Chromium is the strict required gate. Firefox and WebKit can recover from an observed stuck
+cart-to-checkout transition; WebKit also performs a clean canonical reload after reaching checkout
+because its first Knockout bootstrap can remain permanently stuck. Every such fallback writes a
+`[MAG-15 ... recovery]` message to stderr. Promote an exploratory engine only after its fallback is
+no longer needed and three consecutive eligible weekly/main CI runs finish 12/12 with zero MAG-15
+recovery messages; promote one engine at a time (backlog #15).
+
 ### Settled-state count assertions
 
 Cart count assertions are **settled-state assertions by design** (review R-08): the
-header counter is refreshed by an asynchronous customer-data fetch that intermittently
-serves a stale value after a cart mutation, so the `my cart should contain {int} item(s)`
-step reloads the page (forcing the section to re-sync from the server) and then polls —
-it asserts what the cart *settles to*, not whatever transient value the counter shows
-first. The trade-off is conscious: a counter that is genuinely broken *until* a reload
-would not fail the suite. To keep that product-side bug class visible, the step logs the
-pre-reload counter as a **soft signal** (a stderr warning on mismatch, never a failure)
-before reloading — see `src/step-definitions/cart.steps.ts`.
+header counter is refreshed by an asynchronous customer-data fetch that can remain stale
+or empty after a cart mutation, particularly in Firefox. It is therefore an observability
+signal, not a sound hard oracle. The `my cart should contain {int} item(s)` step logs that
+cached counter as a **soft signal** (a stderr warning on mismatch, never a failure), then
+navigates to the cart and sums the server-rendered line-item quantity inputs for its hard
+assertion. This tests the Gherkin's total-item semantics against authoritative cart state
+without hiding the product-side counter race — see `src/questions/CartTotalQuantity.ts`
+and `src/step-definitions/cart.steps.ts` (backlog #15).
 
 ---
 

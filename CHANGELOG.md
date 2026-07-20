@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a central, engine-aware wait policy for Chromium, Firefox, and WebKit, including semantic
+  Serenity wait tiers, route-transition ceilings, and Cucumber step timeouts (backlog Item #15).
+- Added observable checkout-route recovery for exploratory Firefox/WebKit runs and WebKit's stuck
+  Knockout-bootstrap fallback. Each fallback writes `[MAG-15 ... recovery]` telemetry for promotion
+  decisions; Chromium remains strict.
+
+### Changed
+
+- Changed every task/step explicit wait to consume semantic policy tiers instead of scattered
+  Chromium-tuned `Duration.ofSeconds(...)` literals.
+- Changed hard cart-count assertions to sum server-rendered cart-row quantities; the asynchronous
+  header customer-data counter remains a non-failing diagnostic signal.
+
+### Fixed
+
+- Fixed Firefox add-to-cart and WebKit state-selector visibility failures by scrolling elements
+  that were rendered but outside the viewport before applying Serenity's visibility assertion.
+- Fixed intermittent Firefox/WebKit cart-to-checkout stalls without concealing them from CI:
+  exploratory legs recover visibly, remain non-blocking, and require three consecutive 12/12,
+  zero-recovery eligible runs before promotion.
+- Fixed three newly reported moderate Axios advisories by overriding Serenity/JS 3.43.2's pinned
+  Axios 1.16.0 dependency to 1.18.1. This preserves the Node 20 CI contract; Serenity/JS 3.44.1
+  requires Node 22.12+ and a coordinated Playwright upgrade. `npm audit` reports 0 vulnerabilities.
+
 ## [1.0.0] — 2026-06-19
 
 Cuts the `[Unreleased]` content accumulated since `[0.3.0]`: the original 12-item close-out
