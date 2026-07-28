@@ -4,7 +4,11 @@
     <default>
         <payment>
             <declinepayment>
-                <active>1</active>
+                <!-- Default OFF (CODEX-01, review Risk 1): matches the CartSeed
+                     safe-default pattern so only a baked test store, which
+                     activates it explicitly in bake.yml, ever serves this
+                     always-declining fixture method. -->
+                <active>0</active>
                 <model>PortfolioDeclinePaymentFacade</model>
                 <order_status>pending</order_status>
                 <title>Test Declining Payment (portfolio fixture)</title>

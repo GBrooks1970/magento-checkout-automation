@@ -26,7 +26,11 @@ services:
   app:
     image: markoshust/magento-nginx:1.28-0
     ports:
-      - "8080:8000"
+      # Bind to loopback only (CODEX-01, review Risk 1): the disposable store
+      # ships public admin credentials with 2FA disabled, so it must not be
+      # reachable from the local network. GitHub Actions is unaffected — all
+      # calls originate on the runner host.
+      - "127.0.0.1:8080:8000"
     volumes:
       - appdata:/var/www/html
       - sockdata:/sock

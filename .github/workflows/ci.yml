@@ -128,6 +128,22 @@ jobs:
           done
           echo "available=${available}" >> "$GITHUB_OUTPUT"
 
+      - name: Assert the storefront binds to loopback only (CODEX-01, Risk 1)
+        # The disposable store ships public admin credentials with 2FA disabled,
+        # so it must never be published on a routable interface. Rendering the
+        # merged config (same parse `compose up` uses) and requiring the nginx
+        # port's host_ip to be 127.0.0.1 enforces the documented boundary in CI.
+        run: |
+          config=$(docker compose -f docker-compose.yml -f docker-compose.ci.yml config)
+          if echo "$config" | grep -qE 'host_ip:[[:space:]]*127\.0\.0\.1'; then
+            echo "Storefront port is bound to loopback (host_ip: 127.0.0.1)."
+          else
+            echo "::error::docker-compose.yml does not bind the storefront to" \
+                 "127.0.0.1 (review Risk 1 / CODEX-01). Published ports:"
+            echo "$config" | grep -nE 'published:|host_ip:' || true
+            exit 1
+          fi
+
   # ── Compute the browser matrix ───────────────────────────────────────────
   # GitHub Actions does not allow the `matrix` context inside a job-level
   # `if:` (only `steps.*.if` can see it), so per-matrix-combination skipping
