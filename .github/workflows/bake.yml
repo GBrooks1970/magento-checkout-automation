@@ -195,6 +195,23 @@ jobs:
             php bin/magento config:set cartseed/general/active 1 && \
             php bin/magento cache:flush'
 
+          # Step 6d-assert (CODEX-01, review Risk 1): prove both fixture flags
+          # are active in the baked store. Both config.xml defaults are now OFF,
+          # so this confirms the explicit activation above took effect — a baked
+          # test store is the only place these are ever on.
+          fixtures=$(docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
+            php bin/magento config:show payment/declinepayment/active; \
+            php bin/magento config:show cartseed/general/active')
+          echo "$fixtures"
+          if echo "$fixtures" | grep -q 'payment/declinepayment/active - 1' \
+             && echo "$fixtures" | grep -q 'cartseed/general/active - 1'; then
+            echo "Both fixture flags active in the baked store."
+          else
+            echo "::error::Baked fixture flags are not both active" \
+                 "(expected declinepayment=1 and cartseed=1)."
+            exit 1
+          fi
+
           # Step 6c: disable mandatory admin 2FA so the REST admin-token
           # endpoint works (required by MagentoApiClient in the Background
           # step — see docs/admin-api-token-guide.md).
