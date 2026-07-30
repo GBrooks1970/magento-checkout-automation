@@ -171,6 +171,29 @@ jobs:
             echo 'browsers=["chromium"]' >> "$GITHUB_OUTPUT"
           fi
 
+  # ── Dependency audit gate (SEC-01) ────────────────────────────────────────
+  # Runs on every push/PR independent of the Docker preflight, so a transitive
+  # HIGH+ advisory fails the build even when the store images are not baked
+  # (and without paying for it once per browser in the matrix `test` job).
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Dependency audit gate
+        # npm audit --audit-level=high — see docs/dependency-audit-policy.md.
+        run: npm run audit:ci
+
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
     needs: [preflight, compute-browsers]
