@@ -19,10 +19,18 @@ When('I provide shipping details with email {string}', async (email: string) => 
 });
 
 Then('I should not be able to advance to payment', async () => {
-    // The payment step never becomes visible — the user has not advanced. This is
-    // more reliable than checking the email field, which the post-submit Knockout.js
-    // loader transiently hides, causing a flaky assertion. See backlog #10.
+    // Positive oracle (CODEX-02, CODEX review v1 Risk 3). The payment section is
+    // `display:none` until the shipping step completes, so a bare `not(isVisible())`
+    // check is true by default and can pass BEFORE any invalid transition occurs —
+    // i.e. before the async submit has been validated and rejected. First wait
+    // (engine-aware ceiling, no fixed sleep) for validation to actually fire and flag
+    // a required field `aria-invalid="true"` — a positive proof the advance was
+    // rejected — THEN assert payment never became visible. This holds for both the
+    // missing-details case (empty required fields are flagged) and the invalid-email
+    // case (the email field is flagged). See backlog #10 for why the attribute, not
+    // visibility, is the stable signal under the Knockout.js loader.
     await actorCalled('User').attemptsTo(
+        Wait.upTo(waitFor.responsiveUi).until(CheckoutPage.invalidCheckoutField.isPresent(), equals(true)),
         Ensure.that(CheckoutPage.paymentSection, not(isVisible())),
     );
 });

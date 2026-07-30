@@ -101,6 +101,16 @@ export const CheckoutPage = {
     orderSummaryBlock: PageElement.located(By.css('.opc-block-summary'))
         .describedAs('order summary block'),
 
+    // A checkout field Magento's validation has flagged invalid, read via the stable
+    // `aria-invalid="true"` attribute (the same signal `emailInput` relies on, backlog #10).
+    // Its PRESENCE is a positive proof that the shipping submit was validated and rejected —
+    // used by the "should not advance to payment" oracle (CODEX-02) to wait for the invalid
+    // transition to actually occur before asserting payment stayed hidden, rather than passing
+    // on the payment section's default `display:none`. Scoped to `#checkout` (the OPC wrapper,
+    // as `paymentErrorMessage` is) so a stray flagged control elsewhere cannot satisfy it.
+    invalidCheckoutField: PageElement.located(By.css('#checkout [aria-invalid="true"]'))
+        .describedAs('a checkout field flagged invalid'),
+
     // NOTE on validation assertions (backlog #10): Magento's generated field-error
     // div (`div.mage-error`) is unreliable to assert on in the KO.js checkout — it
     // flickers during re-render, and the "missing details" case surfaces no message
