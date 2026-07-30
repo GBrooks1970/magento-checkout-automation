@@ -10,7 +10,8 @@
     "test": "cucumber-js --profile default",
     "test:smoke": "cucumber-js --profile smoke",
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
-    "verify": "tsc --noEmit && cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run"
+    "verify": "tsc --noEmit && cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run",
+    "audit:ci": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "@cucumber/cucumber": "12.9.0",
@@ -29,6 +30,7 @@
     "@types/node": "^20.0.0"
   },
   "overrides": {
-    "axios": "1.18.1"
+    "axios": "1.18.1",
+    "brace-expansion": "5.0.8"
   }
 }
