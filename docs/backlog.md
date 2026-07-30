@@ -10,13 +10,25 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 8 — Resolved Item #15 with a central engine-aware wait policy, live root-cause fixes, an evidence-based promotion gate, and a zero-vulnerability dependency tree
-**Last Updated:** 2026-07-20
-**Based on:** `main` at `03ca426` (PRs #36–#44 merged) plus Item #15 live-store evidence on `codex/magento-engine-aware-waits`; session notes v19; code-review closure R-01…R-10 + MAG-C01…C04; planning items 0001 (ADR-0007), 0002, 0003
+**Version:** 9 — reconciliation: marked the stale 2026-06-22 update (which still read "#13/#14 remain outstanding") as superseded; the authoritative state is unchanged — **0 outstanding, all Items #1–#15 resolved**
+**Last Updated:** 2026-07-30
+**Based on:** `main` at `85f7353` (PRs #36–#47 merged) plus Item #15 live-store evidence on `codex/magento-engine-aware-waits`; session notes v20; code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01; planning items 0001 (ADR-0007), 0002, 0003
 
-> **Update (2026-06-22):** Verified the source of truth against live `main` (`10f2c66`, PR #33,
+> **Reconciliation (2026-07-30):** No status change — this file's authoritative state has read
+> **0 outstanding / all Items #1–#15 resolved** since the 2026-07-19 update below and the Risk
+> Summary. The single inconsistency was the older **2026-06-22** update block, which still read
+> "#13/#14 remain the only outstanding items, READY TO START" and is now explicitly marked
+> superseded (they were delivered by PR #37 on 2026-07-17 — see their `✅ Resolved` entries). The
+> live `portfolio-prompts/registry.yml` (magento row = `resting`, handover v20, "#1..#15
+> delivered") and `README.md` are already consistent; the plugin-cache copy of the registry lags
+> the source repo, which is a library-versioning artefact, not a magento drift.
+
+> **Update (2026-06-22) — ⚠️ SUPERSEDED 2026-07-17 (historical; do not read as current status):**
+> Items #13 and #14 were delivered by PR #37 (`167be92`, merged 2026-07-17) and are ✅ Resolved —
+> see the 2026-07-19 update below and their entries. The dated text is retained for the record.
+> Verified the source of truth against live `main` (`10f2c66`, PR #33,
 > CI run `27845450443` green). No status change since v4 — Items #13 (trace/video on failure) and
-> #14 (cross-browser matrix) remain the only outstanding items, both **READY TO START**. The
+> #14 (cross-browser matrix) ~~remain the only outstanding items, both **READY TO START**~~. The
 > planning proposals were surfaced into `docs/planning/proposals/` (one file per proposal,
 > PR #33), and the #13/#14 provenance links here already point at those files. Handover **v18**
 > written this session supersedes the stale **v17** (whose §7 predated the #13/#14 promotion and
