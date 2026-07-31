@@ -178,7 +178,7 @@ docker compose exec -T phpfpm sh -c 'cd /var/www/html && \
 
 # 7. Sanity check, then run the suite
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/   # expect 200
-BASE_URL=http://localhost:8080 npm run test:smoke                 # read-only subset
+BASE_URL=http://localhost:8080 npm run test:smoke                 # non-ordering subset (still mutates cart/session; needs this resettable store)
 BASE_URL=http://localhost:8080 npm test                           # full suite (places orders)
 ```
 

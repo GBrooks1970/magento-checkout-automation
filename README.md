@@ -105,10 +105,14 @@ The pre-baked images carry everything the suite needs: Luma sample data, the
 Placing real orders is fine — the store is disposable; tear down with
 `GHCR_OWNER=gbrooks1970 docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v`.
 
-**Read-only subset.** The `smoke` profile (`npm run test:smoke`) runs only the 7
-scenarios that neither place orders nor depend on the decline module — filter by
-this profile (tags `not @deferred and not @placesOrder and not @usesDeclineModule`), **not** by CLI path or
-`feature:line` arguments, which the default profile's path glob overrides.
+**Non-ordering subset.** The `smoke` profile (`npm run test:smoke`) runs the 7
+scenarios that neither place an order nor exercise the decline module (tags
+`not @deferred and not @placesOrder and not @usesDeclineModule`) — filter by this
+profile, **not** by CLI path or `feature:line` arguments, which the default
+profile's path glob overrides. It is **not read-only and not shared-store-safe**:
+the included cart and checkout-validation scenarios still mutate state (add to
+cart, submit the shipping step), so run it against the **dedicated, resettable**
+Docker store, not a shared or public storefront.
 
 > An earlier README recommended running the smoke subset against a public Luma
 > demo (Magebit). That path no longer works: the Background now verifies product

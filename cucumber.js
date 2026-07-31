@@ -28,11 +28,14 @@ module.exports = {
     ...common,
     paths: ['features/**/*.feature']
   },
-  // Read-only subset: excludes scenarios that place an order (@placesOrder) and
-  // scenarios that depend on the deterministic decline module (@usesDeclineModule
-  // — payment-failure submits a checkout and so is not read-only / not
-  // shared-store-safe), so it is safe to run against a shared or non-resettable
-  // storefront (e.g. a public demo). Tag-based filtering is used because CLI
+  // Non-ordering subset (CODEX-03): excludes scenarios that place an order
+  // (@placesOrder) and scenarios that depend on the deterministic decline module
+  // (@usesDeclineModule). It is NOT read-only and NOT shared-store-safe — the
+  // included cart and checkout-validation scenarios still MUTATE state (they add
+  // items to the cart and submit the shipping step), so it requires a dedicated,
+  // resettable target (the disposable Docker store), not a shared or public
+  // storefront. What it guarantees is only that no order is placed and the always-
+  // declining fixture is not exercised. Tag-based filtering is used because CLI
   // path/line arguments do not reliably override the default profile's path glob.
   // See backlog #9.
   smoke: {
