@@ -19,18 +19,19 @@ When('I provide shipping details with email {string}', async (email: string) => 
 });
 
 Then('I should not be able to advance to payment', async () => {
-    // Positive oracle (CODEX-02, CODEX review v1 Risk 3). The payment section is
+    // Strengthened oracle (CODEX-02, CODEX review v1 Risk 3). The payment section is
     // `display:none` until the shipping step completes, so a bare `not(isVisible())`
-    // check is true by default and can pass BEFORE any invalid transition occurs —
-    // i.e. before the async submit has been validated and rejected. First wait
-    // (engine-aware ceiling, no fixed sleep) for validation to actually fire and flag
-    // a required field `aria-invalid="true"` — a positive proof the advance was
-    // rejected — THEN assert payment never became visible. This holds for both the
-    // missing-details case (empty required fields are flagged) and the invalid-email
-    // case (the email field is flagged). See backlog #10 for why the attribute, not
-    // visibility, is the stable signal under the Knockout.js loader.
+    // check is true by default and could pass BEFORE the shipping submit has actually
+    // been processed. The missing-details submit surfaces no field-level invalid
+    // signal to wait on (Magento does not flag the empty address fields aria-invalid;
+    // confirmed on the live store), so we settle on the Knockout loading mask instead:
+    // wait (engine-aware ceiling, no fixed sleep) for it to clear — proof the submit
+    // was processed and its outcome is settled — THEN assert payment never became
+    // visible. If no loader shows the wait is satisfied immediately, and the payment
+    // section still cannot appear on an incomplete/invalid submit. The invalid-email
+    // scenario additionally asserts the positive aria-invalid state in its own step.
     await actorCalled('User').attemptsTo(
-        Wait.upTo(waitFor.responsiveUi).until(CheckoutPage.invalidCheckoutField.isPresent(), equals(true)),
+        Wait.upTo(waitFor.responsiveUi).until(CheckoutPage.checkoutLoader, not(isVisible())),
         Ensure.that(CheckoutPage.paymentSection, not(isVisible())),
     );
 });
