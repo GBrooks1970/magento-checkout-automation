@@ -101,6 +101,20 @@ export const CheckoutPage = {
     orderSummaryBlock: PageElement.located(By.css('.opc-block-summary'))
         .describedAs('order summary block'),
 
+    // The Knockout.js checkout loading mask. Magento overlays it while a continue
+    // click is processed and clears it once the outcome (advance or reject) is
+    // settled. The "should not advance to payment" oracle (CODEX-02) waits for it
+    // to clear before asserting non-advancement, so the assertion cannot pass on
+    // the payment section's default `display:none` before the shipping submit has
+    // actually been processed. Confirmed on the live store (CI run 30573685643):
+    // the missing-details submit surfaces NO field-level invalid signal (Magento
+    // does not flag the empty address fields `aria-invalid`, unlike the
+    // invalid-email case), so a settled-loader anchor is the reliable strengthening
+    // there; the invalid-email scenario keeps its positive `aria-invalid` assertion
+    // in its own dedicated step below.
+    checkoutLoader: PageElement.located(By.css('.loading-mask'))
+        .describedAs('checkout loading mask'),
+
     // NOTE on validation assertions (backlog #10): Magento's generated field-error
     // div (`div.mage-error`) is unreliable to assert on in the KO.js checkout — it
     // flickers during re-render, and the "missing details" case surfaces no message

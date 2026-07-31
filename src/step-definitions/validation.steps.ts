@@ -19,10 +19,19 @@ When('I provide shipping details with email {string}', async (email: string) => 
 });
 
 Then('I should not be able to advance to payment', async () => {
-    // The payment step never becomes visible — the user has not advanced. This is
-    // more reliable than checking the email field, which the post-submit Knockout.js
-    // loader transiently hides, causing a flaky assertion. See backlog #10.
+    // Strengthened oracle (CODEX-02, CODEX review v1 Risk 3). The payment section is
+    // `display:none` until the shipping step completes, so a bare `not(isVisible())`
+    // check is true by default and could pass BEFORE the shipping submit has actually
+    // been processed. The missing-details submit surfaces no field-level invalid
+    // signal to wait on (Magento does not flag the empty address fields aria-invalid;
+    // confirmed on the live store), so we settle on the Knockout loading mask instead:
+    // wait (engine-aware ceiling, no fixed sleep) for it to clear — proof the submit
+    // was processed and its outcome is settled — THEN assert payment never became
+    // visible. If no loader shows the wait is satisfied immediately, and the payment
+    // section still cannot appear on an incomplete/invalid submit. The invalid-email
+    // scenario additionally asserts the positive aria-invalid state in its own step.
     await actorCalled('User').attemptsTo(
+        Wait.upTo(waitFor.responsiveUi).until(CheckoutPage.checkoutLoader, not(isVisible())),
         Ensure.that(CheckoutPage.paymentSection, not(isVisible())),
     );
 });
