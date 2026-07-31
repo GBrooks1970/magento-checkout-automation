@@ -9,13 +9,23 @@ notes are recorded here.
 ## The gate
 
 ```
-npm run audit:ci    # -> npm audit --audit-level=high
+npm run audit:ci    # -> node scripts/audit-ci.mjs (parses `npm audit --json`)
 ```
 
-- **Severity threshold: `high`.** The command exits non-zero - failing the build - on any advisory
-  of **high** or **critical** severity, across runtime and dev/test dependencies (a compromised
-  test toolchain is still a supply-chain risk). Moderate and low findings are reported by a plain
-  `npm audit` but do not fail the gate; they are triaged into the backlog instead.
+- **Severity threshold: `high`.** The gate fails the build on any advisory of **high** or
+  **critical** severity, across runtime and dev/test dependencies (a compromised test toolchain is
+  still a supply-chain risk). Moderate and low findings are reported but do not fail the gate; they
+  are triaged into the backlog instead.
+- **Resilient to npm's retiring audit endpoint.** `npm audit` conflates two different non-zero
+  exits: a real HIGH+ finding, and a transient failure of npm's legacy `/security/audits/quick`
+  endpoint (which is being retired and intermittently returns `400 "Invalid package tree"` even on
+  a clean tree - observed 2026-07-30, CI run 30573685643, while the identical lockfile passed
+  minutes earlier). [scripts/audit-ci.mjs](../scripts/audit-ci.mjs) therefore decides on the JSON
+  **content**, not the exit code: `>= 1` high/critical advisory fails; a valid report with none
+  passes; an endpoint/registry error is **retried** (3 attempts) and, if still unusable, treated as
+  **inconclusive** - it warns and does not red the build, because an unreachable advisory database
+  is not proof of a vulnerability. A real HIGH+ still fails the gate. Node built-ins only; no new
+  dependency in the tree being audited.
 - **Where it runs:** a dedicated `audit` job in [.github/workflows/ci.yml](../.github/workflows/ci.yml)
   runs on every push and pull request, **independent of the Docker preflight** - so a transitive
   HIGH is caught even when the store images are not baked, and without running once per browser in
