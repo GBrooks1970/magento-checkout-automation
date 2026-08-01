@@ -442,6 +442,17 @@ jobs:
       always()
     runs-on: ubuntu-latest
 
+    # Serialise Pages deployments so an older, long-running main run cannot
+    # publish its (now stale) report over a newer eligible commit's (CODEX-07,
+    # review v1 Risk 6). The group is a single stable key — every main deploy
+    # shares it, so only one Pages deployment is ever in flight — and
+    # cancel-in-progress lets a newer deploy supersede an older one still
+    # running rather than queuing behind it. `deploy-pages` only runs on `main`
+    # (see the `if` above), so PR runs never enter this group or deploy.
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+
     permissions:
       pages: write
       id-token: write
