@@ -2,6 +2,7 @@ import { Task } from '@serenity-js/core';
 import { GetRequest, LastResponse, Send } from '@serenity-js/rest';
 import { Ensure, equals, isGreaterThan } from '@serenity-js/assertions';
 import { BASE_URL } from '../serenity.config';
+import { isLocalhostTarget } from '../config/target-host';
 
 /**
  * Thin client over the Magento REST API, used to establish and verify test
@@ -40,14 +41,7 @@ let cachedToken: string | undefined;
  * other host is treated as a real store the caller must authenticate explicitly
  * (review R-09).
  */
-const targetIsLocalhost = (): boolean => {
-    try {
-        const host = new URL(BASE_URL).hostname.toLowerCase();
-        return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
-    } catch {
-        return false;
-    }
-};
+const targetIsLocalhost = (): boolean => isLocalhostTarget(BASE_URL);
 
 export const MagentoApi = {
     restBaseUrl: (): string => `${BASE_URL}/rest/V1`,

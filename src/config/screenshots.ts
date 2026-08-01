@@ -13,9 +13,14 @@ import { Photographer, TakePhotosOfFailures, TakePhotosOfInteractions } from '@s
 // A single SCREENSHOTS override beats the environment default in both directions.
 // See docs/planning/proposals/0001-screenshots-in-test-reports.md for the full design.
 
-type Mode = 'off' | 'failures' | 'all';
+export type Mode = 'off' | 'failures' | 'all';
 
-function resolveMode(): Mode {
+/**
+ * Resolve the screenshot mode from the environment (exposed for policy unit
+ * tests). An explicit `SCREENSHOTS=off|failures|all` (case-insensitive) wins in
+ * both directions; otherwise the default is `off` in CI and `all` locally.
+ */
+export function resolveMode(): Mode {
     const explicit = process.env.SCREENSHOTS?.toLowerCase();
     if (explicit === 'off' || explicit === 'failures' || explicit === 'all') {
         return explicit;
