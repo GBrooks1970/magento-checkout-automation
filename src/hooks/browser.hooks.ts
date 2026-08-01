@@ -1,4 +1,4 @@
-import { BeforeAll, Before, After, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
+import { BeforeAll, Before, After, AfterAll, setDefaultTimeout } from '@cucumber/cucumber';
 import { Cast, engage } from '@serenity-js/core';
 import { BrowseTheWebWithPlaywright } from '@serenity-js/playwright';
 import { CallAnApi } from '@serenity-js/rest';
@@ -10,6 +10,7 @@ import { BASE_URL } from '../serenity.config';
 import { MagentoApi } from '../api/MagentoApiClient';
 import { browserEngine, cucumberStepTimeoutMilliseconds } from '../config/wait-durations';
 import { artifactSlug } from './artifact-slug';
+import { scenarioFailed, traceDisposition, videoDisposition } from '../config/artifact-retention';
 
 // Cross-browser run matrix (backlog #14 / planning proposal 0003). BROWSER
 // selects the Playwright engine: unset defaults to chromium (the required CI
@@ -185,10 +186,10 @@ After(async (testCase) => {
     tracedContext = undefined;
     tracedPage = undefined;
 
-    const failed = testCase.result?.status !== Status.PASSED;
+    const failed = scenarioFailed(testCase.result?.status);
     const slug = artifactSlug(testCase.pickle.name, testCase.testCaseStartedId);
 
-    if (failed) {
+    if (traceDisposition(failed) === 'retain') {
         await context.tracing.stop({ path: path.join(tracesDir, `${slug}.zip`) });
     } else {
         await context.tracing.stop();
@@ -202,7 +203,7 @@ After(async (testCase) => {
     }
 
     const recordedPath = await video.path();
-    if (failed) {
+    if (videoDisposition(true, failed) === 'retain') {
         fs.renameSync(recordedPath, path.join(videosDir, `${slug}.webm`));
     } else {
         fs.unlinkSync(recordedPath);
