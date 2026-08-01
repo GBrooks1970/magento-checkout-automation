@@ -50,7 +50,7 @@ to `main` and on every pull request, running the full suite against the pre-bake
 
 - **Run artifacts:** Serenity BDD JSON written to `docs/reports/` by `ArtifactArchiver` on every run
 - **Living documentation:** `npm run test:report` converts JSON to HTML; CI publishes it to GitHub Pages on every `main` run — https://gbrooks1970.github.io/magento-checkout-automation/
-- **Flake monitoring:** The `@deferred` tag quarantines scenarios that cannot yet run reliably; it was used to hold `payment-failure.feature` out of every run until the deterministic decline module existed (removed 2026-06-09 — the quarantine demonstration in full). Any scenario that begins flaking under normal conditions should be tagged `@pending` with a comment explaining the instability trigger
+- **Flake monitoring:** The `@deferred` tag quarantines scenarios that cannot yet run reliably; it was used to hold `payment-failure.feature` out of every run until the deterministic decline module existed (removed 2026-06-09 — the quarantine demonstration in full). Any scenario that begins flaking under normal conditions should be tagged `@deferred` (the single quarantine vocabulary — it is the tag both Cucumber profiles exclude via `not @deferred`, so an `@deferred` scenario is actually held out of every run; there is no `not @pending` filter, so a `@pending` tag would not quarantine anything) with a comment explaining the instability trigger
 - **Baseline:** All 12 active scenarios must pass on every run against the Dockerised target; zero tolerance for intermittent failures
 
 ### Screenshots in the report
