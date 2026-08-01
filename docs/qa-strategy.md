@@ -26,7 +26,10 @@
 **Total active scenarios:** 12 (94 steps — the figure CI runs green: 12/12, 94/94)
 **Deferred scenarios:** 0
 **Smoke subset:** the `smoke` profile (`not @deferred and not @placesOrder and not @usesDeclineModule`)
-runs the 7 read-only scenarios — safe against shared, non-resettable stores.
+runs the 7 non-ordering scenarios. It is **not read-only** — the included cart and
+checkout-validation scenarios mutate state (add to cart, submit the shipping step) — so it needs a
+**dedicated, resettable** target (the disposable Docker store), **not** a shared or non-resettable
+store. Its guarantee is only that no order is placed and the always-declining fixture is not run.
 
 ---
 
