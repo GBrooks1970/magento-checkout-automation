@@ -1,17 +1,9 @@
 import { By, PageElement } from '@serenity-js/web';
 import { BASE_URL } from '../serenity.config';
-
-const productSlugs: Record<string, string> = {
-    'Push It Messenger Bag': 'push-it-messenger-bag',
-    'Fusion Backpack': 'fusion-backpack',
-};
+import { productSlug } from '../config/product-slugs';
 
 export const StorefrontPage = {
-    urlFor: (productName: string): string => {
-        const slug = productSlugs[productName];
-        if (!slug) throw new Error(`No URL slug configured for product: "${productName}"`);
-        return `${BASE_URL}/${slug}.html`;
-    },
+    urlFor: (productName: string): string => `${BASE_URL}/${productSlug(productName)}.html`,
 
     addToCartButton: PageElement.located(By.css('#product-addtocart-button'))
         .describedAs('Add to Cart button'),

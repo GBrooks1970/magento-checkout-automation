@@ -9,6 +9,7 @@ import * as path from 'node:path';
 import { BASE_URL } from '../serenity.config';
 import { MagentoApi } from '../api/MagentoApiClient';
 import { browserEngine, cucumberStepTimeoutMilliseconds } from '../config/wait-durations';
+import { artifactSlug } from './artifact-slug';
 
 // Cross-browser run matrix (backlog #14 / planning proposal 0003). BROWSER
 // selects the Playwright engine: unset defaults to chromium (the required CI
@@ -56,10 +57,6 @@ const traceOnFailure = (process.env.TRACE ?? '').toLowerCase() === 'on-failure';
 const tracesDir = path.join('docs', 'reports', 'traces');
 const videosDir = path.join('docs', 'reports', 'videos');
 
-function slugFor(pickleName: string, testCaseStartedId: string): string {
-    const urlFriendly = pickleName.toLowerCase().replace(/[^\d.a-z-]/g, '-').replace(/-+/g, '-');
-    return `${urlFriendly.slice(0, 64)}-${testCaseStartedId.slice(0, 8)}`;
-}
 
 // Only set while TRACE=on-failure; the isolated context+page for the
 // scenario currently in progress, so `After` can finalise it.
@@ -189,7 +186,7 @@ After(async (testCase) => {
     tracedPage = undefined;
 
     const failed = testCase.result?.status !== Status.PASSED;
-    const slug = slugFor(testCase.pickle.name, testCase.testCaseStartedId);
+    const slug = artifactSlug(testCase.pickle.name, testCase.testCaseStartedId);
 
     if (failed) {
         await context.tracing.stop({ path: path.join(tracesDir, `${slug}.zip`) });

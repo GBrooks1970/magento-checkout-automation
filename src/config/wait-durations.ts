@@ -2,7 +2,7 @@ import { Duration } from '@serenity-js/core';
 
 export type BrowserEngine = 'chromium' | 'firefox' | 'webkit';
 
-interface WaitPolicySeconds {
+export interface WaitPolicySeconds {
     responsiveUi: number;
     asynchronousUpdate: number;
     complexRender: number;
@@ -41,6 +41,11 @@ const WAIT_POLICY_SECONDS: Record<BrowserEngine, WaitPolicySeconds> = {
         cucumberStep: 180,
     },
 };
+
+/** The wait-tier policy (seconds) for a given engine — exposed for policy unit tests. */
+export function waitPolicyFor(engine: BrowserEngine): WaitPolicySeconds {
+    return WAIT_POLICY_SECONDS[engine];
+}
 
 export function browserEngine(): BrowserEngine {
     const requested = (process.env.BROWSER ?? 'chromium').trim().toLowerCase();
