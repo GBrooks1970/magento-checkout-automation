@@ -2,6 +2,7 @@ import { Interaction } from '@serenity-js/core';
 import { PlaywrightPage } from '@serenity-js/playwright';
 import { CheckoutPage } from './CheckoutPage';
 import { browserEngine, routeTransitionTimeoutMilliseconds } from '../config/wait-durations';
+import { needsBootstrapReload, routeRecovery } from '../config/route-recovery';
 
 const isCheckoutRoute = (url: URL): boolean =>
     url.pathname === '/checkout' || url.pathname === '/checkout/';
@@ -24,7 +25,7 @@ export const StabiliseCheckoutRoute = {
                 // forever while remaining on /checkout/cart; recover those
                 // exploratory engines through the same canonical destination and
                 // leave a visible signal for promotion decisions (backlog #15).
-                if (engine === 'chromium') {
+                if (routeRecovery(engine) === 'throw') {
                     throw error;
                 }
 
@@ -36,7 +37,7 @@ export const StabiliseCheckoutRoute = {
                 return;
             }
 
-            if (engine === 'webkit') {
+            if (needsBootstrapReload(engine)) {
                 // WebKit can reach /checkout/ while Knockout's first bootstrap is
                 // permanently stuck. A canonical reload after the route proof
                 // gives it a clean client bootstrap without masking navigation.

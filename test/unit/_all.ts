@@ -12,3 +12,5 @@ import './wait-policy.test';
 import './screenshots.test';
 import './target-host.test';
 import './slugs.test';
+import './artifact-retention.test';
+import './route-recovery.test';
