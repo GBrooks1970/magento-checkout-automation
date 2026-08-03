@@ -1,5 +1,14 @@
 # Magento Checkout Automation — Backlog
 
+> **🏁 PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
+> resolved (0 outstanding) and both post-close review-derived worklist cycles are complete: CODEX
+> review v1 (CODEX-01…CODEX-11) and `CLAUDE_Opus_4_8 v2` (SEC-01). The Extension 5 worklist is 0
+> unchecked. Final `main` = `3f6e238`; required Chromium e2e green (run 30812016304); live Serenity
+> report populated (12 tests, all four features) at
+> <https://gbrooks1970.github.io/magento-checkout-automation/>; `npm audit` = 0. No successor session
+> is expected — see session-notes **v22 (FINAL)**. The earlier "🏁 CLOSED 2026-06-19 … v16 FINAL"
+> note below is superseded (two review cycles have run since).
+
 > **🏁 CLOSED 2026-06-19, then REOPENED the same day for Item #12 — later work is now complete.** The
 > project was formally closed (terminal handover **v16 FINAL**: all of #1–#11 done, both code-review
 > cycles closed — first R-01…R-10 + extensions, second MAG-C01…C04) and then reopened on user
@@ -10,9 +19,9 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 10 — Extension 5 review cycle (SEC-01 + CODEX-02…CODEX-10) fully actioned and merged; still **0 outstanding, all Items #1–#15 resolved** (the CODEX/SEC items are post-close review findings tracked in the worklist, not new backlog items)
+**Version:** 11 — **project closed** (terminal handover v22 FINAL); **0 outstanding, all Items #1–#15 resolved**, both review-derived worklist cycles complete (CODEX-01…CODEX-11 + SEC-01)
 **Last Updated:** 2026-08-03
-**Based on:** `main` at `6ba3984` (PRs #59/#60/#61 merged) plus session notes v21; code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01…CODEX-11 + SEC-01; planning items 0001 (ADR-0007), 0002, 0003
+**Based on:** `main` at `3f6e238` (all Extension 5 PRs #59–#63 merged) plus session notes v22 (FINAL); code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01…CODEX-11 + SEC-01; planning items 0001 (ADR-0007), 0002, 0003
 
 > **Update (2026-08-03) — Extension 5 review cycle closed (SEC-01 + CODEX-02…CODEX-10).** The
 > `CLAUDE_Opus_4_8 v2` triage (net-new **SEC-01**) plus the carried **CODEX-02…CODEX-10** are all
