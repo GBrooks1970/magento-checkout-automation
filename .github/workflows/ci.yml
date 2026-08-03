@@ -113,6 +113,19 @@ jobs:
                  "this parse step have drifted apart."
             exit 1
           fi
+          # Assert every reference is digest-pinned (CODEX-09). A bare tag can be
+          # moved in the registry, so an overlay that lost its @sha256:<digest>
+          # would let CI silently pull different bytes than were reviewed. The
+          # bake run summary prints the ready-to-paste `image:` line with the
+          # digest; adopting a bake without it is the failure this catches.
+          for ref in "${images[@]}"; do
+            if [[ "$ref" != *"@sha256:"* ]]; then
+              echo "::error::Image reference is not digest-pinned (CODEX-09): ${ref}." \
+                   "docker-compose.ci.yml must reference each image as" \
+                   ":<tag>@sha256:<digest> — copy the line from the bake run summary."
+              exit 1
+            fi
+          done
           available=true
           for ref in "${images[@]}"; do
             if docker manifest inspect "$ref" > /dev/null 2>&1; then

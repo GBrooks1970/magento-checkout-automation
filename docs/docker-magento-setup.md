@@ -284,15 +284,25 @@ now:
 
 - **Every bake pushes a unique tag**: `:2.4.8-b<run_number>` (the bake
   workflow's run number). No bake ever overwrites a published tag.
-- **`bake.yml` prints the pushed images' digests in its run summary** —
-  provenance on record. CI consumes the tag, never the digest hex
-  (digest-pinning the overlay was considered and rejected: opaque diffs, and
-  it defends against a tag-reuse threat that does not exist in a
-  single-maintainer registry).
-- **Adopting a new bake is a one-line-per-service PR** updating the two
-  `image:` references in `docker-compose.ci.yml`. That overlay is the single
-  source of truth: `ci.yml`'s preflight and pull steps resolve the image
-  references out of it (via `docker compose config --images`, which also
-  interpolates `${GHCR_OWNER}` — R-06c), so nothing else needs editing.
+- **The overlay is digest-pinned (CODEX-09).** Each `image:` in
+  `docker-compose.ci.yml` is `:<tag>@sha256:<digest>`. The readable tag shows
+  which bake a diff adopts; the appended digest makes the reference immutable —
+  a tag *can* be moved in a registry, a digest cannot, so what CI pulls is
+  exactly what was baked and reviewed. This reverses the earlier decision (which
+  recorded digests as provenance only): keeping the tag alongside the digest
+  answers the "opaque diff" objection that decision was based on — the diff
+  still reads as a tag bump, with the digest as the enforcement.
+- **`bake.yml` prints the ready-to-paste pin per service** in its run summary
+  (both the digest table and a copy-paste `image:` block), and **fails the bake
+  if either digest is absent** — a push that did not register a `RepoDigest`
+  cannot be adopted.
+- **Adopting a new bake is a copy-paste-one-line-per-service PR** updating the
+  two `image:` references in `docker-compose.ci.yml` from the bake run summary.
+  That overlay is the single source of truth: `ci.yml`'s preflight and pull
+  steps resolve the image references out of it (via
+  `docker compose config --images`, which also interpolates `${GHCR_OWNER}` —
+  R-06c), so nothing else needs editing. The preflight additionally **asserts
+  every reference is digest-pinned**, so an overlay edit that dropped the
+  `@sha256:` would fail the required check.
 - **The bare `:2.4.8` tag is no longer published.** The last images pushed
   under it remain in GHCR as a historical artefact; nothing references them.

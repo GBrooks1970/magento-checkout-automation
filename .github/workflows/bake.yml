@@ -312,13 +312,15 @@ jobs:
           docker push \
             "${IMAGE_NS}/magento-store-db:${IMAGE_TAG}"
 
-      - name: Record pushed image digests in the run summary
-        # Provenance on record (R-06b): the registry digests of what this bake
-        # actually pushed, readable from the run's Summary tab. CI consumes the
-        # unique TAG (via docker-compose.ci.yml), never the hex — the digests
-        # are documentation, not a pinning mechanism (digest-pinned overlays
-        # were considered and rejected: opaque diffs for a single-maintainer
-        # registry threat model).
+      - name: Record pushed image digests and emit the overlay pins (CODEX-09)
+        # Provenance on record (R-06b) AND the enforcement source (CODEX-09):
+        # the registry digest of what this bake actually pushed. CI references
+        # each image by `:tag@sha256:<digest>` in docker-compose.ci.yml — the
+        # readable tag shows which bake a diff adopts, the appended digest makes
+        # it immutable (a tag can be moved, a digest cannot). This step prints
+        # the exact ready-to-paste `image:` line per service so adoption stays a
+        # copy-paste-one-line-per-service PR, and FAILS if either digest is
+        # absent (a push that did not register a RepoDigest must not be adopted).
         run: |
           {
             echo "## Baked images — tag \`${IMAGE_TAG}\`"
@@ -326,21 +328,33 @@ jobs:
             echo "| Image | Digest |"
             echo "|---|---|"
           } >> "$GITHUB_STEP_SUMMARY"
+          declare -A pins
           for image in magento-store-app magento-store-db; do
             ref="${IMAGE_NS}/${image}:${IMAGE_TAG}"
             digest=$(docker image inspect --format '{{join .RepoDigests "\n"}}' "$ref" \
                      | grep -m1 "/${image}@" | sed 's/.*@//')
             if [ -z "$digest" ]; then
-              echo "::error::No registry digest recorded for ${ref} — was the push successful?"
+              echo "::error::No registry digest recorded for ${ref} — was the push successful? CODEX-09 requires a digest to pin; refusing to emit an unpinned adoption line."
               exit 1
             fi
+            pins[$image]="${ref}@${digest}"
             echo "${image}:${IMAGE_TAG}  ${digest}"
             echo "| \`${image}:${IMAGE_TAG}\` | \`${digest}\` |" >> "$GITHUB_STEP_SUMMARY"
           done
           {
             echo ""
-            echo "Adopt this bake in CI with a one-line-per-service PR pointing the"
-            echo "\`image:\` references in \`docker-compose.ci.yml\` at \`:${IMAGE_TAG}\`."
+            echo "### Adopt this bake (CODEX-09)"
+            echo ""
+            echo "Copy each line into the matching service in \`docker-compose.ci.yml\`,"
+            echo "replacing the \`ghcr.io/…\` prefix with the interpolated \`\${GHCR_OWNER}\` form"
+            echo "already there (only the tag and digest change between bakes):"
+            echo ""
+            echo '```yaml'
+            echo "    # phpfpm:"
+            echo "    image: ${pins[magento-store-app]}"
+            echo "    # db:"
+            echo "    image: ${pins[magento-store-db]}"
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Tear down
