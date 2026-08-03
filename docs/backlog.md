@@ -10,9 +10,20 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 9 — reconciliation: marked the stale 2026-06-22 update (which still read "#13/#14 remain outstanding") as superseded; the authoritative state is unchanged — **0 outstanding, all Items #1–#15 resolved**
-**Last Updated:** 2026-07-30
-**Based on:** `main` at `85f7353` (PRs #36–#47 merged) plus Item #15 live-store evidence on `codex/magento-engine-aware-waits`; session notes v20; code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01; planning items 0001 (ADR-0007), 0002, 0003
+**Version:** 10 — Extension 5 review cycle (SEC-01 + CODEX-02…CODEX-10) fully actioned and merged; still **0 outstanding, all Items #1–#15 resolved** (the CODEX/SEC items are post-close review findings tracked in the worklist, not new backlog items)
+**Last Updated:** 2026-08-03
+**Based on:** `main` at `6ba3984` (PRs #59/#60/#61 merged) plus session notes v21; code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01…CODEX-11 + SEC-01; planning items 0001 (ADR-0007), 0002, 0003
+
+> **Update (2026-08-03) — Extension 5 review cycle closed (SEC-01 + CODEX-02…CODEX-10).** The
+> `CLAUDE_Opus_4_8 v2` triage (net-new **SEC-01**) plus the carried **CODEX-02…CODEX-10** are all
+> merged to `main` (`6ba3984`). This session landed the final three: **CODEX-08** (all 9 workflow
+> `uses:` pinned to full commit SHAs, PR #59), **CODEX-09** (GHCR store images digest-pinned in
+> `docker-compose.ci.yml`, bake emits the pins + fails if absent, preflight asserts `@sha256:`,
+> PR #60 — required Chromium gate green on the digest-pinned pull), and **CODEX-10** (architecture
+> v3 / screenplay v3 docs reconciliation; the FF/WebKit promotion counter made observable via the
+> new promotion-tracker table in `qa-strategy.md` and a `MAG-15 promotion` CI run-summary line;
+> PR #61). No Item #1–#15 status changed — these are supply-chain/documentation controls layered on
+> the already-complete backlog. `npm audit` = 0. See session notes **v21**.
 
 > **Reconciliation (2026-07-30):** No status change — this file's authoritative state has read
 > **0 outstanding / all Items #1–#15 resolved** since the 2026-07-19 update below and the Risk
