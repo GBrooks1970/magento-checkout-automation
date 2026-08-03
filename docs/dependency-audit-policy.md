@@ -65,8 +65,10 @@ cadence (or sooner if an advisory or a required upgrade forces it):
 - `npm outdated` - note majors behind and the reason each is deferred.
 - **GitHub Actions SHA review** - third-party actions are periodically re-reviewed (see CODEX-08 when
   actioned; until then actions are tag-pinned).
-- **Base-image / GHCR digest review** - the baked Magento store images and the markoshust base
-  images are checked for security refreshes (see CODEX-09 for digest pinning when actioned).
+- **Base-image / GHCR digest review** - the baked Magento store images are digest-pinned in
+  `docker-compose.ci.yml` (CODEX-09); the pins and the markoshust base images are checked for
+  security refreshes, adopting a fresh bake (whose digest the bake run summary prints) when one is
+  warranted.
 - **Serenity / Node / Playwright upgrade boundary** - the Serenity-JS suite, Node engine floor
   (`>=20`), and Playwright are upgraded deliberately, verifying the single-stdout-formatter
   constraint and the `@serenity-js/cucumber` supported range each time.

@@ -34,6 +34,15 @@
 # `docker compose config --images`, so nothing else needs editing. The bare
 # :2.4.8 tag is no longer published.
 #
+# Digest pinning (CODEX-09): each image is referenced as `:tag@sha256:<digest>`.
+# The readable tag still shows what a diff means (which bake was adopted); the
+# appended digest makes the reference immutable — a tag can be moved in a
+# registry, a digest cannot, so what CI pulls is exactly what was baked and
+# reviewed. bake.yml prints the ready-to-paste `image:` line for each service
+# in its run summary, so adopting a bake stays a copy-paste-one-line-per-service
+# PR. Keep the tag and the digest in sync: the tag is documentation, the digest
+# is the enforcement.
+#
 # Owner substitution (R-06c): the GHCR namespace owner is NOT hardcoded —
 # ${GHCR_OWNER} is interpolated by compose so a fork pulls (and bakes to) its
 # own namespace without editing this file. It must be the LOWERCASE GitHub
@@ -44,7 +53,7 @@
 
 services:
   phpfpm:
-    image: ghcr.io/${GHCR_OWNER:?set GHCR_OWNER to the lowercase GitHub owner whose GHCR namespace holds the baked images — see the header of docker-compose.ci.yml}/magento-checkout-automation/magento-store-app:2.4.8-b24
+    image: ghcr.io/${GHCR_OWNER:?set GHCR_OWNER to the lowercase GitHub owner whose GHCR namespace holds the baked images — see the header of docker-compose.ci.yml}/magento-checkout-automation/magento-store-app:2.4.8-b24@sha256:42c47502303706ad0e2d40664f61b16058b78d12b9e688d3c2937e3d01b507cd
 
   db:
-    image: ghcr.io/${GHCR_OWNER:?set GHCR_OWNER to the lowercase GitHub owner whose GHCR namespace holds the baked images — see the header of docker-compose.ci.yml}/magento-checkout-automation/magento-store-db:2.4.8-b24
+    image: ghcr.io/${GHCR_OWNER:?set GHCR_OWNER to the lowercase GitHub owner whose GHCR namespace holds the baked images — see the header of docker-compose.ci.yml}/magento-checkout-automation/magento-store-db:2.4.8-b24@sha256:24bf475640f7471f615b77c80ce9dc9569d218508166ba23bebe40eab38387fd
