@@ -1,7 +1,7 @@
 # Screenplay Guide — Magento Checkout Automation
 
-**Version:** 2
-**Last Updated:** 2026-06-10
+**Version:** 3
+**Last Updated:** 2026-08-03
 
 This guide covers the Serenity/JS Screenplay implementation for this project.
 For the rationale behind choosing Screenplay over Page Objects, see
@@ -16,18 +16,18 @@ For the rationale behind using Serenity/JS rather than hand-rolling Screenplay, 
 **Location:** `src/hooks/browser.hooks.ts`
 
 The actor is created on the first call to `actorCalled('User')` within a scenario.
-The browser is launched **once for the whole run** in a Cucumber `BeforeAll` hook; a `Before`
-hook resets the shared browser state (cookies + local/session storage, for per-scenario cart
-isolation) and calls `engage(Cast.where(...))`, equipping every actor with
-`BrowseTheWebWithPlaywright` and `CallAnApi`. An `AfterAll` hook closes the browser at the end
-of the run.
+The browser is launched **once for the whole run** in a Cucumber `BeforeAll` hook, using the
+engine selected by `BROWSER` (`resolveBrowserType()`, default Chromium). A `Before` hook resets
+the shared browser state (cookies + local/session storage, for per-scenario cart isolation) and
+calls `engage(Cast.where(...))`, equipping every actor with `BrowseTheWebWithPlaywright` and
+`CallAnApi`. An `AfterAll` hook closes the browser at the end of the run.
 
 ```typescript
 // src/hooks/browser.hooks.ts
 let browser: Browser;
 
 BeforeAll(async () => {
-    browser = await chromium.launch({ headless: ... });
+    browser = await resolveBrowserType().launch({ headless: ... }); // BROWSER: chromium|firefox|webkit
     await MagentoApi.authenticate();      // admin token, once per run (ADR-0003)
 });
 
@@ -45,6 +45,14 @@ Before(async () => {
 
 AfterAll(async () => { await browser.close(); });
 ```
+
+**Two `Before` context modes.** The block above is the **default** path (`TRACE` unset): all
+scenarios share one reset context. When **`TRACE=on-failure`** is set, `Before` instead creates a
+freshly-isolated `BrowserContext`+`Page` per scenario (`BrowseTheWebWithPlaywright.usingPage(...)`)
+recording a Playwright trace and video; `After` retains them under `docs/reports/{traces,videos}/`
+only when the scenario failed and deletes them on pass (see `src/config/artifact-retention.ts`). The
+default path is byte-for-byte unchanged and unreached when `TRACE` is unset, so the isolation
+contract (backlog #10) is untouched by default.
 
 **Do NOT launch the browser per scenario.** An earlier version of these hooks launched in
 `Before` and closed in `After`; only the first scenario in a run passed — every subsequent one
@@ -141,7 +149,8 @@ Questions return `QuestionAdapter<string>` from `Text.of(element)`. They are pas
 
 | Question | Location | Returns | Assertion pattern |
 |---|---|---|---|
-| `CartItemCount()` | `src/questions/CartItemCount.ts` | Counter text, e.g. `"2"` | `equals(String(n))` |
+| `CartItemCount()` | `src/questions/CartItemCount.ts` | Distinct line-item count from the server-rendered cart rows, e.g. `"2"` | `equals(String(n))` |
+| `CartTotalQuantity()` | `src/questions/CartTotalQuantity.ts` | Summed quantity across the server-rendered cart rows, e.g. `"3"` | `equals(String(n))` — the authoritative total-quantity oracle (the Magento header counter is telemetry, not cart state — durable lesson, backlog #14) |
 | `CartSubtotal()` | `src/questions/CartSubtotal.ts` | Price text including symbol, e.g. `"$45.00"` | `includes("45.00")` |
 | `OrderSummary.subtotal()` | `src/questions/OrderSummary.ts` | Checkout Order Summary subtotal, e.g. `"$90.00"` | `includes("90.00")` — asserted at the payment step, before placing the order |
 | `PaymentError.text()` | `src/questions/PaymentError.ts` | Decline error message text | `includes('declined')` (payment-failure scenario) |
@@ -160,16 +169,30 @@ asserted — only subtotals, which are price × quantity and unaffected by shipp
 
 | Hook | File | Trigger | Action |
 |---|---|---|---|
-| `BeforeAll` | `src/hooks/browser.hooks.ts` | Once per run | Launches Chromium (headless by default); resolves the admin API token (`MagentoApi.authenticate()`) |
-| `Before` (no tag filter) | `src/hooks/browser.hooks.ts` | Every scenario | Resets browser state (clears cookies + local/session storage — per-scenario cart isolation, backlog #10); calls `engage(Cast.where(...))` |
+| `BeforeAll` | `src/hooks/browser.hooks.ts` | Once per run | Launches the `BROWSER`-selected engine (default Chromium, headless by default); resolves the admin API token (`MagentoApi.authenticate()`); sets the Cucumber step timeout from the engine tier |
+| `Before` (no tag filter) | `src/hooks/browser.hooks.ts` | Every scenario | Resets browser state (clears cookies + local/session storage — per-scenario cart isolation, backlog #10) on the default path; under `TRACE=on-failure` creates a fresh isolated context+page instead; calls `engage(Cast.where(...))` |
+| `After` (no tag filter) | `src/hooks/browser.hooks.ts` | Every scenario | Under `TRACE=on-failure`, finalises the isolated context — retaining the trace+video only on failure; a no-op when `TRACE` is unset |
 | `AfterAll` | `src/hooks/browser.hooks.ts` | Once per run | Closes the browser |
 
 All hooks are registered by Cucumber when `src/hooks/browser.hooks.ts` is loaded via the `require`
-array in `cucumber.js`. The browser (and its single Playwright context, under Serenity/JS v3's
-`using(browser)` wiring) is shared across the whole run; per-scenario isolation comes from the
-`Before` state reset, not from a fresh browser. The file also sets the Cucumber step timeout
-(`setDefaultTimeout(60 s)`) — note that Serenity's `Wait.until` has its own independent 5 s
-default, so KO.js renders need explicit `Wait.upTo(15–20 s)` (see Magento-Specific Patterns).
+array in `cucumber.js`. On the default path the browser (and its single Playwright context, under
+Serenity/JS v3's `using(browser)` wiring) is shared across the whole run; per-scenario isolation
+comes from the `Before` state reset, not from a fresh browser.
+
+**Step timeout and wait tiers are engine-aware** (`src/config/wait-durations.ts`, backlog #15). The
+Cucumber step timeout is `setDefaultTimeout(cucumberStepTimeoutMilliseconds)` — **90 s Chromium /
+120 s Firefox / 180 s WebKit**. Waits are ceilings drawn from the same per-engine policy (they
+return as soon as the condition is met, never fixed sleeps):
+
+| Tier (`waitFor.*`) | Chromium | Firefox | WebKit |
+|---|---|---|---|
+| `responsiveUi` | 15 s | 20 s | 25 s |
+| `asynchronousUpdate` | 25 s | 30 s | 45 s |
+| `complexRender` | 30 s | 45 s | 60 s |
+
+Serenity's bare `Wait.until` has its own independent 5 s default, too short for cold KO.js renders —
+hence the explicit tiers (see Magento-Specific Patterns). These are the single source for the numbers;
+`architecture.md` references this module rather than repeating them.
 
 ---
 

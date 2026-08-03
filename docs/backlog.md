@@ -847,6 +847,12 @@ recovery]` prefix so green scenarios cannot conceal a fallback. Chromium remains
 - [x] Promotion remains deferred until that consecutive-run evidence exists; no Firefox/WebKit
   required-gate claim is made from the local green runs.
 
+**Promotion counter (observable):** the running three-run tally is tracked in the **promotion
+tracker** table in `docs/qa-strategy.md` (currently Firefox 0/3, WebKit 0/3), and each exploratory
+CI leg prints a `MAG-15 promotion` line in its run summary reporting whether that run was eligible
+(passed with no `[MAG-15 ... recovery]` telemetry) — so the evidence is observable rather than
+remembered (Opus_4_8 v2 Risk 3, CODEX-10).
+
 **Dependency / risk:** live-store access was available and the implementation dependency is
 resolved. Remaining risk is operational: Firefox/WebKit still need fallback-free CI evidence before
 either `continue-on-error` setting can be removed.
@@ -883,7 +889,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
 | ADRs complete with concrete examples | ✅ Done | Item #5 |
-| Green CI badge, demonstrably non-flaky | ✅ Done — 11/11 green on main (run `27141209665`) | Item #4 |
+| Green CI badge, demonstrably non-flaky | ✅ Done — 12/12 Chromium (required) green on main (run `30742167799`, commit `825afd4`) | Item #4 |
 | Living documentation published (GitHub Pages) | ✅ Done — live at gbrooks1970.github.io/magento-checkout-automation | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Done — activated & exercised (12/12 green) | Item #2 |

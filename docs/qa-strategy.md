@@ -105,6 +105,26 @@ because its first Knockout bootstrap can remain permanently stuck. Every such fa
 no longer needed and three consecutive eligible weekly/main CI runs finish 12/12 with zero MAG-15
 recovery messages; promote one engine at a time (backlog #15).
 
+#### Promotion tracker (Firefox/WebKit → required)
+
+This is the **single tracked record** of the three-run promotion counter, so the evidence is
+observable rather than remembered (Opus_4_8 v2 Risk 3). A run is **eligible** when it is a
+`main`/schedule run that finished 12/12 for that engine **with zero `[MAG-15 ... recovery]`
+messages**; a recovery message or any non-pass resets that engine's streak to 0. Each Firefox/WebKit
+CI leg prints its own contribution as a `MAG-15 promotion` line in the run summary (engine, scenario
+pass count, recovery-telemetry present/absent, eligible yes/no) — read those to update the tally
+below when a `main`/schedule run completes. At **3/3** with the fallback no longer firing, remove
+that engine's `continue-on-error` and record the promotion here.
+
+| Engine | Consecutive eligible runs | Last eligible run | Notes |
+|---|:---:|---|---|
+| Firefox | 0 / 3 | — | Streak reset by MAG-15 recovery telemetry on the exploratory legs (backlog #14/#15 drift). |
+| WebKit | 0 / 3 | — | As above; WebKit historically the slower engine against this storefront. |
+
+> Counter as of 2026-08-03 (CODEX-10). Update this table — not resolution prose — from the CI
+> `MAG-15 promotion` summary lines as eligible `main`/schedule runs accrue. The earlier README
+> snapshot ("Firefox 1/3, WebKit 0/3", v20) is superseded by this tracked table.
+
 ### Settled-state count assertions
 
 Cart count assertions are **settled-state assertions by design** (review R-08): the

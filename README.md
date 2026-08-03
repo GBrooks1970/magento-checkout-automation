@@ -198,7 +198,10 @@ centralised engine-aware wait ceilings and resolved the live, engine-specific vi
 state failure modes; local Docker validation on 2026-07-20 finished 12/12 on each engine. Those two
 exploratory legs are intentionally not promoted yet: each must produce three consecutive eligible
 weekly/main CI runs at 12/12 with no `[MAG-15 ... recovery]` telemetry before its
-`continue-on-error` setting is removed. See `docs/backlog.md` for full status and evidence.
+`continue-on-error` setting is removed. The running counter is tracked in the **promotion tracker**
+in `docs/qa-strategy.md` (currently Firefox 0/3, WebKit 0/3), and each exploratory CI leg prints a
+`MAG-15 promotion` line in its run summary showing whether that run was eligible. See
+`docs/backlog.md` for full status and evidence.
 
 ## Licence
 
