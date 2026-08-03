@@ -316,6 +316,7 @@ jobs:
           done
 
       - name: Run full test suite
+        id: suite
         env:
           BASE_URL: http://localhost:8080
           # Admin credentials match what is baked into the store image.
@@ -327,10 +328,51 @@ jobs:
           # (backlog #14). Chromium is the required leg; firefox/webkit are
           # non-blocking (see the job-level continue-on-error above).
           BROWSER: ${{ matrix.browser }}
-        run: npm test
+        # Tee the run so the MAG-15 promotion summary below can inspect the
+        # exploratory engines' recovery telemetry. `set -o pipefail` keeps the
+        # required Chromium gate honest: tee always exits 0, so without pipefail
+        # a failing suite would be masked by the pipe.
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee suite-output.log
         # 'default' profile already excludes @deferred (see cucumber.js);
         # @placesOrder scenarios ARE included — CI runs against a clean,
         # disposable store so placing real orders is fine.
+
+      - name: MAG-15 promotion signal (exploratory engines)
+        # Opus_4_8 v2 Risk 3 / CODEX-10: make each exploratory leg's contribution
+        # to the Firefox/WebKit promotion counter observable in the run summary,
+        # instead of leaving it to be remembered. A run is eligible toward
+        # promotion only when the leg passed AND emitted no `[MAG-15 ... recovery]`
+        # telemetry; any recovery message resets that engine's streak. The
+        # authoritative running tally is the promotion tracker in
+        # docs/qa-strategy.md — update it from these lines on main/schedule runs.
+        # Chromium is the required gate, not a promotion candidate, so this is
+        # skipped there.
+        if: always() && matrix.browser != 'chromium'
+        env:
+          SUITE_OUTCOME: ${{ steps.suite.outcome }}
+        run: |
+          recovery=0
+          if [ -f suite-output.log ]; then
+            recovery=$(grep -c "\[MAG-15 " suite-output.log || true)
+          fi
+          recovery=${recovery:-0}
+          if [ "$SUITE_OUTCOME" = "success" ] && [ "$recovery" -eq 0 ]; then
+            verdict="ELIGIBLE — counts toward this engine's 3-run promotion streak"
+          else
+            verdict="NOT eligible — resets this engine's streak to 0"
+          fi
+          {
+            echo "## MAG-15 promotion — ${{ matrix.browser }} (${{ github.event_name }})"
+            echo ""
+            echo "- Suite outcome: \`${SUITE_OUTCOME}\`"
+            echo "- \`[MAG-15 ... recovery]\` telemetry: ${recovery} message(s)"
+            echo "- This run: **${verdict}**"
+            echo ""
+            echo "Eligible only on \`main\`/\`schedule\` runs. Update the promotion tracker in"
+            echo "\`docs/qa-strategy.md\` from this line as eligible runs accrue."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Guard — Serenity JSON must evidence the expected scenario count (MAG-C09)
         # The published report was an empty shell from go-live (2026-06-08) to
