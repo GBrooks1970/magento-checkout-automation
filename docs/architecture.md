@@ -1,7 +1,7 @@
 # Magento Checkout Automation — Architecture Guide
 
-**Version:** 2
-**Last Updated:** 2026-06-10
+**Version:** 3
+**Last Updated:** 2026-08-03
 
 ---
 
@@ -9,7 +9,8 @@
 
 - **Purpose:** Demonstrate senior test-automation architecture against the Magento Luma storefront guest checkout journey, using Spec-Driven Development, BDD, and the Screenplay pattern.
 - **Surface type:** UI — Magento Luma storefront (Knockout.js checkout)
-- **Language / Framework:** TypeScript + Serenity/JS 3.43 + Playwright 1.60 + Cucumber 11
+- **Language / Framework:** TypeScript + Serenity/JS 3.43 + Playwright 1.60 + Cucumber 12 (exact pinned versions live in `package.json` — not restated here to avoid drift)
+- **Browser engine:** selected by the `BROWSER` env var (`chromium` default / `firefox` / `webkit`); Chromium is the required CI gate, Firefox/WebKit run non-blocking on `main`/schedule (see `qa-strategy.md`)
 - **Test target:** `BASE_URL` env var — defaults to `http://localhost:8080`, the local Dockerised Magento 2.4.8 store (pre-baked GHCR images locally and in CI — see `docs/docker-magento-setup.md`).
 - **Automation entry point:** `npm test` — runs Cucumber with `--tags "not @deferred"` (no scenario currently carries the tag; the full suite of 12 scenarios runs)
 
@@ -35,16 +36,22 @@ The subject application is the Magento Open Source (Luma theme) storefront. It i
 - **Screenplay questions:** `src/questions/` — state assertions
 - **Hooks:** `src/hooks/browser.hooks.ts` — browser launched once per run (`BeforeAll`); per-scenario state reset (cookies + storage) in `Before` for cart isolation
 - **API client:** `src/api/MagentoApiClient.ts` — Magento REST V1; Background steps verify product preconditions through it (admin token resolved once per run, ADR-0003)
-- **Serenity config:** `src/serenity.config.ts` — crew: ArtifactArchiver, SerenityBDDReporter, ConsoleReporter
+- **Serenity config:** `src/serenity.config.ts` — crew: ArtifactArchiver, SerenityBDDReporter, ConsoleReporter, plus a Photographer added only when screenshots are enabled (`SCREENSHOTS`; default ON locally, OFF in CI — see `src/config/screenshots.ts`, ADR-0007)
+- **Wait policy:** `src/config/wait-durations.ts` — engine-aware wait tiers and the per-engine Cucumber step timeout, defined once as ceilings (not fixed delays) and consumed everywhere; the concrete numbers live there and in `screenplay-guide.md`, not duplicated here
 
 ### Tooling
 
 | Command | Purpose |
 |---|---|
 | `npm test` | Run the active suite (excludes `@deferred`) |
+| `npm run test:smoke` | Non-ordering 7-scenario subset (state-mutating; needs a resettable target) |
+| `npm run test:unit` | Fast `node:test` policy/decision units — no live store |
+| `npm run verify` | Gate: `tsc --noEmit` → `test:unit` → default + smoke dry-runs |
+| `npm run audit:ci` | Dependency-audit gate (SEC-01) — parses `npm audit --json` by content |
 | `npx tsc --noEmit` | TypeScript type check |
-| `HEADLESS=false npm test` | Run with visible browser for debugging |
 | `npm run test:report` | Generate Serenity BDD HTML report from JSON artifacts |
+
+Selected via environment: `BROWSER=chromium\|firefox\|webkit` (engine), `SCREENSHOTS=off\|failures\|all` (Photographer; default ON local / OFF CI), `TRACE=on-failure` (per-scenario trace+video, retained on failure), `HEADLESS=false` (visible browser), `BASE_URL` (target store).
 
 ---
 
@@ -59,13 +66,22 @@ magento-checkout-automation/
 │   ├── checkout-validation.feature    # Required fields, invalid email
 │   └── payment-failure.feature        # Active — deterministic decline via Portfolio_DeclinePayment (ADR-0005)
 ├── src/
-│   ├── serenity.config.ts             # Crew configuration (reporters, ArtifactArchiver)
+│   ├── serenity.config.ts             # Crew configuration (reporters, ArtifactArchiver, optional Photographer)
+│   ├── config/                        # Pure, side-effect-free policy modules (unit-tested — see test/)
+│   │   ├── wait-durations.ts          # Engine-aware wait tiers + per-engine Cucumber step timeout (backlog #15)
+│   │   ├── screenshots.ts             # SCREENSHOTS mode → optional Photographer crew member (ADR-0007)
+│   │   ├── artifact-retention.ts      # Trace/video retain-on-failure decisions (CODEX-06)
+│   │   ├── route-recovery.ts          # Per-engine checkout-route recovery policy (MAG-15, CODEX-06)
+│   │   ├── target-host.ts             # BASE_URL localhost-safety check (R-09)
+│   │   └── product-slugs.ts           # Deterministic product-name → URL-slug map
 │   ├── hooks/
-│   │   └── browser.hooks.ts           # Browser launched once (BeforeAll); per-scenario state reset (Before)
+│   │   ├── browser.hooks.ts           # Engine launched once (BeforeAll); per-scenario reset (Before); TRACE isolated-context path
+│   │   └── artifact-slug.ts           # Scenario-name → filesystem-safe artifact slug
 │   ├── interactions/                  # PageElement definitions per page area
 │   │   ├── StorefrontPage.ts          # Product page elements + URL slug map
 │   │   ├── CartPage.ts                # Cart page elements
-│   │   └── CheckoutPage.ts            # Checkout steps: shipping, method, payment, confirmation
+│   │   ├── CheckoutPage.ts            # Checkout steps: shipping, method, payment, confirmation
+│   │   └── StabiliseCheckoutRoute.ts  # Engine-aware checkout-route recovery interaction (MAG-15)
 │   ├── tasks/                         # Screenplay Tasks
 │   │   ├── AddToCart.ts
 │   │   ├── AdoptSeededCart.ts         # Binds the API-seeded guest cart to the session (ADR-0006)
@@ -78,7 +94,8 @@ magento-checkout-automation/
 │   │   ├── SelectShippingMethod.ts
 │   │   └── UpdateCartQuantity.ts
 │   ├── questions/                     # Screenplay Questions
-│   │   ├── CartItemCount.ts
+│   │   ├── CartItemCount.ts           # Distinct line-item count (server-rendered rows)
+│   │   ├── CartTotalQuantity.ts       # Summed cart quantity from the server-rendered rows (not the header counter)
 │   │   ├── CartSubtotal.ts
 │   │   ├── OrderSummary.ts            # Checkout Order Summary subtotal (asserted at the payment step)
 │   │   └── PaymentError.ts            # Decline message (payment-failure scenario)
@@ -90,8 +107,12 @@ magento-checkout-automation/
 │       ├── checkout.steps.ts          # When/Then for checkout journey
 │       ├── cart.steps.ts              # When/Then for cart management
 │       └── validation.steps.ts        # When/Then for validation scenarios
+├── test/
+│   └── unit/                          # Fast node:test policy/decision units (via ts-node) — no live store (CODEX-05/06)
+├── scripts/
+│   └── audit-ci.mjs                   # Dependency-audit gate: parses `npm audit --json` by content (SEC-01)
 ├── docs/
-│   ├── adr/                           # Architecture Decision Records (0001–0006)
+│   ├── adr/                           # Architecture Decision Records (0001–0007)
 │   ├── templates/                     # Document templates for this project
 │   ├── implementation-logs/           # Per-session development logs
 │   ├── reports/                       # Serenity BDD output (runtime — gitignored)
@@ -126,12 +147,12 @@ What happens when `npm test` runs:
 2. `ts-node/register` (loaded via `requireModule`) compiles TypeScript on-the-fly
 3. `src/serenity.config.ts` is required — configures ArtifactArchiver, SerenityBDDReporter, ConsoleReporter
 4. `src/hooks/browser.hooks.ts` is required — registers `BeforeAll`, `Before` and `AfterAll` hooks
-5. Once per run: `BeforeAll` launches Chromium and resolves the admin API token (`MagentoApi.authenticate()`)
-6. Per scenario: `Before` resets browser state (cookies + local/session storage — cart isolation), then calls `engage(Cast.where(...))` equipping the actor with `BrowseTheWebWithPlaywright` and `CallAnApi`
+5. Once per run: `BeforeAll` launches the engine selected by `BROWSER` (`resolveBrowserType()`, default Chromium) and resolves the admin API token (`MagentoApi.authenticate()`). The Cucumber step timeout is set once from the engine's tier (`setDefaultTimeout(cucumberStepTimeoutMilliseconds)`)
+6. Per scenario: `Before` resets browser state (cookies + local/session storage — cart isolation), then calls `engage(Cast.where(...))` equipping the actor with `BrowseTheWebWithPlaywright` and `CallAnApi`. **Default (TRACE unset):** all scenarios share the reset context, byte-for-byte the pre-existing path. **`TRACE=on-failure`:** each scenario instead gets a freshly-created isolated context+page (`usingPage`) recording a trace+video, retained only on failure and deleted on pass (see `src/config/artifact-retention.ts`)
 7. Cucumber matches Gherkin steps to step definitions in `src/step-definitions/`
 8. Step definitions call `actorCalled('User').attemptsTo(Task...)` or `Ensure.that(Question, matcher)`
-9. Tasks decompose to Interactions (`Click`, `Enter`, `Navigate`, `Wait`, `Select`) against Playwright via Serenity/JS web
-10. `Wait.upTo(15–20 s).until(element, isVisible())` guards every async Knockout.js transition (Serenity's bare `Wait.until` 5 s default is too short for cold KO.js renders)
+9. Tasks decompose to Interactions (`Click`, `Enter`, `Navigate`, `Wait`, `Select`) against Playwright via Serenity/JS web; the exploratory engines additionally recover a stalled checkout route via `StabiliseCheckoutRoute` (Chromium never recovers — a broken button must fail the required gate; see `src/config/route-recovery.ts`, MAG-15)
+10. Waits are ceilings drawn from the engine-aware tiers in `src/config/wait-durations.ts` (`waitFor.responsiveUi` / `asynchronousUpdate` / `complexRender`), returning as soon as the Knockout.js condition is met — never fixed sleeps. The concrete per-engine seconds live in that module and `screenplay-guide.md`; they are not restated here
 11. Once per run: `AfterAll` closes the browser
 12. `ArtifactArchiver` writes Serenity JSON artifacts to `docs/reports/`
 13. `SerenityBDDReporter` emits structured BDD events; `npm run test:report` converts to HTML living documentation (published to GitHub Pages by CI)
