@@ -11,7 +11,7 @@
     "test:smoke": "cucumber-js --profile smoke",
     "test:report": "serenity-bdd run --source ./docs/reports --features ./features",
     "test:unit": "node --require ts-node/register test/unit/_all.ts",
-    "verify": "tsc --noEmit && npm run test:unit && cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run",
+    "verify": "tsc --noEmit && npm run test:unit && npm run audit:ci && cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run",
     "audit:ci": "node scripts/audit-ci.mjs"
   },
   "devDependencies": {

@@ -142,7 +142,12 @@ Before(async () => {
                 };
                 w.localStorage?.clear();
                 w.sessionStorage?.clear();
-            }).catch(() => { /* no accessible storage on this page */ });
+            }).catch((err) => {
+                // Expected when page has no accessible origin or is already navigating.
+                if (process.env.DEBUG) {
+                    console.warn(`[browser.hooks] web storage reset skipped: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            });
 
             // 2. Park the page on about:blank to ABORT the previous scenario's
             //    in-flight requests before cookies are cleared. Magento re-sends
@@ -152,7 +157,7 @@ Before(async () => {
             //    cart then leaks into this one (observed in CI run 27295894167:
             //    count read 3 where 2 expected; the count survived a reload + 20 s
             //    poll, proving a server-side leak, not a stale client cache).
-            await page.goto('about:blank').catch(() => { /* page already closing */ });
+            await page.goto('about:blank', { waitUntil: 'domcontentloaded' }).catch(() => { /* page already closing */ });
         }
 
         // 3. Clear cookies LAST, once nothing can re-set them. Deliberately NOT
