@@ -384,11 +384,11 @@
     "moderate": 3
   },
   "files": {
-    "audit-before.json": "ae64b8a2be8fb93f6b3e476a6db26ef4723b02a4873e57630e07b1efe839bfff",
-    "audit-gate-before.log": "1b0c34d02448ac8790c883da6d3ec28a161b807d560d2bd9f7b8334cd3b1bdcf",
-    "phase1-audit.json": "67bf4798b52c269635b9f5232e0f9df987ae8bde72982002351fd4eaffef0744",
+    "audit-before.json": "386c25f694a47f616bb75c4d91564ad8a81002802d5f478d4cda7add8af77762",
+    "audit-gate-before.log": "994a3afa4d1b8e8f7344fc00af48feb6689e36dc480131097a0b27858f487fa8",
+    "phase1-audit.json": "8eca42a0430d1958484a1468c82e742b1d447a1f729c56178f729508780c41fb",
     "phase1-verify-metrics.txt": "93d91122c20b57633ec6864d6a1b0fde478ce466c158db5dbeadb9fd17a53023",
-    "phase1-verify.log": "1fb7b74ee6071043c84abcf04dbbc44975305efc843e554db9247c5225facde8"
+    "phase1-verify.log": "2921a540af2c6460c4856f701723be451dc994117b098002d6456fa30446f157"
   },
   "phase_2_authorised": false,
   "chromium": {

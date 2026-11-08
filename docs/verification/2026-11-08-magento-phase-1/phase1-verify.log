@@ -1,0 +1,569 @@
+
+> magento-checkout-automation@1.0.0 verify
+> tsc --noEmit && npm run test:unit && npm run audit:ci && cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run
+
+
+> magento-checkout-automation@1.0.0 test:unit
+> node --require ts-node/register test/unit/_all.ts
+
+▶ browserEngine (browser selection)
+  ✔ defaults to chromium when BROWSER is unset (2.0203ms)
+  ✔ accepts chromium/firefox/webkit case-insensitively and trimmed (0.6789ms)
+  ✔ throws loudly on an unsupported engine (invalid input) (2.0488ms)
+✔ browserEngine (browser selection) (6.8036ms)
+▶ waitPolicyFor (engine wait tiers)
+  ✔ chromium tier is the documented baseline (3.1727ms)
+  ✔ firefox and webkit widen the render/async/step ceilings (0.7739ms)
+✔ waitPolicyFor (engine wait tiers) (4.368ms)
+▶ resolveMode (screenshot modes / defaults)
+  ✔ an explicit SCREENSHOTS value wins, case-insensitively (0.8004ms)
+  ✔ with no override, defaults to off in CI and all locally (0.5434ms)
+  ✔ an unrecognised SCREENSHOTS value falls back to the environment default (0.4786ms)
+✔ resolveMode (screenshot modes / defaults) (2.2887ms)
+▶ isLocalhostTarget (credential-safety boundary, R-09)
+  ✔ true only for the local Docker test targets (case-insensitive host) (0.7716ms)
+  ✔ false for real stores, LAN hosts, and unparseable input (0.7589ms)
+✔ isLocalhostTarget (credential-safety boundary, R-09) (1.7579ms)
+▶ artifactSlug (deterministic trace/video slug)
+  ✔ lowercases, collapses non-slug chars, and appends the 8-char id (0.6571ms)
+  ✔ caps the readable part at 64 characters (0.4149ms)
+  ✔ is deterministic for the same inputs (id kept verbatim, not lowercased) (0.447ms)
+✔ artifactSlug (deterministic trace/video slug) (1.7883ms)
+▶ productSlug (product-name -> slug config parsing)
+  ✔ resolves each configured product (0.436ms)
+  ✔ throws with a clear message for an unconfigured product (0.4726ms)
+✔ productSlug (product-name -> slug config parsing) (1.2389ms)
+▶ scenarioFailed (pass/fail determination for retention)
+  ✔ only an explicit PASSED counts as not-failed; anything else (incl. missing) is failed (0.7288ms)
+✔ scenarioFailed (pass/fail determination for retention) (0.9401ms)
+▶ traceDisposition (trace .zip retention)
+  ✔ retained only for a failed scenario (0.4351ms)
+✔ traceDisposition (trace .zip retention) (0.5581ms)
+▶ videoDisposition (video .webm retention)
+  ✔ retain on failure, discard on pass, and none when no video was recorded (0.6037ms)
+✔ videoDisposition (video .webm retention) (0.8117ms)
+▶ routeRecovery (Chromium no-recovery contract, MAG-15)
+  ✔ chromium re-throws (never conceals a broken button); firefox/webkit navigate to recover (0.7747ms)
+✔ routeRecovery (Chromium no-recovery contract, MAG-15) (1.0372ms)
+▶ needsBootstrapReload (exploratory-engine recovery eligibility, MAG-15)
+  ✔ only webkit needs the canonical bootstrap reload after reaching /checkout (0.4632ms)
+✔ needsBootstrapReload (exploratory-engine recovery eligibility, MAG-15) (0.5918ms)
+ℹ tests 20
+ℹ suites 11
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 436.8341
+
+> magento-checkout-automation@1.0.0 audit:ci
+> node scripts/audit-ci.mjs
+
+audit:ci OK - 0 high/critical (moderate 3, low 0).
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:11
+
+Cart management: Add a single product to an empty cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  Then my cart should contain 1 item
+  ⇢ Then my cart should contain 1 item
+  After
+  ⇢ After
+
+⇢ Execution skipped (17ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:15
+
+Cart management: Add multiple distinct products to the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  And I add "Fusion Backpack" to my cart
+  ⇢ And I add "Fusion Backpack" to my cart
+  Then my cart should contain 2 items
+  ⇢ Then my cart should contain 2 items
+  And the cart subtotal should be "104.00"
+  ⇢ And the cart subtotal should be "104.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (13ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:21
+
+Cart management: Update the quantity of an item in the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  Given I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ Given I have "Push It Messenger Bag" in my cart with quantity 1
+  When I update the quantity of "Push It Messenger Bag" to 3
+  ⇢ When I update the quantity of "Push It Messenger Bag" to 3
+  Then my cart should contain 3 items
+  ⇢ Then my cart should contain 3 items
+  And the cart subtotal should be "135.00"
+  ⇢ And the cart subtotal should be "135.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (12ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:27
+
+Cart management: Remove an item from the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  Given I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ Given I have "Push It Messenger Bag" in my cart with quantity 1
+  When I remove "Push It Messenger Bag" from my cart
+  ⇢ When I remove "Push It Messenger Bag" from my cart
+  Then my cart should be empty
+  ⇢ Then my cart should be empty
+  After
+  ⇢ After
+
+⇢ Execution skipped (10ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/checkout-validation.feature:11
+
+Checkout validation: Reject checkout with missing shipping details
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ And I have "Push It Messenger Bag" in my cart with quantity 1
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I proceed to checkout
+  ⇢ When I proceed to checkout
+  And I provide incomplete shipping details
+  ⇢ And I provide incomplete shipping details
+  Then I should not be able to advance to payment
+  ⇢ Then I should not be able to advance to payment
+  After
+  ⇢ After
+
+⇢ Execution skipped (10ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/checkout-validation.feature:16
+
+Checkout validation: Reject checkout with an invalid email
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ And I have "Push It Messenger Bag" in my cart with quantity 1
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I proceed to checkout
+  ⇢ When I proceed to checkout
+  And I provide shipping details with email "not-an-email"
+  ⇢ And I provide shipping details with email "not-an-email"
+  Then I should not be able to advance to payment
+  ⇢ Then I should not be able to advance to payment
+  And the email field should be flagged as invalid
+  ⇢ And the email field should be flagged as invalid
+  After
+  ⇢ After
+
+⇢ Execution skipped (10ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:11
+
+Guest checkout: Complete a guest order with valid details
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  And I proceed to checkout
+  ⇢ And I proceed to checkout
+  And I provide valid shipping details
+  ⇢ And I provide valid shipping details
+  And I select a shipping method
+  ⇢ And I select a shipping method
+  And I provide valid payment details
+  ⇢ And I provide valid payment details
+  And I place the order
+  ⇢ And I place the order
+  Then I should see an order confirmation
+  ⇢ Then I should see an order confirmation
+  And the confirmation should include an order number
+  ⇢ And the confirmation should include an order number
+  After
+  ⇢ After
+
+⇢ Execution skipped (13ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:21
+
+Guest checkout: Cart reflects the correct total before checkout
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  Then my cart should contain 1 item
+  ⇢ Then my cart should contain 1 item
+  And the cart subtotal should be "45.00"
+  ⇢ And the cart subtotal should be "45.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (9ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:39
+
+Guest checkout: Order multiple quantities of a single product
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart with quantity 1
+  ⇢ When I add "Push It Messenger Bag" to my cart with quantity 1
+  And I proceed to checkout
+  ⇢ And I proceed to checkout
+  And I provide valid shipping details
+  ⇢ And I provide valid shipping details
+  And I select a shipping method
+  ⇢ And I select a shipping method
+  And I provide valid payment details
+  ⇢ And I provide valid payment details
+  Then the order summary subtotal should be "45.00"
+  ⇢ Then the order summary subtotal should be "45.00"
+  When I place the order
+  ⇢ When I place the order
+  Then I should see an order confirmation
+  ⇢ Then I should see an order confirmation
+  After
+  ⇢ After
+
+⇢ Execution skipped (25ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:40
+
+Guest checkout: Order multiple quantities of a single product
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart with quantity 2
+  ⇢ When I add "Push It Messenger Bag" to my cart with quantity 2
+  And I proceed to checkout
+  ⇢ And I proceed to checkout
+  And I provide valid shipping details
+  ⇢ And I provide valid shipping details
+  And I select a shipping method
+  ⇢ And I select a shipping method
+  And I provide valid payment details
+  ⇢ And I provide valid payment details
+  Then the order summary subtotal should be "90.00"
+  ⇢ Then the order summary subtotal should be "90.00"
+  When I place the order
+  ⇢ When I place the order
+  Then I should see an order confirmation
+  ⇢ Then I should see an order confirmation
+  After
+  ⇢ After
+
+⇢ Execution skipped (11ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:41
+
+Guest checkout: Order multiple quantities of a single product
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart with quantity 3
+  ⇢ When I add "Push It Messenger Bag" to my cart with quantity 3
+  And I proceed to checkout
+  ⇢ And I proceed to checkout
+  And I provide valid shipping details
+  ⇢ And I provide valid shipping details
+  And I select a shipping method
+  ⇢ And I select a shipping method
+  And I provide valid payment details
+  ⇢ And I provide valid payment details
+  Then the order summary subtotal should be "135.00"
+  ⇢ Then the order summary subtotal should be "135.00"
+  When I place the order
+  ⇢ When I place the order
+  Then I should see an order confirmation
+  ⇢ Then I should see an order confirmation
+  After
+  ⇢ After
+
+⇢ Execution skipped (15ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/payment-failure.feature:19
+
+Payment failure handling: Declined card payment is reported to the shopper
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ And I have "Push It Messenger Bag" in my cart with quantity 1
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I proceed to checkout
+  ⇢ When I proceed to checkout
+  And I provide valid shipping details
+  ⇢ And I provide valid shipping details
+  And I select a shipping method
+  ⇢ And I select a shipping method
+  And I provide payment details for a card that will be declined
+  ⇢ And I provide payment details for a card that will be declined
+  And I attempt to place the order
+  ⇢ And I attempt to place the order
+  Then the order should not be placed
+  ⇢ Then the order should not be placed
+  And I should see a payment failure message
+  ⇢ And I should see a payment failure message
+  And I should remain on the checkout page with my cart intact
+  ⇢ And I should remain on the checkout page with my cart intact
+  After
+  ⇢ After
+
+⇢ Execution skipped (13ms)
+================================================================================
+Execution Summary
+
+Cart management:          4 skipped, 4 total (52ms)
+Checkout validation:      2 skipped, 2 total (20ms)
+Guest checkout:           5 skipped, 5 total (73ms)
+Payment failure handling: 1 skipped, 1 total (13ms)
+
+Total time: 158ms
+Real time: 370ms
+Scenarios:  12
+================================================================================
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:11
+
+Cart management: Add a single product to an empty cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  Then my cart should contain 1 item
+  ⇢ Then my cart should contain 1 item
+  After
+  ⇢ After
+
+⇢ Execution skipped (13ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:15
+
+Cart management: Add multiple distinct products to the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  And I add "Fusion Backpack" to my cart
+  ⇢ And I add "Fusion Backpack" to my cart
+  Then my cart should contain 2 items
+  ⇢ Then my cart should contain 2 items
+  And the cart subtotal should be "104.00"
+  ⇢ And the cart subtotal should be "104.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (10ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:21
+
+Cart management: Update the quantity of an item in the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  Given I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ Given I have "Push It Messenger Bag" in my cart with quantity 1
+  When I update the quantity of "Push It Messenger Bag" to 3
+  ⇢ When I update the quantity of "Push It Messenger Bag" to 3
+  Then my cart should contain 3 items
+  ⇢ Then my cart should contain 3 items
+  And the cart subtotal should be "135.00"
+  ⇢ And the cart subtotal should be "135.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (12ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/cart-management.feature:27
+
+Cart management: Remove an item from the cart
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And a product "Fusion Backpack" priced at "59.00" is available
+  ⇢ And a product "Fusion Backpack" priced at "59.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  Given I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ Given I have "Push It Messenger Bag" in my cart with quantity 1
+  When I remove "Push It Messenger Bag" from my cart
+  ⇢ When I remove "Push It Messenger Bag" from my cart
+  Then my cart should be empty
+  ⇢ Then my cart should be empty
+  After
+  ⇢ After
+
+⇢ Execution skipped (8ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/checkout-validation.feature:11
+
+Checkout validation: Reject checkout with missing shipping details
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ And I have "Push It Messenger Bag" in my cart with quantity 1
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I proceed to checkout
+  ⇢ When I proceed to checkout
+  And I provide incomplete shipping details
+  ⇢ And I provide incomplete shipping details
+  Then I should not be able to advance to payment
+  ⇢ Then I should not be able to advance to payment
+  After
+  ⇢ After
+
+⇢ Execution skipped (6ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/checkout-validation.feature:16
+
+Checkout validation: Reject checkout with an invalid email
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I have "Push It Messenger Bag" in my cart with quantity 1
+  ⇢ And I have "Push It Messenger Bag" in my cart with quantity 1
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I proceed to checkout
+  ⇢ When I proceed to checkout
+  And I provide shipping details with email "not-an-email"
+  ⇢ And I provide shipping details with email "not-an-email"
+  Then I should not be able to advance to payment
+  ⇢ Then I should not be able to advance to payment
+  And the email field should be flagged as invalid
+  ⇢ And the email field should be flagged as invalid
+  After
+  ⇢ After
+
+⇢ Execution skipped (8ms)
+--------------------------------------------------------------------------------
+C:/Users/brook/.codex/tmp/magento-repair-20261108/features/guest-checkout.feature:21
+
+Guest checkout: Cart reflects the correct total before checkout
+
+  Before
+  ⇢ Before
+  Given a product "Push It Messenger Bag" priced at "45.00" is available
+  ⇢ Given a product "Push It Messenger Bag" priced at "45.00" is available
+  And I am browsing the storefront as a guest
+  ⇢ And I am browsing the storefront as a guest
+  When I add "Push It Messenger Bag" to my cart
+  ⇢ When I add "Push It Messenger Bag" to my cart
+  Then my cart should contain 1 item
+  ⇢ Then my cart should contain 1 item
+  And the cart subtotal should be "45.00"
+  ⇢ And the cart subtotal should be "45.00"
+  After
+  ⇢ After
+
+⇢ Execution skipped (5ms)
+================================================================================
+Execution Summary
+
+Cart management:     4 skipped, 4 total (43ms)
+Checkout validation: 2 skipped, 2 total (14ms)
+Guest checkout:      1 skipped, 1 total (5ms)
+
+Total time: 62ms
+Real time: 209ms
+Scenarios:  7
+================================================================================
