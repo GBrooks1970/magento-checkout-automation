@@ -35,7 +35,10 @@ npm run audit:ci    # -> node scripts/audit-ci.mjs (parses `npm audit --json`)
 
 ## Current state
 
-- **0 vulnerabilities** (`npm audit`, 2026-07-30).
+- **Repair branch, 2026-11-08:** 0 HIGH/CRITICAL, 3 MODERATE package findings. Main's previous
+  lockfile has 5 HIGH and 3 MODERATE findings. See `docs/backlog.md` MAG-MAINT-01/02 for delivery
+  status and the remaining glob/minimatch dependency review; a passing HIGH gate is not a
+  zero-vulnerability claim.
 - **0 active exceptions.**
 
 ## Temporary exceptions
@@ -49,6 +52,14 @@ at review time. There are no active exceptions today.
 
 ## Remediation history
 
+- **2026-11-08, MAG-MAINT-01:** Axios override **1.18.1 -> 1.21.0**, brace-expansion override
+  **^5.0.9 -> 5.0.12**, and resolved follow-redirects **1.16.0 -> 1.16.2** clear the five HIGH
+  package findings reproduced by main run `40277606923`. These retain the prior override strategy
+  and leave all direct toolchain pins and Node requirements unchanged. Examples of the repaired
+  advisories: [Axios ReDoS](https://github.com/advisories/GHSA-c29m-xwm3-cm6r),
+  [brace-expansion recursion](https://github.com/advisories/GHSA-qhr7-859c-m2p7), and
+  [follow-redirects credential handling](https://github.com/advisories/GHSA-mrwp-f3q8-3g9p).
+  The three MODERATE package findings remain tracked as MAG-MAINT-02, not suppressed.
 - **`brace-expansion` -> `5.0.8`** (advisory GHSA-mh99-v99m-4gvg, DoS/OOM). A transitive dev-only
   advisory reached the tree via `@cucumber/cucumber -> glob -> minimatch@10.2.5 -> brace-expansion@5.0.7`.
   npm's advisory range is `<=5.0.7`, so `5.0.8` is the clearing release; it is a dual package whose
@@ -77,6 +88,20 @@ cadence (or sooner if an advisory or a required upgrade forces it):
 A finding opens **required backlog work** when it is a HIGH+ advisory, a security refresh of a
 consumed image, or an upgrade blocking a supported-version boundary; anything else may be recorded
 as an **accepted deferred update** with a dated note.
+
+### Inactive scheduled workflow recovery
+
+GitHub reported `e2e` as `disabled_inactivity` during the 2026-11-08 maintenance review. Check the
+complete workflow inventory, including disabled workflows; an old successful `bake-store-images`
+run is not E2E evidence. After diagnosing and preparing the repair, reactivate the existing lane:
+
+```sh
+gh workflow enable 287633364 --repo GBrooks1970/magento-checkout-automation
+gh api repos/GBrooks1970/magento-checkout-automation/actions/workflows/287633364
+```
+
+Expect `state: active`, then observe a real PR or manually dispatched run. Preserve required audit
+and Chromium gates. Exact-main validation after owner merge remains a separate acceptance step.
 
 ## GitHub Actions pin runbook (CODEX-08)
 

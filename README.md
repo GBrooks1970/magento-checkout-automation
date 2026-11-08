@@ -180,8 +180,19 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-Backlog items #1–#15 are delivered. The full suite — **12 scenarios, 94 steps** — runs
-green in CI against the pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
+**Maintenance reopened 2026-11-08:** the latest main run `40277606923` passed required Chromium
+but failed its dependency audit, and E2E was disabled for inactivity. MAG-MAINT-01 repairs the
+HIGH findings and restores workflow execution; the repair still needs owner merge and exact-main
+validation. Three MODERATE dependency findings are tracked separately as MAG-MAINT-02 in
+[the backlog](docs/backlog.md). Firefox/WebKit remain exploratory; this repair does not claim
+they are stable or ready for promotion.
+
+The [phased recovery plan](docs/implementation-plans/2026-11-08_mag-maint-01-ci-recovery_v2.md)
+authorises Phase 1 only. Stop after the validated PR, saved evidence and handover; merge and
+main/publication acceptance require explicit Phase 2 authorisation.
+
+Backlog items #1–#15 are delivered. The full suite has **12 scenarios, 94 steps** against the
+pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
 scenario, which declines deterministically via the in-repo
 `Portfolio_DeclinePayment` test-fixture module (no gateway sandbox, secrets, or
 network dependency — see `docs/adr/0005-deterministic-payment-failure.md`).
@@ -189,7 +200,7 @@ Backgrounds are fully API-driven: product preconditions are verified through the
 Magento REST API on every scenario, and cart preconditions are seeded through the
 REST guest-cart endpoints, bound to the browser session via the in-repo
 `Portfolio_CartSeed` endpoint (`docs/adr/0006-api-guest-cart-seeding.md`). The
-green badge above reflects the current `main` state, and the
+workflow badge above reflects the current `main` state, and the
 Serenity living documentation publishes to GitHub Pages on every `main` run. Items **#13**
 (trace + video capture on failure, gated off by default behind `TRACE=on-failure`) and **#14**
 (cross-browser run matrix) are also delivered: CI runs Chromium (required) on every push and PR,
