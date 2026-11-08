@@ -47,3 +47,9 @@ Phase 1 uses the existing `npm run verify` gate, a valid complete audit with zer
 ## Owner decision
 
 The owner instructed: action Phase 1, finish with saved commits, evidence and a handover, then stop until explicit authorisation of the next phase. No merge, Phase 2 acceptance, moderate upgrade or WebKit repair is included.
+
+## Phase 1 addendum: browser runner compatibility (2026-11-08)
+
+PR run 42527987456 passed preflight and the audit gate, but failed before browser tests: Playwright 1.60.0 cannot install Chromium dependencies on the Ubuntu 26.04 image now selected by `ubuntu-latest`. The prior successful Chromium run 40277606923 used Ubuntu 24.04, and the installed Playwright bundle includes that platform.
+
+Pin only the browser matrix job to `ubuntu-24.04`, then repeat required PR CI. This restores compatibility with the unchanged pinned toolchain. Preserve all assertions, Docker pins, Node support, audit gates and the exploratory browser policy. No WebKit stability or main acceptance is claimed.
