@@ -53,3 +53,7 @@ The owner instructed: action Phase 1, finish with saved commits, evidence and a 
 PR run 42527987456 passed preflight and the audit gate, but failed before browser tests: Playwright 1.60.0 cannot install Chromium dependencies on the Ubuntu 26.04 image now selected by `ubuntu-latest`. The prior successful Chromium run 40277606923 used Ubuntu 24.04, and the installed Playwright bundle includes that platform.
 
 Pin only the browser matrix job to `ubuntu-24.04`, then repeat required PR CI. This restores compatibility with the unchanged pinned toolchain. Preserve all assertions, Docker pins, Node support, audit gates and the exploratory browser policy. No WebKit stability or main acceptance is claimed.
+
+## Outcome: Phase 1 validation (2026-11-08)
+
+Dependency repair `0d3b899` and runner correction `b93aa641c95c41355133a8a5a22c17ba8776975e` are saved in draft PR #68. Required audit and Chromium passed in run 42528342786. Local verification passed 20 unit tests and 12/7 default/smoke discovery in 37.131s; the complete audit reports 0 HIGH, 0 CRITICAL and 3 MODERATE. See [walkthrough](../walkthroughs/2026-11-08_mag-maint-01-phase-1.md) and [receipt](../verification/2026-11-08-magento-phase-1/receipt.json). Final documentation-head CI and the paired support handover are checked after this evidence commit. No merge or Phase 2 acceptance is authorised.

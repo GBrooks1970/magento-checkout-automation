@@ -33,7 +33,7 @@
 ### MAG-MAINT-01: Restore dependency audit and E2E execution
 
 **Priority:** HIGH (score 22: breakage 8 + impact 8 + maintenance 6).
-**Status:** Implemented on the repair branch; validation and owner merge pending.
+**Status:** Phase 1 validated on the repair branch; Phase 2 owner merge and exact-main acceptance pending.
 **Phase boundary (2026-11-08):** Only [Phase 1](implementation-plans/2026-11-08_mag-maint-01-ci-recovery_v2.md)
 is authorised: prepare the repair, reactivate E2E, pass required PR checks, save commits/evidence and
 a paired handover, then stop. Merge and exact-main acceptance are Phase 2 and require explicit
@@ -51,6 +51,8 @@ follow-redirects **1.16.2** locked within Axios's supported range. Preserve the 
 Playwright and Cucumber pins, Node contract, audit threshold, Chromium assertions and Docker pins.
 Re-enable the workflow and validate the repair with required Chromium and audit CI.
 See [implementation plan](implementation-plans/2026-11-08_mag-maint-01-ci-recovery.md).
+
+**Update (2026-11-08):** Workflow reactivated. PR #68 code head `b93aa641c95c41355133a8a5a22c17ba8776975e` passed required audit and Chromium in run `42528342786`. The browser job is pinned to Ubuntu 24.04 after the moving latest image exposed a Playwright 1.60 incompatibility. See the [Phase 1 evidence](walkthroughs/2026-11-08_mag-maint-01-phase-1.md). The item remains open until Phase 2 acceptance.
 
 **Acceptance:** zero HIGH/CRITICAL in a valid audit; `npm run verify` passes; E2E workflow active;
 required Chromium and audit checks green on the PR; owner merges and the exact-main run passes.

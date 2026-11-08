@@ -1,0 +1,401 @@
+{
+  "project": "magento-checkout-automation",
+  "phase": 1,
+  "code_head": "b93aa641c95c41355133a8a5a22c17ba8776975e",
+  "run": {
+    "conclusion": "success",
+    "databaseId": 42528342786,
+    "headSha": "b93aa641c95c41355133a8a5a22c17ba8776975e",
+    "jobs": [
+      {
+        "completedAt": "2026-11-08T22:04:35Z",
+        "conclusion": "success",
+        "databaseId": 128876808493,
+        "name": "audit",
+        "startedAt": "2026-11-08T22:04:21Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-08T22:04:22Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-08T22:04:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:23Z",
+            "conclusion": "success",
+            "name": "Check out",
+            "number": 2,
+            "startedAt": "2026-11-08T22:04:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:26Z",
+            "conclusion": "success",
+            "name": "Set up Node",
+            "number": 3,
+            "startedAt": "2026-11-08T22:04:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:30Z",
+            "conclusion": "success",
+            "name": "Install Node dependencies",
+            "number": 4,
+            "startedAt": "2026-11-08T22:04:26Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:32Z",
+            "conclusion": "success",
+            "name": "Policy unit tests (CODEX-05)",
+            "number": 5,
+            "startedAt": "2026-11-08T22:04:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:32Z",
+            "conclusion": "success",
+            "name": "Dependency audit gate",
+            "number": 6,
+            "startedAt": "2026-11-08T22:04:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:33Z",
+            "conclusion": "success",
+            "name": "Post Set up Node",
+            "number": 11,
+            "startedAt": "2026-11-08T22:04:32Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:33Z",
+            "conclusion": "success",
+            "name": "Post Check out",
+            "number": 12,
+            "startedAt": "2026-11-08T22:04:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:33Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-11-08T22:04:33Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786/job/128876808493"
+      },
+      {
+        "completedAt": "2026-11-08T22:04:28Z",
+        "conclusion": "success",
+        "databaseId": 128876808695,
+        "name": "preflight",
+        "startedAt": "2026-11-08T22:04:21Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-08T22:04:22Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-08T22:04:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:24Z",
+            "conclusion": "success",
+            "name": "Check out",
+            "number": 2,
+            "startedAt": "2026-11-08T22:04:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:24Z",
+            "conclusion": "success",
+            "name": "Derive the GHCR namespace owner (R-06c)",
+            "number": 3,
+            "startedAt": "2026-11-08T22:04:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:25Z",
+            "conclusion": "success",
+            "name": "Check whether pre-baked GHCR images exist",
+            "number": 4,
+            "startedAt": "2026-11-08T22:04:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:25Z",
+            "conclusion": "success",
+            "name": "Assert the storefront binds to loopback only (CODEX-01, Risk 1)",
+            "number": 5,
+            "startedAt": "2026-11-08T22:04:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:25Z",
+            "conclusion": "success",
+            "name": "Post Check out",
+            "number": 10,
+            "startedAt": "2026-11-08T22:04:25Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:25Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 11,
+            "startedAt": "2026-11-08T22:04:25Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786/job/128876808695"
+      },
+      {
+        "completedAt": "2026-11-08T22:04:33Z",
+        "conclusion": "success",
+        "databaseId": 128876847327,
+        "name": "compute-browsers",
+        "startedAt": "2026-11-08T22:04:30Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-08T22:04:31Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-08T22:04:30Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:31Z",
+            "conclusion": "success",
+            "name": "Decide which engines run this event",
+            "number": 2,
+            "startedAt": "2026-11-08T22:04:31Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:31Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 3,
+            "startedAt": "2026-11-08T22:04:31Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786/job/128876847327"
+      },
+      {
+        "completedAt": "2026-11-08T22:09:25Z",
+        "conclusion": "success",
+        "databaseId": 128876870793,
+        "name": "test (chromium)",
+        "startedAt": "2026-11-08T22:04:35Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-11-08T22:04:37Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-11-08T22:04:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:39Z",
+            "conclusion": "success",
+            "name": "Check out",
+            "number": 2,
+            "startedAt": "2026-11-08T22:04:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:39Z",
+            "conclusion": "success",
+            "name": "Derive the GHCR namespace owner (R-06c)",
+            "number": 3,
+            "startedAt": "2026-11-08T22:04:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:41Z",
+            "conclusion": "success",
+            "name": "Set up Node",
+            "number": 4,
+            "startedAt": "2026-11-08T22:04:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:04:44Z",
+            "conclusion": "success",
+            "name": "Install Node dependencies",
+            "number": 5,
+            "startedAt": "2026-11-08T22:04:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:05:05Z",
+            "conclusion": "success",
+            "name": "Install Playwright browsers",
+            "number": 6,
+            "startedAt": "2026-11-08T22:04:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:05:57Z",
+            "conclusion": "success",
+            "name": "Pull pre-baked store images",
+            "number": 7,
+            "startedAt": "2026-11-08T22:05:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:07:11Z",
+            "conclusion": "success",
+            "name": "Start Magento store",
+            "number": 8,
+            "startedAt": "2026-11-08T22:05:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:07:13Z",
+            "conclusion": "success",
+            "name": "Smoke-check storefront",
+            "number": 9,
+            "startedAt": "2026-11-08T22:07:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:07:14Z",
+            "conclusion": "success",
+            "name": "Warm up the store",
+            "number": 10,
+            "startedAt": "2026-11-08T22:07:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:05Z",
+            "conclusion": "success",
+            "name": "Run full test suite",
+            "number": 11,
+            "startedAt": "2026-11-08T22:07:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:05Z",
+            "conclusion": "skipped",
+            "name": "MAG-15 promotion signal (exploratory engines)",
+            "number": 12,
+            "startedAt": "2026-11-08T22:09:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:05Z",
+            "conclusion": "success",
+            "name": "Guard \u2014 Serenity JSON must evidence the expected scenario count (MAG-C09)",
+            "number": 13,
+            "startedAt": "2026-11-08T22:09:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:09Z",
+            "conclusion": "success",
+            "name": "Generate Serenity living documentation",
+            "number": 14,
+            "startedAt": "2026-11-08T22:09:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:11Z",
+            "conclusion": "success",
+            "name": "Upload Pages artifact",
+            "number": 15,
+            "startedAt": "2026-11-08T22:09:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:23Z",
+            "conclusion": "success",
+            "name": "Tear down store",
+            "number": 16,
+            "startedAt": "2026-11-08T22:09:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:23Z",
+            "conclusion": "success",
+            "name": "Post Set up Node",
+            "number": 31,
+            "startedAt": "2026-11-08T22:09:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:23Z",
+            "conclusion": "success",
+            "name": "Post Check out",
+            "number": 32,
+            "startedAt": "2026-11-08T22:09:23Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-11-08T22:09:23Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 33,
+            "startedAt": "2026-11-08T22:09:23Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786/job/128876870793"
+      },
+      {
+        "completedAt": "2026-11-08T22:09:26Z",
+        "conclusion": "skipped",
+        "databaseId": 128878182541,
+        "name": "deploy-pages",
+        "startedAt": "2026-11-08T22:09:26Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786/job/128878182541"
+      }
+    ],
+    "status": "completed"
+  },
+  "initial_failed_run": 42527987456,
+  "initial_failure": "Playwright 1.60.0 unsupported on ubuntu26.04; browser job pinned to ubuntu-24.04",
+  "local_verify": {
+    "exit_code": 0,
+    "duration_ms": 37131,
+    "unit_passed": 20,
+    "unit_failed": 0,
+    "default_discovered": 12,
+    "smoke_discovered": 7
+  },
+  "audit": {
+    "high": 0,
+    "critical": 0,
+    "moderate": 3
+  },
+  "files": {
+    "audit-before.json": "ae64b8a2be8fb93f6b3e476a6db26ef4723b02a4873e57630e07b1efe839bfff",
+    "audit-gate-before.log": "1b0c34d02448ac8790c883da6d3ec28a161b807d560d2bd9f7b8334cd3b1bdcf",
+    "phase1-audit.json": "67bf4798b52c269635b9f5232e0f9df987ae8bde72982002351fd4eaffef0744",
+    "phase1-verify-metrics.txt": "93d91122c20b57633ec6864d6a1b0fde478ce466c158db5dbeadb9fd17a53023",
+    "phase1-verify.log": "1fb7b74ee6071043c84abcf04dbbc44975305efc843e554db9247c5225facde8"
+  },
+  "phase_2_authorised": false,
+  "chromium": {
+    "successful_scenarios": 12,
+    "failed_scenarios": 0,
+    "suite_real_time_ms": 107461,
+    "job_duration_seconds": 290,
+    "report_json_files": 10
+  }
+}

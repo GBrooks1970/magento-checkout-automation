@@ -182,7 +182,9 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 **Maintenance reopened 2026-11-08:** the latest main run `40277606923` passed required Chromium
 but failed its dependency audit, and E2E was disabled for inactivity. MAG-MAINT-01 repairs the
-HIGH findings and restores workflow execution; the repair still needs owner merge and exact-main
+HIGH findings and restores workflow execution. Phase 1 required audit and Chromium passed in
+[run 42528342786](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786)
+on the repair branch, using Ubuntu 24.04 for the pinned Playwright browser installer. The repair still needs owner merge and exact-main
 validation. Three MODERATE dependency findings are tracked separately as MAG-MAINT-02 in
 [the backlog](docs/backlog.md). Firefox/WebKit remain exploratory; this repair does not claim
 they are stable or ready for promotion.
