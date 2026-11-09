@@ -35,8 +35,8 @@ npm run audit:ci    # -> node scripts/audit-ci.mjs (parses `npm audit --json`)
 
 ## Current state
 
-- **Repair branch, 2026-11-08:** 0 HIGH/CRITICAL, 3 MODERATE package findings. Main's previous
-  lockfile has 5 HIGH and 3 MODERATE findings. See `docs/backlog.md` MAG-MAINT-01/02 for delivery
+- **Accepted repair, 2026-11-09 (main run 42541336270):** 0 HIGH/CRITICAL, 3 MODERATE package findings. The pre-repair
+  lockfile had 5 HIGH and 3 MODERATE findings. See `docs/backlog.md` MAG-MAINT-01/02 for delivery
   status and the remaining glob/minimatch dependency review; a passing HIGH gate is not a
   zero-vulnerability claim.
 - **0 active exceptions.**

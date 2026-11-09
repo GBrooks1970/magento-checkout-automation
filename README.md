@@ -180,18 +180,17 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-**Maintenance reopened 2026-11-08:** the latest main run `40277606923` passed required Chromium
-but failed its dependency audit, and E2E was disabled for inactivity. MAG-MAINT-01 repairs the
-HIGH findings and restores workflow execution. Phase 1 required audit and Chromium passed in
-[run 42528342786](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42528342786)
-on the repair branch, using Ubuntu 24.04 for the pinned Playwright browser installer. The repair still needs owner merge and exact-main
-validation. Three MODERATE dependency findings are tracked separately as MAG-MAINT-02 in
-[the backlog](docs/backlog.md). Firefox/WebKit remain exploratory; this repair does not claim
-they are stable or ready for promotion.
+**Phase 2 accepted 2026-11-09:** the dependency repair is merged and E2E is active. Main
+[run 42541336270](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42541336270)
+at `9b6dd5f` passed audit, required Chromium (12/12), exploratory Firefox (12/12) and Pages deployment.
+The live report matched the deployed artefact on three checked pages. Exploratory WebKit failed
+12/12; its non-blocking policy is unchanged. MAG-MAINT-01 is resolved. Three MODERATE findings
+remain as MAG-MAINT-02 in [the backlog](docs/backlog.md); passing the HIGH gate does not mean
+zero vulnerabilities.
 
-The [phased recovery plan](docs/implementation-plans/2026-11-08_mag-maint-01-ci-recovery_v2.md)
-authorises Phase 1 only. Stop after the validated PR, saved evidence and handover; merge and
-main/publication acceptance require explicit Phase 2 authorisation.
+The [Phase 2 plan](docs/implementation-plans/2026-11-09_mag-maint-01-phase-2.md) records acceptance
+and synchronisation. Stop before Phase 3 dependency compatibility work or Phase 4 WebKit investigation
+until explicitly authorised. See the [acceptance evidence](docs/walkthroughs/2026-11-09_mag-maint-01-phase-2.md).
 
 Backlog items #1–#15 are delivered. The full suite has **12 scenarios, 94 steps** against the
 pre-baked Dockerised Magento 2.4.8 store, including the payment-failure

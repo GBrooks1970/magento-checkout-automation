@@ -27,3 +27,7 @@ Phase 1 code and evidence are saved at `0e32cb40de8d7b81f5dfd5c293fda77db470726c
 ## Gates and stop
 
 Existing required audit and Chromium gates remain unchanged. A failing exploratory leg is recorded honestly and is not repaired or promoted in Phase 2. Validate documentation links, evidence hashes, paired handover generation, registry rendering and staged whitespace. Local Docker is unnecessary; its storage remains E:\_DockerData. No moderate dependency upgrade or WebKit repair. Stop at Phase 2 completion until explicit later-phase authorisation.
+
+## Outcome: accepted repair
+
+PR #68 merged as `9b6dd5f`; support PR #366 merged as `c32f4a9`. Exact-main run 42541336270 passed required audit/Chromium and Pages deployment; Firefox passed and exploratory WebKit failed 12/12. Three published pages matched the Pages artefact. MAG-MAINT-01 is resolved; MAG-MAINT-02 remains open. Registry PR #141 merged as `07b5f1c` with main check 42541663540 passing. The registry primary was synchronised while preserving unrelated edits. Project primary is at the accepted repair; final reconciliation-head acceptance and handover are recorded in paired v24 after this documentation PR. No Phase 3 or 4 work is authorised.
