@@ -1,9 +1,6 @@
 # Magento Checkout Automation — Backlog
 
-> **Maintenance reopened 2026-11-08.** The owner requested investigation and resolution of the failed,
-> inactive E2E workflow. MAG-MAINT-01 repairs the HIGH audit findings and reactivates the workflow;
-> MAG-MAINT-02 tracks the three residual MODERATE package findings. Historical Items #1–#15 stay
-> resolved. A repaired PR does not establish a green merged `main` or a new Pages publication.
+> **Maintenance complete 2026-11-09.** MAG-MAINT-01 and MAG-MAINT-02 are resolved. WebKit is monitored as exploratory under Item #15.
 
 > **Historical closure, superseded by the maintenance reopening above: PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
 > resolved (0 outstanding) and both post-close review-derived worklist cycles are complete: CODEX
@@ -24,9 +21,9 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 13, Phase 2 acceptance complete; **1 outstanding: 1 MEDIUM**. All historical Items #1–#15 remain resolved.
+**Version:** 14, maintenance acceptance complete; **0 outstanding**. All historical Items #1–#15 remain resolved.
 **Last Updated:** 2026-11-09
-**Based on:** `main` at `dfa7086c7d30ebaf34ada295d52d8a24b35720b5`, failed main run `40277606923`, live workflow inventory and current npm audit. Historical closure evidence follows unchanged.
+**Based on:** accepted main `d5fb1d4`, CI and Pages run `42717430993`, and the zero-finding full audit of the merged Phase 3 lockfile. Historical closure evidence follows unchanged.
 
 ## Current maintenance items
 
@@ -60,7 +57,7 @@ Do not close this item from a PR-only success.
 ### MAG-MAINT-02: Review the remaining glob/minimatch advisories
 
 **Priority:** MEDIUM (score 13: breakage 3 + impact 5 + maintenance 5).
-**Status:** Phase 3 repair prepared. Required Chromium CI and merge acceptance pending.
+**Status:** Resolved. PR #70 merged at `6882115`; full audit on merged main reported zero findings. Required CI and publication passed in run `42683170305`.
 **Review by:** 2026-12-08, repository owner.
 
 The repaired lockfile still reports three MODERATE package findings through
@@ -79,7 +76,7 @@ the resulting complete audit. Do not treat the current HIGH gate pass as a zero-
 
 ### Monitor-only: exploratory WebKit
 
-Main acceptance run `42541336270` on 2026-11-09 produced **0/12 passing WebKit scenarios** (12 failed). Chromium and Firefox passed 12/12 each. WebKit remains non-blocking under the existing owner-approved policy, with no promotion credit. This phase records the outcome only; Phase 4 diagnosis and repair remain unauthorised. The earlier October run's 11 failed / 1 compromised result is historical evidence.
+Phase 4 PR #71 merged at `d5fb1d4`. Main run [42717430993](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42717430993) passed audit, Chromium, Firefox and Pages. WebKit improved from 0/12 to 11/12, with one cart removal timeout and 11 recovery events. It remains exploratory under Item #15. Further stability work is parked and may be reopened if sustained browser coverage becomes a requirement.
 
 ---
 
@@ -958,7 +955,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
 | MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) ✅ DONE 2026-07-20 (engine-aware waits and live root-cause fixes) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **1** | MAG-MAINT-01 HIGH: resolved after Phase 2 acceptance. MAG-MAINT-02 MEDIUM: moderate dependency review. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
+| **Outstanding** | **0** | MAG-MAINT-01 and MAG-MAINT-02 resolved. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---

@@ -180,17 +180,7 @@ The architectural decisions are recorded as short ADRs in `docs/adr/`:
 
 ## Status
 
-**Phase 2 accepted 2026-11-09:** the dependency repair is merged and E2E is active. Main
-[run 42541336270](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42541336270)
-at `9b6dd5f` passed audit, required Chromium (12/12), exploratory Firefox (12/12) and Pages deployment.
-The live report matched the deployed artefact on three checked pages. Exploratory WebKit failed
-12/12; its non-blocking policy is unchanged. MAG-MAINT-01 is resolved. Three MODERATE findings
-remain as MAG-MAINT-02 in [the backlog](docs/backlog.md); passing the HIGH gate does not mean
-zero vulnerabilities.
-
-The [Phase 2 plan](docs/implementation-plans/2026-11-09_mag-maint-01-phase-2.md) records acceptance
-and synchronisation. Stop before Phase 3 dependency compatibility work or Phase 4 WebKit investigation
-until explicitly authorised. See the [acceptance evidence](docs/walkthroughs/2026-11-09_mag-maint-01-phase-2.md).
+**Maintenance resting point.** MAG-MAINT-01 and MAG-MAINT-02 are resolved. The merged Phase 3 lockfile audited at zero findings. Phase 4 restored WebKit guest sessions in hosted CI. Main run [42717430993](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42717430993) passed audit, Chromium, Firefox and Pages. WebKit passed 11/12 and remains exploratory. See the [backlog](docs/backlog.md) for the parked limitation.
 
 Backlog items #1–#15 are delivered. The full suite has **12 scenarios, 94 steps** against the
 pre-baked Dockerised Magento 2.4.8 store, including the payment-failure
