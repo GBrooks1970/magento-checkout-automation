@@ -1,0 +1,112 @@
+{
+  "phase": 2,
+  "accepted_main_sha": "9b6dd5f07779bb0caf170b47072de23a86e2ff79",
+  "run_id": 42541336270,
+  "workflow_conclusion": "success",
+  "jobs": [
+    {
+      "databaseId": 128916715062,
+      "name": "audit",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:39:07Z",
+      "completedAt": "2026-11-09T00:39:19Z"
+    },
+    {
+      "databaseId": 128916715297,
+      "name": "preflight",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:39:07Z",
+      "completedAt": "2026-11-09T00:39:16Z"
+    },
+    {
+      "databaseId": 128916771102,
+      "name": "compute-browsers",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:39:18Z",
+      "completedAt": "2026-11-09T00:39:21Z"
+    },
+    {
+      "databaseId": 128916790982,
+      "name": "test (firefox)",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:39:23Z",
+      "completedAt": "2026-11-09T00:44:58Z"
+    },
+    {
+      "databaseId": 128916791110,
+      "name": "test (webkit)",
+      "conclusion": "failure",
+      "startedAt": "2026-11-09T00:39:23Z",
+      "completedAt": "2026-11-09T00:53:34Z"
+    },
+    {
+      "databaseId": 128916791177,
+      "name": "test (chromium)",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:39:23Z",
+      "completedAt": "2026-11-09T00:44:22Z"
+    },
+    {
+      "databaseId": 128920711868,
+      "name": "deploy-pages",
+      "conclusion": "success",
+      "startedAt": "2026-11-09T00:53:38Z",
+      "completedAt": "2026-11-09T00:53:50Z"
+    }
+  ],
+  "browser_results": {
+    "chromium": {
+      "passed": 12,
+      "failed": 0,
+      "real_time_ms": 90150
+    },
+    "firefox": {
+      "passed": 12,
+      "failed": 0,
+      "real_time_ms": 124146
+    },
+    "webkit": {
+      "passed": 0,
+      "failed": 12,
+      "real_time_ms": 617690,
+      "required": false
+    }
+  },
+  "publication": {
+    "run_id": "42541336270",
+    "checked_at": "2026-11-09T12:39:18.784458+00:00",
+    "artifact_tar_sha256": "0576722f3d0c18f055a3bd5529afc837ab4b39ba7ebccd4c15a2b274c0e547c5",
+    "files": [
+      {
+        "path": "index.html",
+        "url": "https://gbrooks1970.github.io/magento-checkout-automation/index.html",
+        "http_status": 200,
+        "artifact_sha256": "4907af34731a39e87deb4c10733cda02812d98397d0a3174510b363e0d2b6684",
+        "live_sha256": "4907af34731a39e87deb4c10733cda02812d98397d0a3174510b363e0d2b6684",
+        "byte_match": true
+      },
+      {
+        "path": "ec15c69e9cdfacdd94621ea7dd4a6ce65a50ca4bbb9e2da226565e292ce659d1.html",
+        "url": "https://gbrooks1970.github.io/magento-checkout-automation/ec15c69e9cdfacdd94621ea7dd4a6ce65a50ca4bbb9e2da226565e292ce659d1.html",
+        "http_status": 200,
+        "artifact_sha256": "e3efff848a48298398f064a8eb7bb9d453412068a3f601f1cde48bf55dc59703",
+        "live_sha256": "e3efff848a48298398f064a8eb7bb9d453412068a3f601f1cde48bf55dc59703",
+        "byte_match": true
+      },
+      {
+        "path": "7c4e6089facbe522a22db0117a4284e69173abb7ba9c916ad6dbb51e06788eaa.html",
+        "url": "https://gbrooks1970.github.io/magento-checkout-automation/7c4e6089facbe522a22db0117a4284e69173abb7ba9c916ad6dbb51e06788eaa.html",
+        "http_status": 200,
+        "artifact_sha256": "b7eea94110664372caa2e18d4b11f2dbf0aa08ce90905816600d57de6b0c1ae5",
+        "live_sha256": "b7eea94110664372caa2e18d4b11f2dbf0aa08ce90905816600d57de6b0c1ae5",
+        "byte_match": true
+      }
+    ]
+  },
+  "merged_prs": {
+    "project": 68,
+    "phase1_handover": 366,
+    "registry": 141
+  },
+  "remaining": "MAG-MAINT-02 and exploratory WebKit investigation; phases 3 and 4 not authorised"
+}

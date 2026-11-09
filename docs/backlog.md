@@ -24,8 +24,8 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 12, maintenance reopened; **2 outstanding: 1 HIGH, 1 MEDIUM**. All historical Items #1–#15 remain resolved.
-**Last Updated:** 2026-11-08
+**Version:** 13, Phase 2 acceptance complete; **1 outstanding: 1 MEDIUM**. All historical Items #1–#15 remain resolved.
+**Last Updated:** 2026-11-09
 **Based on:** `main` at `dfa7086c7d30ebaf34ada295d52d8a24b35720b5`, failed main run `40277606923`, live workflow inventory and current npm audit. Historical closure evidence follows unchanged.
 
 ## Current maintenance items
@@ -33,11 +33,8 @@
 ### MAG-MAINT-01: Restore dependency audit and E2E execution
 
 **Priority:** HIGH (score 22: breakage 8 + impact 8 + maintenance 6).
-**Status:** Phase 1 validated on the repair branch; Phase 2 owner merge and exact-main acceptance pending.
-**Phase boundary (2026-11-08):** Only [Phase 1](implementation-plans/2026-11-08_mag-maint-01-ci-recovery_v2.md)
-is authorised: prepare the repair, reactivate E2E, pass required PR checks, save commits/evidence and
-a paired handover, then stop. Merge and exact-main acceptance are Phase 2 and require explicit
-owner authorisation. MAG-MAINT-02 and WebKit investigation are separate later phases.
+**Status:** Resolved 2026-11-09: merged PR #68 and exact-main required CI/publication accepted.
+**Phase boundary (2026-11-09):** The owner authorised Phase 2, including merges, exact-main acceptance, record reconciliation and safe primary synchronisation. See the [Phase 2 plan](implementation-plans/2026-11-09_mag-maint-01-phase-2.md). Stop before Phase 3 moderate dependency work or Phase 4 WebKit investigation.
 **Provenance:** Owner's 2026-11-08 investigation/resolution request and main run
 [40277606923](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/40277606923).
 
@@ -53,6 +50,8 @@ Re-enable the workflow and validate the repair with required Chromium and audit 
 See [implementation plan](implementation-plans/2026-11-08_mag-maint-01-ci-recovery.md).
 
 **Update (2026-11-08):** Workflow reactivated. PR #68 code head `b93aa641c95c41355133a8a5a22c17ba8776975e` passed required audit and Chromium in run `42528342786`. The browser job is pinned to Ubuntu 24.04 after the moving latest image exposed a Playwright 1.60 incompatibility. See the [Phase 1 evidence](walkthroughs/2026-11-08_mag-maint-01-phase-1.md). The item remains open until Phase 2 acceptance.
+
+**Update (2026-11-09):** PR #68 merged as `9b6dd5f07779bb0caf170b47072de23a86e2ff79`. Main run [42541336270](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/42541336270) passed audit, required Chromium (12/12), exploratory Firefox (12/12), and Pages deployment. Exploratory WebKit failed 12/12; no repair or promotion is claimed. Three live report pages returned HTTP 200 and matched that run's Pages artefact byte-for-byte. [Acceptance receipt](verification/2026-11-09-magento-phase-2/receipt.json). MAG-MAINT-01 is closed; MAG-MAINT-02 remains open.
 
 **Acceptance:** zero HIGH/CRITICAL in a valid audit; `npm run verify` passes; E2E workflow active;
 required Chromium and audit checks green on the PR; owner merges and the exact-main run passes.
@@ -78,11 +77,7 @@ the resulting complete audit. Do not treat the current HIGH gate pass as a zero-
 
 ### Monitor-only: exploratory WebKit
 
-The same October run produced **0/12 passing WebKit scenarios** (11 failed, 1 compromised), with
-add-to-cart confirmation and checkout-button timeouts matching the classes already documented
-under Items #14/#15. Logs alone do not establish a new root cause or a repair. It remains
-non-blocking under the existing owner-approved policy, with no promotion credit from this run.
-The required Chromium job succeeded. This dependency repair makes no WebKit stability claim.
+Main acceptance run `42541336270` on 2026-11-09 produced **0/12 passing WebKit scenarios** (12 failed). Chromium and Firefox passed 12/12 each. WebKit remains non-blocking under the existing owner-approved policy, with no promotion credit. This phase records the outcome only; Phase 4 diagnosis and repair remain unauthorised. The earlier October run's 11 failed / 1 compromised result is historical evidence.
 
 ---
 
@@ -961,7 +956,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
 | MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) ✅ DONE 2026-07-20 (engine-aware waits and live root-cause fixes) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **2** | MAG-MAINT-01 HIGH: implemented, validation/owner merge pending. MAG-MAINT-02 MEDIUM: moderate dependency review. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
+| **Outstanding** | **1** | MAG-MAINT-01 HIGH: resolved after Phase 2 acceptance. MAG-MAINT-02 MEDIUM: moderate dependency review. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
@@ -972,7 +967,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
 | ADRs complete with concrete examples | ✅ Done | Item #5 |
-| Green CI badge, demonstrably non-flaky | Maintenance pending: latest main run `40277606923` failed audit; required Chromium passed. Repair must pass exact-main CI after owner merge. | MAG-MAINT-01 / Item #4 |
+| Green CI badge, demonstrably non-flaky | Required gates accepted: main run `42541336270` at `9b6dd5f` passed audit and Chromium 12/12. WebKit remains non-blocking and failed; no all-browser-green claim. | MAG-MAINT-01 / Item #4 |
 | Living documentation published (GitHub Pages) | ✅ Done — live at gbrooks1970.github.io/magento-checkout-automation | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Done — activated & exercised (12/12 green) | Item #2 |
