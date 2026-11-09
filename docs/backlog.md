@@ -60,7 +60,7 @@ Do not close this item from a PR-only success.
 ### MAG-MAINT-02: Review the remaining glob/minimatch advisories
 
 **Priority:** MEDIUM (score 13: breakage 3 + impact 5 + maintenance 5).
-**Status:** Open, separate toolchain compatibility review required.
+**Status:** Phase 3 repair prepared. Required Chromium CI and merge acceptance pending.
 **Review by:** 2026-12-08, repository owner.
 
 The repaired lockfile still reports three MODERATE package findings through
@@ -70,6 +70,8 @@ The repaired lockfile still reports three MODERATE package findings through
 `npm audit` proposes Cucumber **13.3.0**, a major change. This suite's feature globs are repository
 controlled, but the dependency risk remains recorded under the existing moderate-finding policy.
 No HIGH exception or audit-gate relaxation is introduced.
+
+**Phase 3 update (2026-11-09):** Cucumber 12.9.0 now resolves glob 14.0.2 and minimatch 11.0.5 through a scoped override. Clean install and full audit reported zero findings. Typecheck, 20 unit tests and dry discovery (12 default, 7 smoke) passed. See the [Phase 3 plan](implementation-plans/2026-11-09_mag-maint-02-phase-3.md) and [audit evidence](verification/2026-11-09-magento-phase-3/audit-after.json).
 
 **Acceptance:** select a compatible patched dependency path, validate the Serenity adapter and
 single stdout formatter, run both dry profiles and the required live Chromium suite, and record
