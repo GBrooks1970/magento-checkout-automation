@@ -34,10 +34,10 @@ export const StabiliseCheckoutRoute = {
                     `after the Proceed to Checkout click; navigating to the canonical checkout route.`,
                 );
                 await page.goto(CheckoutPage.url(), { waitUntil: 'domcontentloaded' });
-                return;
+                // A recovered WebKit navigation can also stall during bootstrap.
             }
 
-            if (needsBootstrapReload(engine)) {
+            if (needsBootstrapReload(engine) && isCheckoutRoute(new URL(page.url()))) {
                 // WebKit can reach /checkout/ while Knockout's first bootstrap is
                 // permanently stuck. A canonical reload after the route proof
                 // gives it a clean client bootstrap without masking navigation.
