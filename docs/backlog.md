@@ -1,9 +1,6 @@
 # Magento Checkout Automation — Backlog
 
-> **Maintenance reopened 2026-11-08.** The owner requested investigation and resolution of the failed,
-> inactive E2E workflow. MAG-MAINT-01 repairs the HIGH audit findings and reactivates the workflow;
-> MAG-MAINT-02 tracks the three residual MODERATE package findings. Historical Items #1–#15 stay
-> resolved. A repaired PR does not establish a green merged `main` or a new Pages publication.
+> **Maintenance complete 2026-11-09.** MAG-MAINT-01 and MAG-MAINT-02 are resolved. WebKit is monitored as exploratory under Item #15.
 
 > **Historical closure, superseded by the maintenance reopening above: PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
 > resolved (0 outstanding) and both post-close review-derived worklist cycles are complete: CODEX
@@ -26,7 +23,7 @@
 
 **Version:** 14, maintenance acceptance complete; **0 outstanding**. All historical Items #1–#15 remain resolved.
 **Last Updated:** 2026-11-09
-**Based on:** `main` at `dfa7086c7d30ebaf34ada295d52d8a24b35720b5`, failed main run `40277606923`, live workflow inventory and current npm audit. Historical closure evidence follows unchanged.
+**Based on:** accepted main `d5fb1d4`, CI and Pages run `42717430993`, and the zero-finding full audit of the merged Phase 3 lockfile. Historical closure evidence follows unchanged.
 
 ## Current maintenance items
 
