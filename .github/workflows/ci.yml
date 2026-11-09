@@ -56,7 +56,7 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-  # Firefox/WebKit legs run schedule- and main-only (TRIAGE-03, review v2
+  # Firefox/WebKit legs run on schedule, main and manual dispatch (TRIAGE-03, review v2
   # Risk 3): weekly is enough to catch drift changing, without paying the
   # ~3x CI-minutes cost of a full store bring-up per engine on every PR push.
   schedule:
@@ -178,7 +178,7 @@ jobs:
       - name: Decide which engines run this event
         id: set
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo 'browsers=["chromium","firefox","webkit"]' >> "$GITHUB_OUTPUT"
           else
             echo 'browsers=["chromium"]' >> "$GITHUB_OUTPUT"
@@ -295,9 +295,22 @@ jobs:
             up -d --wait
         timeout-minutes: 15
 
+      - name: Configure the loopback storefront hostname
+        # WebKit discards Magento's session cookie when it carries Domain=localhost.
+        # Use a reserved test name mapped to the existing loopback-only port.
+        run: |
+          echo '127.0.0.1 magento.test' | sudo tee -a /etc/hosts
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T phpfpm sh -ec '
+            cd /var/www/html
+            php bin/magento config:set web/unsecure/base_url http://magento.test:8080/
+            php bin/magento config:set web/secure/base_url http://magento.test:8080/
+            php bin/magento config:set web/cookie/cookie_domain magento.test
+            php bin/magento cache:clean config full_page
+          '
+
       - name: Smoke-check storefront
         run: |
-          curl -sf http://localhost:8080/ -o /dev/null
+          curl -sf http://magento.test:8080/ -o /dev/null
           echo "Storefront HTTP 200 OK"
 
       - name: Warm up the store
@@ -316,10 +329,10 @@ jobs:
         run: |
           for pass in 1 2; do
             for url in \
-              "http://localhost:8080/" \
-              "http://localhost:8080/push-it-messenger-bag.html" \
-              "http://localhost:8080/fusion-backpack.html" \
-              "http://localhost:8080/checkout/cart"; do
+              "http://magento.test:8080/" \
+              "http://magento.test:8080/push-it-messenger-bag.html" \
+              "http://magento.test:8080/fusion-backpack.html" \
+              "http://magento.test:8080/checkout/cart"; do
               code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
               echo "pass $pass  HTTP $code  $url"
               if [ "$code" != "200" ]; then
@@ -332,7 +345,7 @@ jobs:
       - name: Run full test suite
         id: suite
         env:
-          BASE_URL: http://localhost:8080
+          BASE_URL: http://magento.test:8080
           # Admin credentials match what is baked into the store image.
           # MagentoApiClient uses these to mint a bearer token for the
           # API-driven Background step (backlog #3 / ADR-0003).
