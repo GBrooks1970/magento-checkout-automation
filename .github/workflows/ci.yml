@@ -219,7 +219,8 @@ jobs:
     # produces a neutral (⊘) check status rather than a failure (❌).
     if: needs.preflight.outputs.images-available == 'true'
 
-    runs-on: ubuntu-latest
+    # Playwright 1.60 supports Ubuntu 24.04; latest can advance beyond it.
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
 
     permissions:

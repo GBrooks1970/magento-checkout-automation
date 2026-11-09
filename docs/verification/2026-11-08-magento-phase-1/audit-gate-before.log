@@ -1,0 +1,5 @@
+
+> magento-checkout-automation@1.0.0 audit:ci
+> node scripts/audit-ci.mjs
+
+audit:ci FAIL - 0 critical, 5 high advisory(ies): @serenity-js/rest (high), @serenity-js/serenity-bdd (high), axios (high), brace-expansion (high), follow-redirects (high)

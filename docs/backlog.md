@@ -1,6 +1,11 @@
 # Magento Checkout Automation — Backlog
 
-> **🏁 PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
+> **Maintenance reopened 2026-11-08.** The owner requested investigation and resolution of the failed,
+> inactive E2E workflow. MAG-MAINT-01 repairs the HIGH audit findings and reactivates the workflow;
+> MAG-MAINT-02 tracks the three residual MODERATE package findings. Historical Items #1–#15 stay
+> resolved. A repaired PR does not establish a green merged `main` or a new Pages publication.
+
+> **Historical closure, superseded by the maintenance reopening above: PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
 > resolved (0 outstanding) and both post-close review-derived worklist cycles are complete: CODEX
 > review v1 (CODEX-01…CODEX-11) and `CLAUDE_Opus_4_8 v2` (SEC-01). The Extension 5 worklist is 0
 > unchecked. Final `main` = `3f6e238`; required Chromium e2e green (run 30812016304); live Serenity
@@ -19,9 +24,67 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 11 — **project closed** (terminal handover v22 FINAL); **0 outstanding, all Items #1–#15 resolved**, both review-derived worklist cycles complete (CODEX-01…CODEX-11 + SEC-01)
-**Last Updated:** 2026-08-03
-**Based on:** `main` at `3f6e238` (all Extension 5 PRs #59–#63 merged) plus session notes v22 (FINAL); code-review closure R-01…R-10 + MAG-C01…C04 + CODEX-01…CODEX-11 + SEC-01; planning items 0001 (ADR-0007), 0002, 0003
+**Version:** 12, maintenance reopened; **2 outstanding: 1 HIGH, 1 MEDIUM**. All historical Items #1–#15 remain resolved.
+**Last Updated:** 2026-11-08
+**Based on:** `main` at `dfa7086c7d30ebaf34ada295d52d8a24b35720b5`, failed main run `40277606923`, live workflow inventory and current npm audit. Historical closure evidence follows unchanged.
+
+## Current maintenance items
+
+### MAG-MAINT-01: Restore dependency audit and E2E execution
+
+**Priority:** HIGH (score 22: breakage 8 + impact 8 + maintenance 6).
+**Status:** Phase 1 validated on the repair branch; Phase 2 owner merge and exact-main acceptance pending.
+**Phase boundary (2026-11-08):** Only [Phase 1](implementation-plans/2026-11-08_mag-maint-01-ci-recovery_v2.md)
+is authorised: prepare the repair, reactivate E2E, pass required PR checks, save commits/evidence and
+a paired handover, then stop. Merge and exact-main acceptance are Phase 2 and require explicit
+owner authorisation. MAG-MAINT-02 and WebKit investigation are separate later phases.
+**Provenance:** Owner's 2026-11-08 investigation/resolution request and main run
+[40277606923](https://github.com/GBrooks1970/magento-checkout-automation/actions/runs/40277606923).
+
+The 26 October run failed its audit job on five HIGH package findings. Chromium passed, while
+WebKit failed as a non-blocking exploratory leg. Workflow `287633364` (`e2e`) was subsequently
+reported as `disabled_inactivity`, so the active image-bake workflow's old green result was not
+evidence of healthy E2E coverage.
+
+Refresh the existing overrides to Axios **1.21.0** and brace-expansion **5.0.12**, with
+follow-redirects **1.16.2** locked within Axios's supported range. Preserve the direct Serenity,
+Playwright and Cucumber pins, Node contract, audit threshold, Chromium assertions and Docker pins.
+Re-enable the workflow and validate the repair with required Chromium and audit CI.
+See [implementation plan](implementation-plans/2026-11-08_mag-maint-01-ci-recovery.md).
+
+**Update (2026-11-08):** Workflow reactivated. PR #68 code head `b93aa641c95c41355133a8a5a22c17ba8776975e` passed required audit and Chromium in run `42528342786`. The browser job is pinned to Ubuntu 24.04 after the moving latest image exposed a Playwright 1.60 incompatibility. See the [Phase 1 evidence](walkthroughs/2026-11-08_mag-maint-01-phase-1.md). The item remains open until Phase 2 acceptance.
+
+**Acceptance:** zero HIGH/CRITICAL in a valid audit; `npm run verify` passes; E2E workflow active;
+required Chromium and audit checks green on the PR; owner merges and the exact-main run passes.
+Do not close this item from a PR-only success.
+
+### MAG-MAINT-02: Review the remaining glob/minimatch advisories
+
+**Priority:** MEDIUM (score 13: breakage 3 + impact 5 + maintenance 5).
+**Status:** Open, separate toolchain compatibility review required.
+**Review by:** 2026-12-08, repository owner.
+
+The repaired lockfile still reports three MODERATE package findings through
+`@cucumber/cucumber@12.9.0 -> glob@13.0.6 -> minimatch@10.2.5`:
+[glob cancellation bypass](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
+[minimatch globparts amplification](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+`npm audit` proposes Cucumber **13.3.0**, a major change. This suite's feature globs are repository
+controlled, but the dependency risk remains recorded under the existing moderate-finding policy.
+No HIGH exception or audit-gate relaxation is introduced.
+
+**Acceptance:** select a compatible patched dependency path, validate the Serenity adapter and
+single stdout formatter, run both dry profiles and the required live Chromium suite, and record
+the resulting complete audit. Do not treat the current HIGH gate pass as a zero-vulnerability claim.
+
+### Monitor-only: exploratory WebKit
+
+The same October run produced **0/12 passing WebKit scenarios** (11 failed, 1 compromised), with
+add-to-cart confirmation and checkout-button timeouts matching the classes already documented
+under Items #14/#15. Logs alone do not establish a new root cause or a repair. It remains
+non-blocking under the existing owner-approved policy, with no promotion credit from this run.
+The required Chromium job succeeded. This dependency repair makes no WebKit stability claim.
+
+---
 
 > **Update (2026-08-03) — Extension 5 review cycle closed (SEC-01 + CODEX-02…CODEX-10).** The
 > `CLAUDE_Opus_4_8 v2` triage (net-new **SEC-01**) plus the carried **CODEX-02…CODEX-10** are all
@@ -898,7 +961,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
 | MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) ✅ DONE 2026-07-20 (engine-aware waits and live root-cause fixes) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **0** | All Items #1–#15 resolved. Firefox/WebKit remain exploratory until Item #15's three-run, zero-recovery promotion gate is met; that operational evidence does not reopen the implementation backlog. |
+| **Outstanding** | **2** | MAG-MAINT-01 HIGH: implemented, validation/owner merge pending. MAG-MAINT-02 MEDIUM: moderate dependency review. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
@@ -909,7 +972,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 |---|---|---|
 | Commit history shows specs before implementation | ✅ Done | — |
 | ADRs complete with concrete examples | ✅ Done | Item #5 |
-| Green CI badge, demonstrably non-flaky | ✅ Done — 12/12 Chromium (required) green on main (run `30742167799`, commit `825afd4`) | Item #4 |
+| Green CI badge, demonstrably non-flaky | Maintenance pending: latest main run `40277606923` failed audit; required Chromium passed. Repair must pass exact-main CI after owner merge. | MAG-MAINT-01 / Item #4 |
 | Living documentation published (GitHub Pages) | ✅ Done — live at gbrooks1970.github.io/magento-checkout-automation | Item #4 |
 | Gherkin style guide with refactor example | ✅ Done | Item #6 |
 | Quarantine strategy demonstrated (`@deferred`) | ✅ Done — activated & exercised (12/12 green) | Item #2 |
