@@ -1,5 +1,7 @@
 # Magento Checkout Automation — Backlog
 
+> **Two candidates added 2026-11-11.** MAG-MAINT-03 and MAG-MAINT-04 are LOW candidates from the portfolio test-strategy report. Neither is started or authorised, and the maintenance state below is unchanged.
+
 > **Maintenance complete 2026-11-09.** MAG-MAINT-01 and MAG-MAINT-02 are resolved. WebKit is monitored as exploratory under Item #15.
 
 > **Historical closure, superseded by the maintenance reopening above: PROJECT CLOSED 2026-08-03 (terminal handover v22 FINAL).** All backlog Items #1–#15 are
@@ -21,8 +23,8 @@
 > the engine-portability gap exposed by that matrix. All Items #1–#15 are now resolved; Firefox and
 > WebKit remain non-blocking until the operational promotion evidence recorded under Item #15 exists.**
 
-**Version:** 14, maintenance acceptance complete; **0 outstanding**. All historical Items #1–#15 remain resolved.
-**Last Updated:** 2026-11-09
+**Version:** 15, two LOW candidates added (MAG-MAINT-03, MAG-MAINT-04); **2 outstanding, both unauthorised candidates**. MAG-MAINT-01 and MAG-MAINT-02 and all historical Items #1–#15 remain resolved.
+**Last Updated:** 2026-11-11
 **Based on:** accepted main `d5fb1d4`, CI and Pages run `42717430993`, and the zero-finding full audit of the merged Phase 3 lockfile. Historical closure evidence follows unchanged.
 
 ## Current maintenance items
@@ -73,6 +75,46 @@ No HIGH exception or audit-gate relaxation is introduced.
 **Acceptance:** select a compatible patched dependency path, validate the Serenity adapter and
 single stdout formatter, run both dry profiles and the required live Chromium suite, and record
 the resulting complete audit. Do not treat the current HIGH gate pass as a zero-vulnerability claim.
+
+### MAG-MAINT-03: Assert scenario counts in the `verify` dry runs
+
+**Priority:** LOW (score 7: breakage 2 + impact 3 + maintenance 2).
+**Status:** Candidate, added 2026-11-11. Not started and not authorised. It needs an implementation plan and owner approval first.
+**Provenance:** Portfolio test-strategy report, [section 6](https://github.com/GBrooks1970/test-automation-portfolio/blob/main/portfolio-docs/PORTFOLIO_TEST_STRATEGY_GREEN_HID_THE_TRUTH_2026-11-11.md#6-known-open-gaps).
+
+`npm run verify` ends with `cucumber-js --profile default --dry-run && cucumber-js --profile smoke --dry-run`.
+Each dry run passes on any number of discovered scenarios, including none, so a tag or path change
+that drops scenarios leaves `verify` green. CI already counts the live default run through
+`SERENITY_EXPECTED_SCENARIOS` (MAG-C09). The gap is local `verify` and the smoke profile, whose
+expected count is asserted nowhere. The Phase 3 record gives the current counts: 12 default, 7 smoke.
+
+Proposed: run each dry run through a small script that reads the discovered count and fails on a
+mismatch, as `orangehrm-pim-automation` does. Keep the single stdout formatter rule.
+
+**Acceptance:** `verify` fails when either profile's count differs from the expected value; a test or
+recorded negative control shows that failure with a deliberately wrong count; the expected dry-run
+counts live in one place and their relation to `SERENITY_EXPECTED_SCENARIOS` is documented; required
+audit and Chromium checks are green on the PR and on exact main.
+
+### MAG-MAINT-04: Check API response shapes in `MagentoApiClient`
+
+**Priority:** LOW (score 9: breakage 2 + impact 4 + maintenance 3).
+**Status:** Candidate, added 2026-11-11. Not started and not authorised. It needs an implementation plan and owner approval first.
+**Provenance:** Portfolio test-strategy report, [section 6](https://github.com/GBrooks1970/test-automation-portfolio/blob/main/portfolio-docs/PORTFOLIO_TEST_STRATEGY_GREEN_HID_THE_TRUTH_2026-11-11.md#6-known-open-gaps).
+
+`src/api/MagentoApiClient.ts` casts three responses without checking them: the admin token
+(`as string`, line 99), the product search (`as ProductSearchResult`, line 130) and the masked quote id
+(`as string`, line 148), as read on 2026-11-11. The casts are compile-time only, so an unexpected body
+flows on under the wrong type. The likely result is a later failure far from its cause; a false
+green is possible only where a caller never uses the value. The store image is digest-pinned, so
+drift is unlikely, which is why this scores LOW.
+
+Proposed: a runtime guard at each of the three boundaries that throws an error naming the endpoint
+and the shape received. Prefer hand-written type guards to a new dependency; settle that in the plan.
+
+**Acceptance:** each of the three responses is validated before use; unit tests feed each a malformed
+body and expect the named error; no new dependency without a recorded decision; full audit stays at
+zero findings; `npm run verify` and the required Chromium check are green on the PR and on exact main.
 
 ### Monitor-only: exploratory WebKit
 
@@ -955,7 +997,7 @@ historical; the score governs the band — e.g. #2 scores 21 = HIGH).
 | HIGH (20–30) | 4 | #1 (27) ✅ done; #2 (21) ✅ DONE (decline module, 12/12 green); #8 (26) ✅ done; #9 (20) ✅ done |
 | MEDIUM (10–19) | 9 | #3 (17) ✅ done; #4 (15) ✅ DONE (badge green, Pages live); #5 (12) ✅ done; #10 (18) ✅ done; #11 (16) ✅ done; #12 (12) ✅ DONE (screenshots, ADR-0007); #13 (11) ✅ DONE 2026-07-17 (trace/video, from 0002); #14 (15) ✅ DONE 2026-07-17 (cross-browser, drift documented, from 0003); #15 (11) ✅ DONE 2026-07-20 (engine-aware waits and live root-cause fixes) |
 | LOW (0–9) | 2 | #6 (8) ✅ done; #7 (7) ✅ done |
-| **Outstanding** | **0** | MAG-MAINT-01 and MAG-MAINT-02 resolved. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
+| **Outstanding** | **2** | MAG-MAINT-03 (7) and MAG-MAINT-04 (9): LOW candidates, not authorised. MAG-MAINT-01 and MAG-MAINT-02 resolved. Historical Items #1–#15 remain resolved. Firefox/WebKit remain exploratory under Item #15's existing promotion gate. |
 | Resolved (phases 1–3) | 1 | ~20 hrs completed |
 
 ---
